@@ -19,7 +19,8 @@ def test_time_ids():
     with pytest.raises(ValueError, match=r"The length of `include_zero_delay`.*"):
         make_time_shift_ids(3, 2, [False, True, False, True])
 
-def test_narx():
+@pytest.mark.parametrize("nan", [False, True])
+def test_narx(nan):
     rng = np.random.default_rng(12345)
     n_samples = 1000
     max_delay = 3
@@ -32,8 +33,14 @@ def test_narx():
     y = y[max_delay:]+e
     X = np.c_[u0[max_delay:], u1]
 
+    if nan:
+        X_nan_ids = rng.choice(n_samples, 20, replace=False)
+        y_nan_ids = rng.choice(n_samples, 10, replace=False)
+        X[X_nan_ids] = np.nan
+        y[y_nan_ids] = np.nan
+
     params = {
-        "n_features_to_select": rng.integers(low=1, high=4),
+        "n_features_to_select": rng.integers(low=2, high=4),
         "max_delay": rng.integers(low=0, high=10),
         "poly_degree": rng.integers(low=2, high=5),
     }
@@ -46,14 +53,19 @@ def test_narx():
     params["include_zero_delay"] = [False, True, False]
     narx_0_delay = make_narx(X=X, y=y, **params)
     time_shift_ids = narx_0_delay.time_shift_ids
-    assert ~np.isin(0, time_shift_ids[time_shift_ids[:, 0] == 0][:, 1])
-    assert np.isin(0, time_shift_ids[time_shift_ids[:, 0] == 1][:, 1])
-    assert ~np.isin(0, time_shift_ids[time_shift_ids[:, 0] == 2][:, 1])
+    time_ids_u0 = time_shift_ids[time_shift_ids[:, 0] == 0]
+    time_ids_u1 = time_shift_ids[time_shift_ids[:, 0] == 1]
+    time_ids_y = time_shift_ids[time_shift_ids[:, 0] == 2]
+    assert ~np.isin(0, time_ids_u0[:, 1]) or (time_ids_u0.size == 0)
+    assert np.isin(0, time_ids_u1[:, 1]) or (time_ids_u1.size == 0)
+    assert ~np.isin(0, time_ids_y[:, 1]) or (time_ids_y.size == 0)
 
     params["static_indices"] = [1]
     narx_static = make_narx(X=X, y=y, **params)
     time_shift_ids = narx_static.time_shift_ids
-    assert time_shift_ids[time_shift_ids[:, 0] == 1][0, 1] == 0
+    time_ids_u1 = time_shift_ids[time_shift_ids[:, 0] == 1]
+    if time_ids_u1.size != 0:
+        assert time_ids_u1[0, 1] == 0
 
     params["drop"] = 1
     params["max_iter"] = 10
@@ -112,3 +124,5 @@ def test_narx():
     poly_ids = make_poly_ids(time_shift_ids.shape[0]+1, 2)
     with pytest.raises(ValueError, match=r"The element x of poly_ids should .*"):
         narx_osa = Narx(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
+
+test_narx(True)

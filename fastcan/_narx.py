@@ -4,14 +4,14 @@ This file contains Narx model class.
 
 import math
 from itertools import combinations_with_replacement
-from numbers import Integral, Real
+from numbers import Integral
 
 import numpy as np
 from scipy.optimize import least_squares
 from scipy.stats import rankdata
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import LinearRegression
-from sklearn.utils import check_array, check_X_y
+from sklearn.utils import check_array, check_consistent_length, column_or_1d
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import check_is_fitted
 
@@ -52,7 +52,7 @@ def make_time_shift_features(X, ids):
            [5., 3., 4.],
            [7., 5., 6.]])
     """
-    X = check_array(X, ensure_2d=True, dtype=float)
+    X = check_array(X, ensure_2d=True, dtype=float, force_all_finite="allow-nan")
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_samples = X.shape[0]
     n_outputs = ids.shape[0]
@@ -177,7 +177,7 @@ def make_poly_features(X, ids):
            [ 1.,  5., 25.,  6.],
            [ 1.,  7., 49.,  8.]])
     """
-    X = check_array(X, ensure_2d=True, dtype=float)
+    X = check_array(X, ensure_2d=True, dtype=float, force_all_finite="allow-nan")
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_samples = X.shape[0]
     n_outputs, degree = ids.shape
@@ -261,6 +261,12 @@ def make_poly_ids(
 
     const_id = np.where((ids == 0).all(axis=1))
     return np.delete(ids, const_id, 0)  # remove the constant featrue
+
+
+def _mask_missing_value(*arr):
+    """Remove missing value for all arrays."""
+    mask_nomissing = np.all(np.isfinite(np.c_[arr]), axis=1)
+    return tuple([x[mask_nomissing] for x in arr])
 
 
 class Narx(BaseEstimator, RegressorMixin):
@@ -392,6 +398,9 @@ class Narx(BaseEstimator, RegressorMixin):
             When `coef_init` is an array, the model will be a Multi-Step-Ahead
             Narx whose coefficients and intercept are initialized by the array.
 
+            .. note::
+                When coef_init is None, missing values (i.e., np.nan) are allowed.
+
         **params : dict
             Keyword arguments passed to
             `scipy.optimize.least_squares`.
@@ -401,7 +410,9 @@ class Narx(BaseEstimator, RegressorMixin):
         self : object
             Fitted Estimator.
         """
-        X, y = self._validate_data(X, y, y_numeric=True, multi_output=False)
+        X = self._validate_data(X, dtype=float, force_all_finite="allow-nan")
+        y = column_or_1d(y, dtype=float, warn=True)
+        check_consistent_length(X, y)
 
         if self.time_shift_ids is None:
             self.time_shift_ids_ = make_time_shift_ids(
@@ -455,8 +466,10 @@ class Narx(BaseEstimator, RegressorMixin):
             osa_narx = LinearRegression()
             time_shift_vars = make_time_shift_features(xy_hstack, self.time_shift_ids_)
             poly_terms = make_poly_features(time_shift_vars, self.poly_ids_)
+            # Remove missing values
+            poly_terms_masked, y_masked = _mask_missing_value(poly_terms, y)
 
-            osa_narx.fit(poly_terms, y)
+            osa_narx.fit(poly_terms_masked, y_masked)
             if coef_init is None:
                 self.coef_ = osa_narx.coef_
                 self.intercept_ = osa_narx.intercept_
@@ -516,9 +529,21 @@ class Narx(BaseEstimator, RegressorMixin):
     def _predict(expression, X, y_init, coef, intercept, max_delay):
         n_samples = X.shape[0]
         y_hat = np.zeros(n_samples)
-        y_hat[:max_delay] = y_init
-        for k in range(max_delay, n_samples):
-            y_hat[k] = expression(X, y_hat, coef, intercept, k)
+        at_init = True
+        init_k = 0
+        for k in range(n_samples):
+            if ~np.all(np.isfinite(X[k])):
+                at_init = True
+                init_k = k + 1
+                y_hat[k] = np.nan
+                continue
+            if k - init_k == max_delay:
+                at_init = False
+
+            if at_init:
+                y_hat[k] = y_init[k - init_k]
+            else:
+                y_hat[k] = expression(X, y_hat, coef, intercept, k)
             if np.any(y_hat[k] > 1e20):
                 y_hat[k:] = np.inf
                 return y_hat
@@ -535,9 +560,11 @@ class Narx(BaseEstimator, RegressorMixin):
         coef = coef_intercept[:-1]
         intercept = coef_intercept[-1]
 
-        return (
-            y - Narx._predict(expression, X, y[:max_delay], coef, intercept, max_delay)
-        ).flatten()
+        y_hat = Narx._predict(expression, X, y[:max_delay], coef, intercept, max_delay)
+
+        y_masked, y_hat_masked = _mask_missing_value(y, y_hat)
+
+        return (y_masked - y_hat_masked).flatten()
 
     @validate_params(
         {
@@ -564,11 +591,11 @@ class Narx(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, force_all_finite="allow-nan")
         if y_init is None:
             y_init = np.zeros(self.max_delay_)
         else:
-            y_init = check_array(y_init, ensure_2d=False, dtype=np.float64)
+            y_init = column_or_1d(y_init, dtype=float)
             if y_init.shape[0] != self.max_delay_:
                 raise ValueError(
                     "`y_init` should have the shape of "
@@ -585,6 +612,9 @@ class Narx(BaseEstimator, RegressorMixin):
             self.intercept_,
             self.max_delay_,
         )
+
+    def _more_tags(self):
+        return {"allow_nan": True}
 
 
 @validate_params(
@@ -721,10 +751,10 @@ def make_narx(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-            Feature matrix.
+        Feature matrix.
 
     y : array-like of shape (n_samples,)
-        Target matrix.
+        Target vector.
 
     n_features_to_select : int
         The parameter is the absolute number of features to select.
@@ -800,14 +830,15 @@ def make_narx(
     | X[k-1,0]*X[k-3,0]  |  1.999   |
     | X[k-2,0]*X[k-0,1]  |  1.527   |
     """
-    X, y = check_X_y(X, y, dtype=Real, multi_output=False)
+    X = check_array(X, dtype=float, ensure_2d=True, force_all_finite="allow-nan")
+    y = column_or_1d(y, dtype=float)
+    check_consistent_length(X, y)
 
     xy_hstack = np.c_[X, y]
     n_features = X.shape[1]
-    n_outputs = xy_hstack.shape[1] - n_features
 
     if include_zero_delay is None:
-        include_zero_delay = [True] * n_features + [False] * n_outputs
+        include_zero_delay = [True] * n_features + [False]
 
     time_shift_ids_all = make_time_shift_ids(
         n_features=xy_hstack.shape[1],
@@ -831,11 +862,14 @@ def make_narx(
     )
     poly_terms = make_poly_features(time_shift_vars, poly_ids_all)
 
+    # Remove missing values
+    poly_terms_masked, y_masked = _mask_missing_value(poly_terms, y)
+
     csf = FastCan(
         n_features_to_select,
         eta=eta,
         verbose=0,
-    ).fit(poly_terms, y)
+    ).fit(poly_terms_masked, y_masked)
     if drop is not None:
         indices, _ = refine(csf, drop=drop, max_iter=max_iter, verbose=verbose)
         support = np.zeros(shape=csf.n_features_in_, dtype=bool)
