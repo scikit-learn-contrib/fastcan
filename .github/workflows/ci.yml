@@ -85,6 +85,8 @@ jobs:
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
+          # Include free-threaded support
+          CIBW_ENABLE: cpython-freethreading
     - name: Upload package
       uses: actions/upload-artifact@v4
       with:

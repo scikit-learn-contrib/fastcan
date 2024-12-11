@@ -55,6 +55,9 @@ mypy = "*"
 python-build = "*"
 uv = "*"
 
+[tool.pixi.feature.nogil.dependencies]
+python-freethreading = "*"
+
 [build-system]
 requires = ["meson-python>=0.16.0", "Cython>=3.0.10", "scikit-learn>=1.6.0"]
 build-backend = "mesonpy"
@@ -77,14 +80,14 @@ compilers = "*"
 [tool.pixi.target.osx-arm64.build-dependencies]
 compilers = "*"
 
-[tool.pixi.host-dependencies]
-meson-python = ">=0.16.0"
-cython = ">=3.0.10"
-scikit-learn = ">=1.6.0"
+# [tool.pixi.host-dependencies]
+# meson-python = ">=0.16.0"
+# cython = ">=3.0.10"
+# scikit-learn = ">=1.6.0"
 
-[tool.pixi.dependencies]
-python = ">=3.12.0"
-scikit-learn = ">=1.6.0"
+# [tool.pixi.dependencies]
+# python = ">=3.12.0"
+# scikit-learn = ">=1.6.0"
 
 [tool.pixi.tasks]
 time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
@@ -114,7 +117,8 @@ doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "do
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
 
 [tool.pixi.environments]
-default = ["fmt", "lint", "type", "docs", "test", "build"]
+dev = ["fmt", "lint", "type", "docs", "test", "build"]
+nogil = ["nogil"]
 
 [tool.black]
 line-length = 88
