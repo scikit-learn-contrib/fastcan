@@ -30,7 +30,7 @@ API Reference
          refine
          minibatch
    
-   .. rubric:: Modules
+   .. rubric:: Submodules
 
    .. autosummary::
       :toctree: generated/
