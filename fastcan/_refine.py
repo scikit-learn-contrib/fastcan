@@ -31,7 +31,7 @@ from ._fastcan import FastCan, _prepare_search
     prefer_skip_nested_validation=True,
 )
 def refine(selector, drop=1, max_iter=None, verbose=1):
-    """Two-Stage Refining.
+    """Two-stage refining for the results of :class:`fastcan.FastCan`.
 
     In the refining process, the selected features will be dropped, and
     the vacancy positions will be refilled from the candidate features.

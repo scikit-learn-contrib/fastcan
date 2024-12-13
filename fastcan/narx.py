@@ -1,5 +1,6 @@
 """
-This file contains Narx model class.
+The module related to nonlinear autoregressive exogenous (NARX) model for system
+identification.
 """
 
 import math
@@ -47,7 +48,7 @@ def make_time_shift_features(X, ids):
 
     Examples
     --------
-    >>> from fastcan import make_time_shift_features
+    >>> from fastcan.narx import make_time_shift_features
     >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
     >>> ids = [[0, 0], [0, 1], [1, 1]]
     >>> make_time_shift_features(X, ids)
@@ -108,7 +109,7 @@ def make_time_shift_ids(
 
     Examples
     --------
-    >>> from fastcan import make_time_shift_ids
+    >>> from fastcan.narx import make_time_shift_ids
     >>> make_time_shift_ids(2, max_delay=3, include_zero_delay=[True, False])
     array([[0, 0],
            [0, 1],
@@ -172,7 +173,7 @@ def make_poly_features(X, ids):
 
     Examples
     --------
-    >>> from fastcan import make_poly_features
+    >>> from fastcan.narx import make_poly_features
     >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
     >>> ids = [[0, 0], [0, 1], [1, 1], [0, 2]]
     >>> make_poly_features(X, ids)
@@ -233,7 +234,7 @@ def make_poly_ids(
 
     Examples
     --------
-    >>> from fastcan import make_poly_ids
+    >>> from fastcan.narx import make_poly_ids
     >>> make_poly_ids(2, degree=3)
     array([[0, 0, 1],
            [0, 0, 2],
@@ -274,7 +275,7 @@ def _mask_missing_value(*arr):
 
 
 class Narx(RegressorMixin, BaseEstimator):
-    """Nonlinear Autoregressive eXogenous model.
+    """The Nonlinear Autoregressive eXogenous (NARX) model class.
     For example, a (polynomial) Narx model is like
     y(t) = y(t-1)*u(t-1) + u(t-1)^2 + u(t-2) + 1.5
     where y(t) is the system output at time t,
@@ -332,7 +333,7 @@ class Narx(RegressorMixin, BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from fastcan import Narx, print_narx
+    >>> from fastcan.narx import Narx, print_narx
     >>> rng = np.random.default_rng(12345)
     >>> n_samples = 1000
     >>> max_delay = 3
@@ -675,7 +676,7 @@ def print_narx(
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
-    >>> from fastcan import print_narx, Narx
+    >>> from fastcan.narx import print_narx, Narx
     >>> X, y = load_diabetes(return_X_y=True)
     >>> print_narx(Narx().fit(X, y), term_space=10, coef_space=5, float_precision=0)
     |   Term   |Coef |
@@ -816,7 +817,7 @@ def make_narx(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import mean_squared_error
-    >>> from fastcan import make_narx, print_narx
+    >>> from fastcan.narx import make_narx, print_narx
     >>> rng = np.random.default_rng(12345)
     >>> n_samples = 1000
     >>> max_delay = 3
