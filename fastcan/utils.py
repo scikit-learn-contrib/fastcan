@@ -1,4 +1,4 @@
-"""Sum squared of correlation."""
+"""Utils functions."""
 
 from numbers import Integral
 
@@ -33,7 +33,7 @@ def ssc(X, y):
 
     Examples
     --------
-    >>> from fastcan import ssc
+    >>> from fastcan.utils import ssc
     >>> X = [[1], [-1], [0]]
     >>> y = [[0], [1], [-1]]
     >>> ssc(X, y)
@@ -58,7 +58,7 @@ def ssc(X, y):
     prefer_skip_nested_validation=True,
 )
 def ols(X, y, t=1):
-    """Orthogonal least-squares
+    """Orthogonal least-squares.
 
     Parameters
     ----------
@@ -83,7 +83,7 @@ def ols(X, y, t=1):
 
     Examples
     --------
-    >>> from fastcan import ols
+    >>> from fastcan.utils import ols
     >>> X = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]]
     >>> y = [1, 0, 1, 0]
     >>> indices, scores = ols(X, y, 2)

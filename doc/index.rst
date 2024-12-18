@@ -9,33 +9,41 @@
 
 .. include:: ../README.rst
 
-.. currentmodule:: fastcan
 
 
 API Reference
 -------------
-.. autosummary::
-   :toctree: generated/
+.. automodule:: fastcan
 
-   FastCan
-   refine
-   minibatch
-   ssc
-   ols
-   make_poly_ids
-   make_poly_features
-   make_time_shift_features
-   make_time_shift_ids
-   make_narx
-   print_narx
-   Narx
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: generated/
+
+         FastCan
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: generated/
+
+         refine
+         minibatch
+   
+   .. rubric:: Submodules
+
+   .. autosummary::
+      :toctree: generated/
+
+         narx
+         utils
 
 Useful Links
 ------------
 .. toctree::
    :maxdepth: 2
 
-   User Guild <user_guide>
+   User Guide <user_guide>
    Examples <auto_examples/index>
 
 API Compatibility

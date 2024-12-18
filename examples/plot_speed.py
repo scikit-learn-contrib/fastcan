@@ -39,7 +39,7 @@ y = rng.random((3000, 5))
 # canonical correlation coefficients may be more than one, the feature ranking
 # criterion used here is the sum squared of all canonical correlation coefficients.
 
-from fastcan import ssc
+from fastcan.utils import ssc
 
 
 def baseline(X, y, t):

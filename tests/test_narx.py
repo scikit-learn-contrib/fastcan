@@ -5,7 +5,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from sklearn.utils.estimator_checks import check_estimator
 
-from fastcan import Narx, make_narx, make_poly_ids, make_time_shift_ids, print_narx
+from fastcan.narx import Narx, make_narx, make_poly_ids, make_time_shift_ids, print_narx
 
 
 def test_narx_is_sklearn_estimator():

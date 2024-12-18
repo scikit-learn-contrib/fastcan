@@ -23,7 +23,8 @@ import numpy as np
 from sklearn.datasets import load_diabetes
 from sklearn.linear_model import OrthogonalMatchingPursuit
 
-from fastcan import FastCan, ols
+from fastcan import FastCan
+from fastcan.utils import ols
 
 X, y = load_diabetes(return_X_y=True)
 

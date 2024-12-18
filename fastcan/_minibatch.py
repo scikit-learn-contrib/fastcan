@@ -1,5 +1,5 @@
 """
-Feature selection with mini-batch
+Feature selection with mini-batch.
 """
 
 from copy import deepcopy
@@ -29,7 +29,7 @@ from ._fastcan import FastCan, _prepare_search
     prefer_skip_nested_validation=False,
 )
 def minibatch(X, y, n_features_to_select=1, batch_size=1, verbose=1):
-    """FastCan selection with mini batches.
+    """Feature selection using :class:`fastcan.FastCan` with mini batches.
 
     It is suitable for selecting a very large number of features
     even larger than the number of samples.
