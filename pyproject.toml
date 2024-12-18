@@ -36,6 +36,26 @@ tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 [project.optional-dependencies]
 docs = ["furo", "matplotlib", "sphinx_gallery", "sphinx-design"]
 
+[build-system]
+requires = ["meson-python>=0.16.0", "Cython>=3.0.10", "scikit-learn>=1.6.0"]
+build-backend = "mesonpy"
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[tool.pixi.dependencies]
+python = ">=3.12.0"
+scikit-learn = ">=1.6.0"
+
+[tool.pixi.pypi-dependencies]
+fastcan = { path = ".", editable = true }
+
+[tool.pixi.build-dependencies]
+cython = ">=3.0.10"
+meson-python = ">=0.16.0"
+ninja = ">=1.12.1"
+
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
 pytest-cov = "*"
@@ -57,37 +77,16 @@ uv = "*"
 
 [tool.pixi.feature.nogil.dependencies]
 python-freethreading = "*"
-
-[build-system]
-requires = ["meson-python>=0.16.0", "Cython>=3.0.10", "scikit-learn>=1.6.0"]
-build-backend = "mesonpy"
-
-[tool.pixi.project]
-channels = ["conda-forge"]
-platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
-
-[tool.pixi.pypi-dependencies]
-fastcan = { path = ".", editable = true }
-
-[tool.pixi.build-dependencies]
-cython = ">=3.0.10"
-meson-python = ">=0.16.0"
-ninja = ">=1.12.1"
+pip = "*"
+meson-python = "*"
+joblib = "*"
+threadpoolctl = "*"
 
 [tool.pixi.target.osx-64.build-dependencies]
 compilers = "*"
 
 [tool.pixi.target.osx-arm64.build-dependencies]
 compilers = "*"
-
-# [tool.pixi.host-dependencies]
-# meson-python = ">=0.16.0"
-# cython = ">=3.0.10"
-# scikit-learn = ">=1.6.0"
-
-# [tool.pixi.dependencies]
-# python = ">=3.12.0"
-# scikit-learn = ">=1.6.0"
 
 [tool.pixi.tasks]
 time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
@@ -116,9 +115,20 @@ type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
 doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "doc", env = { SPHINXBUILD = "sphinx-build", CMD = "html", SOURCEDIR = ".", BUILDDIR = "_build", SPHINXOPTS = "" } }
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
 
+[tool.pixi.feature.nogil.tasks]
+nightly-Cython = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple Cython"
+nightly-numpy = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy"
+nightly-scipy = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy"
+nightly-scikit-learn = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn"
+
+nogil-build = { cmd = "pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true", depends_on = ["nightly-Cython", "nightly-numpy", "nightly-scipy", "nightly-scikit-learn"] }
+nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends_on = ["nogil-build"] }
+nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends_on = ["nogil-build"] }
+
 [tool.pixi.environments]
-dev = ["fmt", "lint", "type", "docs", "test", "build"]
-nogil = ["nogil"]
+dev = ["docs", "test", "build"]
+lint = { features = ["fmt", "lint", "type"], no-default-feature = true}
+nogil = { features = ["nogil"], no-default-feature = true}
 
 [tool.black]
 line-length = 88
