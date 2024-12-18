@@ -70,7 +70,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v2.22.0
       env:
           CIBW_BUILD: cp3*-*
           CIBW_SKIP: pp* *i686* *musllinux* *-macosx_universal2 *-manylinux_ppc64le *-manylinux_s390x
