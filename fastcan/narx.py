@@ -274,9 +274,9 @@ def _mask_missing_value(*arr):
     return tuple([x[mask_nomissing] for x in arr])
 
 
-class Narx(RegressorMixin, BaseEstimator):
+class NARX(RegressorMixin, BaseEstimator):
     """The Nonlinear Autoregressive eXogenous (NARX) model class.
-    For example, a (polynomial) Narx model is like
+    For example, a (polynomial) NARX model is like
     y(t) = y(t-1)*u(t-1) + u(t-1)^2 + u(t-2) + 1.5
     where y(t) is the system output at time t,
     u(t) is the system input at time t,
@@ -333,7 +333,7 @@ class Narx(RegressorMixin, BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from fastcan.narx import Narx, print_narx
+    >>> from fastcan.narx import NARX, print_narx
     >>> rng = np.random.default_rng(12345)
     >>> n_samples = 1000
     >>> max_delay = 3
@@ -351,7 +351,7 @@ class Narx(RegressorMixin, BaseEstimator):
     >>> poly_ids = [[0, 2], # 1*u(k-1)
     ...             [0, 4], # 1*y(k-1)
     ...             [1, 3]] # u(k-1)*u(k-3)
-    >>> narx = Narx(time_shift_ids=time_shift_ids,
+    >>> narx = NARX(time_shift_ids=time_shift_ids,
     ...             poly_ids=poly_ids).fit(X, y, coef_init="one_step_ahead")
     >>> print_narx(narx)
     |        Term        |   Coef   |
@@ -397,16 +397,16 @@ class Narx(RegressorMixin, BaseEstimator):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample, which are used for a One-Step-Ahead
-            Narx.
+            NARX.
 
         coef_init : array-like of shape (n_terms,), default=None
             The initial values of coefficients and intercept for optimization.
-            When `coef_init` is None, the model will be a One-Step-Ahead Narx.
+            When `coef_init` is None, the model will be a One-Step-Ahead NARX.
             When `coef_init` is `one_step_ahead`, the model will be a Multi-Step-Ahead
-            Narx whose coefficients and intercept are initialized by the a
-            One-Step-Ahead Narx.
+            NARX whose coefficients and intercept are initialized by the a
+            One-Step-Ahead NARX.
             When `coef_init` is an array, the model will be a Multi-Step-Ahead
-            Narx whose coefficients and intercept are initialized by the array.
+            NARX whose coefficients and intercept are initialized by the array.
 
             .. note::
                 When coef_init is None, missing values (i.e., np.nan) are allowed.
@@ -477,7 +477,7 @@ class Narx(RegressorMixin, BaseEstimator):
         n_terms = self.poly_ids_.shape[0] + 1
 
         if isinstance(coef_init, (type(None), str)):
-            # fit a one-step-ahead Narx model
+            # fit a one-step-ahead NARX model
             xy_hstack = np.c_[X, y]
             osa_narx = LinearRegression()
             time_shift_vars = make_time_shift_features(xy_hstack, self.time_shift_ids_)
@@ -508,7 +508,7 @@ class Narx(RegressorMixin, BaseEstimator):
                 )
 
         lsq = least_squares(
-            Narx._residual,
+            NARX._residual,
             x0=coef_init,
             args=(
                 self._expression,
@@ -578,7 +578,7 @@ class Narx(RegressorMixin, BaseEstimator):
         coef = coef_intercept[:-1]
         intercept = coef_intercept[-1]
 
-        y_hat = Narx._predict(expression, X, y[:max_delay], coef, intercept, max_delay)
+        y_hat = NARX._predict(expression, X, y[:max_delay], coef, intercept, max_delay)
 
         y_masked, y_hat_masked = _mask_missing_value(y, y_hat)
 
@@ -622,7 +622,7 @@ class Narx(RegressorMixin, BaseEstimator):
                     f"but got {y_init.shape}."
                 )
 
-        return Narx._predict(
+        return NARX._predict(
             self._expression,
             X,
             y_init,
@@ -639,7 +639,7 @@ class Narx(RegressorMixin, BaseEstimator):
 
 @validate_params(
     {
-        "narx": [Narx],
+        "narx": [NARX],
         "term_space": [Interval(Integral, 1, None, closed="left")],
         "coef_space": [Interval(Integral, 1, None, closed="left")],
         "float_precision": [Interval(Integral, 0, None, closed="left")],
@@ -652,12 +652,12 @@ def print_narx(
     coef_space=10,
     float_precision=3,
 ):
-    """Print a Narx model as a Table which contains Term and Coef.
+    """Print a NARX model as a Table which contains Term and Coef.
 
     Parameters
     ----------
-    narx : Narx model
-        The Narx model to be printed.
+    narx : NARX model
+        The NARX model to be printed.
 
     term_space: int, default=20
         The space for the column of Term.
@@ -671,14 +671,14 @@ def print_narx(
     Returns
     -------
     table : str
-        The table of terms and coefficients of the Narx model.
+        The table of terms and coefficients of the NARX model.
 
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
-    >>> from fastcan.narx import print_narx, Narx
+    >>> from fastcan.narx import print_narx, NARX
     >>> X, y = load_diabetes(return_X_y=True)
-    >>> print_narx(Narx().fit(X, y), term_space=10, coef_space=5, float_precision=0)
+    >>> print_narx(NARX().fit(X, y), term_space=10, coef_space=5, float_precision=0)
     |   Term   |Coef |
     ==================
     |Intercept | 152 |
@@ -765,7 +765,7 @@ def make_narx(
     refine_max_iter=None,
     **params,
 ):
-    """Find `time_shift_ids` and `poly_ids` for a Narx model.
+    """Find `time_shift_ids` and `poly_ids` for a NARX model.
 
     Parameters
     ----------
@@ -810,8 +810,8 @@ def make_narx(
 
     Returns
     -------
-    narx : Narx
-        Narx instance.
+    narx : NARX
+        NARX instance.
 
     Examples
     --------
@@ -912,4 +912,4 @@ def make_narx(
         - 1
     )
 
-    return Narx(time_shift_ids=time_shift_ids, poly_ids=poly_ids)
+    return NARX(time_shift_ids=time_shift_ids, poly_ids=poly_ids)
