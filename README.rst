@@ -87,6 +87,12 @@ In particular, we provide a submodule `fastcan.narx` to build Nonlinear AutoRegr
 For more information, check our `Home Page <https://fastcan.readthedocs.io/en/latest/?badge=latest>`_.
 
 
+Support Free-Threaded Wheels
+----------------------------
+FastCan has support for free-threaded (also known as nogil) CPython 3.13.
+For more information about free-threaded CPython, check `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_.
+
+
 Citation
 --------
 
