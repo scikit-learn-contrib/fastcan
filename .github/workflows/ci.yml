@@ -3,62 +3,61 @@ name: CI
 on:
   workflow_call:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: prefix-dev/setup-pixi@v0.8.1
-      with:
-        environments: default
-        cache: true
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          environments: default
+          cache: true
 
-    - name: Re-install local
-      run: |
-        pixi run rebuild
+      - name: Re-install local
+        run: |
+          pixi run rebuild
 
-    - name: Lint with ruff
-      run: |
-        pixi run lint
-    - name: Lint with cython-lint
-      run: |
-        pixi run cython-lint
-    - name: Format with black
-      run: |
-        pixi run fmt
-    - name: Type check with mypy
-      run: |
-        pixi run type
-    - name: Test with pytest
-      run: |
-        pixi run test
-    - name: Test with doctest
-      shell: bash
-      run: |
-        pixi run doc
-        CMD=doctest pixi run doc
-    - name: Test coverage
-      shell: bash
-      run: |
-        FMT=xml pixi run test-coverage
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-    - name: Build SDist
-      run: |
-        pixi run build-sdist
-    - name: Store artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: cibw-sdist
-        path: dist/*.tar.gz
-
+      - name: Lint with ruff
+        run: |
+          pixi run lint
+      - name: Lint with cython-lint
+        run: |
+          pixi run cython-lint
+      - name: Format with black
+        run: |
+          pixi run fmt
+      - name: Type check with mypy
+        run: |
+          pixi run type
+      - name: Test with pytest
+        run: |
+          pixi run test
+      - name: Test with doctest
+        shell: bash
+        run: |
+          pixi run doc
+          CMD=doctest pixi run doc
+      - name: Test coverage
+        shell: bash
+        run: |
+          FMT=xml pixi run test-coverage
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Build SDist
+        run: |
+          pixi run build-sdist
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
 
   build:
     strategy:
@@ -68,10 +67,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: test
     steps:
-    - uses: actions/checkout@v4
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v2.22.0
-      env:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.22.0
+        env:
           CIBW_BUILD: cp3*-*
           CIBW_SKIP: pp* *i686* *musllinux* *-macosx_universal2 *-manylinux_ppc64le *-manylinux_s390x
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
@@ -87,8 +86,10 @@ jobs:
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           # Include free-threaded support
           CIBW_ENABLE: cpython-freethreading
-    - name: Upload package
-      uses: actions/upload-artifact@v4
-      with:
-        name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-        path: ./wheelhouse/*.whl
+          # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
+          CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
