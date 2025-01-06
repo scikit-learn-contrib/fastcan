@@ -5,7 +5,7 @@ description = "A fast canonical-correlation-based feature selection method"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
@@ -19,7 +19,6 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -45,7 +44,7 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
 [tool.pixi.dependencies]
-python = ">=3.12.0"
+python = ">=3.13.0"
 scikit-learn = ">=1.6.0"
 
 [tool.pixi.pypi-dependencies]
@@ -116,19 +115,22 @@ doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "do
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
 
 [tool.pixi.feature.nogil.tasks]
-nightly-Cython = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple Cython"
-nightly-numpy = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy"
-nightly-scipy = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy"
-nightly-scikit-learn = "pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn"
+install-scikit-learn = "pip install scikit-learn" # TODO: change to pypi-dependencies after pixi update
 
-nogil-build = { cmd = "pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true", depends_on = ["nightly-Cython", "nightly-numpy", "nightly-scipy", "nightly-scikit-learn"] }
-nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends_on = ["nogil-build"] }
-nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends_on = ["nogil-build"] }
+nogil-build = { cmd = "pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true", depends_on = [
+    "install-scikit-learn",
+] }
+nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends_on = [
+    "nogil-build",
+] }
+nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends_on = [
+    "nogil-build",
+] }
 
 [tool.pixi.environments]
 dev = ["docs", "test", "build"]
-lint = { features = ["fmt", "lint", "type"], no-default-feature = true}
-nogil = { features = ["nogil"], no-default-feature = true}
+lint = { features = ["fmt", "lint", "type"], no-default-feature = true }
+nogil = { features = ["nogil"], no-default-feature = true }
 
 [tool.black]
 line-length = 88
