@@ -1,15 +1,15 @@
-"""Test Narx"""
+"""Test NARX"""
 
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 from sklearn.utils.estimator_checks import check_estimator
 
-from fastcan.narx import Narx, make_narx, make_poly_ids, make_time_shift_ids, print_narx
+from fastcan.narx import NARX, make_narx, make_poly_ids, make_time_shift_ids, print_narx
 
 
 def test_narx_is_sklearn_estimator():
-    check_estimator(Narx())
+    check_estimator(NARX())
 
 def test_poly_ids():
     with pytest.raises(ValueError, match=r"The output that would result from the .*"):
@@ -78,7 +78,7 @@ def test_narx(nan):
 
     time_shift_ids = make_time_shift_ids(X.shape[1]+1, 5, include_zero_delay=False)
     poly_ids = make_poly_ids(time_shift_ids.shape[0], 2)
-    narx_osa = Narx(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
+    narx_osa = NARX(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
     assert narx_osa.coef_.size == poly_ids.shape[0]
     narx_osa_msa = narx_drop.fit(
         X, y, coef_init="one_step_ahead"
@@ -105,7 +105,7 @@ def test_narx(nan):
     time_shift_ids = make_time_shift_ids(X.shape[1]+2, 3, include_zero_delay=False)
     poly_ids = make_poly_ids(time_shift_ids.shape[0], 2)
     with pytest.raises(ValueError, match=r"The element x of the first column of tim.*"):
-        narx_osa = Narx(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
+        narx_osa = NARX(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
 
     time_shift_ids = np.array(
         [
@@ -117,10 +117,10 @@ def test_narx(nan):
     )
     poly_ids = make_poly_ids(time_shift_ids.shape[0], 2)
     with pytest.raises(ValueError, match=r"The element x of the second column of ti.*"):
-        narx_osa = Narx(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
+        narx_osa = NARX(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
 
 
     time_shift_ids = make_time_shift_ids(X.shape[1]+1, 3, include_zero_delay=False)
     poly_ids = make_poly_ids(time_shift_ids.shape[0]+1, 2)
     with pytest.raises(ValueError, match=r"The element x of poly_ids should .*"):
-        narx_osa = Narx(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
+        narx_osa = NARX(time_shift_ids=time_shift_ids, poly_ids=poly_ids).fit(X, y)
