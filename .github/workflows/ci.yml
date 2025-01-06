@@ -87,7 +87,7 @@ jobs:
           # Include free-threaded support
           CIBW_ENABLE: cpython-freethreading
           # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
-          CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
+          CIBW_BUILD_FRONTEND: 'pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
