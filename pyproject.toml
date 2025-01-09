@@ -53,7 +53,6 @@ fastcan = { path = ".", editable = true }
 [tool.pixi.build-dependencies]
 cython = ">=3.0.10"
 meson-python = ">=0.16.0"
-ninja = ">=1.12.1"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
@@ -76,10 +75,12 @@ uv = "*"
 
 [tool.pixi.feature.nogil.dependencies]
 python-freethreading = "*"
-pip = "*"
 meson-python = "*"
-joblib = "*"
-threadpoolctl = "*"
+uv = "*"
+
+[tool.pixi.feature.nogil.pypi-dependencies]
+scikit-learn = { index = "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" }
+Cython = { index = "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" }
 
 [tool.pixi.target.osx-64.build-dependencies]
 compilers = "*"
@@ -115,11 +116,7 @@ doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "do
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
 
 [tool.pixi.feature.nogil.tasks]
-install-scikit-learn = "pip install scikit-learn" # TODO: change to pypi-dependencies after pixi update
-
-nogil-build = { cmd = "pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true", depends_on = [
-    "install-scikit-learn",
-] }
+nogil-build = { cmd = "uv pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true" }
 nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends_on = [
     "nogil-build",
 ] }
