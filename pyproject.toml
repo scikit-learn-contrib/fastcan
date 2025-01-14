@@ -117,10 +117,10 @@ doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env
 
 [tool.pixi.feature.nogil.tasks]
 nogil-build = { cmd = "uv pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true" }
-nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends_on = [
+nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends-on = [
     "nogil-build",
 ] }
-nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends_on = [
+nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends-on = [
     "nogil-build",
 ] }
 
@@ -148,18 +148,6 @@ exclude = '''
 '''
 
 [tool.ruff]
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
-lint.select = ["E", "F", "W", "I"]
-
-lint.ignore = [
-    # space before : (needed for how black formats slicing)
-    "E203",
-    # do not assign a lambda expression, use a def
-    "E731",
-    # do not use variables named 'l', 'O', or 'I'
-    "E741",
-]
-
 # max line length for black
 line-length = 88
 
@@ -170,6 +158,19 @@ exclude = [
     "doc/_build",
     "doc/auto_examples",
     "build",
+]
+
+[tool.ruff.lint]
+# all rules can be found here: https://beta.ruff.rs/docs/rules/
+select = ["E", "F", "W", "I"]
+
+ignore = [
+    # space before : (needed for how black formats slicing)
+    "E203",
+    # do not assign a lambda expression, use a def
+    "E731",
+    # do not use variables named 'l', 'O', or 'I'
+    "E741",
 ]
 
 [tool.ruff.lint.per-file-ignores]

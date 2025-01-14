@@ -544,8 +544,9 @@ class NARX(RegressorMixin, BaseEstimator):
         return y_pred
 
     @staticmethod
-    def _predict(expression, X, y_init, coef, intercept, max_delay):
+    def _predict(expression, X, y_ref, coef, intercept, max_delay):
         n_samples = X.shape[0]
+        n_ref = len(y_ref)
         y_hat = np.zeros(n_samples)
         at_init = True
         init_k = 0
@@ -559,7 +560,7 @@ class NARX(RegressorMixin, BaseEstimator):
                 at_init = False
 
             if at_init:
-                y_hat[k] = y_init[k - init_k]
+                y_hat[k] = y_ref[k % n_ref]
             else:
                 y_hat[k] = expression(X, y_hat, coef, intercept, k)
             if np.any(y_hat[k] > 1e20):
@@ -578,7 +579,7 @@ class NARX(RegressorMixin, BaseEstimator):
         coef = coef_intercept[:-1]
         intercept = coef_intercept[-1]
 
-        y_hat = NARX._predict(expression, X, y[:max_delay], coef, intercept, max_delay)
+        y_hat = NARX._predict(expression, X, y, coef, intercept, max_delay)
 
         y_masked, y_hat_masked = _mask_missing_value(y, y_hat)
 
@@ -599,8 +600,9 @@ class NARX(RegressorMixin, BaseEstimator):
         X : array-like of shape (n_samples, `n_features_in_`)
             Samples.
 
-        y_init : array-like of shape (`max_delay`,), default=None
+        y_init : array-like of shape (`n_init`,), default=None
             The initial values for the prediction of y.
+            At least have one sample.
 
         Returns
         -------
@@ -614,11 +616,9 @@ class NARX(RegressorMixin, BaseEstimator):
             y_init = np.zeros(self.max_delay_)
         else:
             y_init = column_or_1d(y_init, dtype=float)
-            if y_init.shape[0] != self.max_delay_:
+            if y_init.shape[0] < 1:
                 raise ValueError(
-                    "`y_init` should have the shape of "
-                    "(`max_delay`,), i.e., "
-                    f"({self.max_delay_},), "
+                    "`y_init` should at least have one sample "
                     f"but got {y_init.shape}."
                 )
 
