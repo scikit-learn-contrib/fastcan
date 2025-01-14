@@ -602,7 +602,7 @@ class NARX(RegressorMixin, BaseEstimator):
 
         y_init : array-like of shape (`n_init`,), default=None
             The initial values for the prediction of y.
-            At least have one sample.
+            It should at least have one sample.
 
         Returns
         -------

@@ -44,7 +44,7 @@ X = np.c_[u0[max_delay:], u1[max_delay:]]
 # %%
 # Build term libriary
 # -------------------
-# To build a polynomial NARX model, it is normally have two steps:
+# To build a reduced polynomial NARX model, it is normally have two steps:
 #
 # #. Search the structure of the model, i.e., the terms in the model, e.g.,
 #    :math:`u_0(k-1)u_0(k-3)`, :math:`u_0(k-2)u_1(k-3)`, etc.
@@ -115,7 +115,7 @@ selected_poly_ids = poly_ids[support]
 # %%
 # Build NARX model
 # ----------------
-# As the polynomical NARX is a linear function of the nonlinear tems,
+# As the reduced polynomial NARX is a linear function of the nonlinear tems,
 # the coefficient of each term can be easily estimated by oridnary least squares.
 # In the printed NARX model, it is found that :class:`FastCan` selects the correct
 # terms and the coefficients are close to the true values.

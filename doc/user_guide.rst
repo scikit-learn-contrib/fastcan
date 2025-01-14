@@ -12,3 +12,4 @@ User Guide
    multioutput.rst
    redundancy.rst
    ols_and_omp.rst
+   narx.rst

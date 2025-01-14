@@ -19,7 +19,7 @@ multioutput data may result in better accuracy in the following classification t
 than applying it directly to the original single-label data. See Figure 5 in [2]_.
 
 Relationship on multiclass data
--------------------------------
+===============================
 Assume the feature matrix is :math:`X \in \mathbb{R}^{N\times n}`, the multiclass
 target vector is :math:`y \in \mathbb{R}^{N\times 1}`, and the one-hot encoded target
 matrix is :math:`Y \in \mathbb{R}^{N\times m}`. Then, the Fisher's criterion for
