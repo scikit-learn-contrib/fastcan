@@ -1,6 +1,6 @@
 [project]
 name = "fastcan"
-version = "0.3.1"
+version = "0.3.2"
 description = "A fast canonical-correlation-based feature selection method"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
@@ -89,8 +89,9 @@ compilers = "*"
 compilers = "*"
 
 [tool.pixi.tasks]
-time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
-time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, verbose=0).fit(X, y)'"
+time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='$SORT')"''', env = { SORT = "cumtime" } }
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", cwd = "tests" }
@@ -117,10 +118,10 @@ doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env
 
 [tool.pixi.feature.nogil.tasks]
 nogil-build = { cmd = "uv pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true" }
-nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends-on = [
+nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, verbose=0).fit(X, y)'", depends-on = [
     "nogil-build",
 ] }
-nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends-on = [
+nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends-on = [
     "nogil-build",
 ] }
 

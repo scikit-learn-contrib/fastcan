@@ -117,6 +117,7 @@ class FastCan(SelectorMixin, BaseEstimator):
     def __init__(
         self,
         n_features_to_select=1,
+        *,
         indices_include=None,
         indices_exclude=None,
         eta=False,
