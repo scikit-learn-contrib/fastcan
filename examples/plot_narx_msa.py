@@ -15,7 +15,7 @@ In this example, we will compare one-step-ahead NARX and multi-step-ahead NARX.
 # Nonlinear system
 # ----------------
 #
-# `Duffing equation <https://en.wikipedia.org/wiki/Duffing_equation>` is used to
+# `Duffing equation <https://en.wikipedia.org/wiki/Duffing_equation>`_ is used to
 # generate simulated data. The mathematical model is given by
 #
 # .. math::
@@ -82,15 +82,18 @@ plt.show()
 dur = 10
 n_samples = 1000
 
+rng = np.random.default_rng(12345)
+e_train = rng.normal(0, 0.0002, n_samples)
+e_test = rng.normal(0, 0.0002, n_samples)
 t = np.linspace(0, dur, n_samples)
 
 sol = odeint(duffing_equation, [0.6, 0.8], t)
 u_train = 2.5 * np.cos(2 * np.pi * t).reshape(-1, 1)
-y_train = sol[:, 0]
+y_train = sol[:, 0] + e_train
 
-sol = odeint(auto_duffing_equation, [0.6, -0.8], t)
+sol = odeint(duffing_equation, [0.6, -0.8], t)
 u_test = 2.5 * np.cos(2 * np.pi * t).reshape(-1, 1)
-y_test = sol[:, 0]
+y_test = sol[:, 0] + e_test
 
 # %%
 # One-step-head VS. multi-step-ahead NARX
@@ -105,12 +108,12 @@ from sklearn.metrics import r2_score
 
 from fastcan.narx import make_narx
 
-max_delay = 2
+max_delay = 3
 
 narx_model = make_narx(
     X=u_train,
     y=y_train,
-    n_features_to_select=10,
+    n_terms_to_select=5,
     max_delay=max_delay,
     poly_degree=3,
     verbose=0,
@@ -159,7 +162,7 @@ y_all = np.r_[y_train, [np.nan], y_test]
 narx_model = make_narx(
     X=u_all,
     y=y_all,
-    n_features_to_select=10,
+    n_terms_to_select=5,
     max_delay=max_delay,
     poly_degree=3,
     verbose=0,

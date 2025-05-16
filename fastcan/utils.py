@@ -7,7 +7,7 @@ from numbers import Integral
 
 import numpy as np
 from sklearn.cross_decomposition import CCA
-from sklearn.utils import check_X_y
+from sklearn.utils import _safe_indexing, check_consistent_length, check_X_y
 from sklearn.utils._param_validation import Interval, validate_params
 
 
@@ -120,3 +120,52 @@ def ols(X, y, t=1):
             if not mask[j]:
                 w[:, j] = w[:, j] - w[:, d] * (w[:, d] @ w[:, j])
                 w[:, j] /= np.linalg.norm(w[:, j], axis=0)
+
+
+@validate_params(
+    {
+        "return_mask": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def mask_missing_values(*arrays, return_mask=False):
+    """Remove missing values for all arrays.
+
+    Parameters
+    ----------
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
+        Arrays with consistent first dimension.
+
+    return_mask : bool, default=False
+        If True, return a mask of valid values.
+        If False, return the arrays with missing values removed.
+
+    Returns
+    -------
+    mask_valid : ndarray of shape (n_samples,)
+        Mask of valid values.
+
+    masked_arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
+        Arrays with missing values removed.
+        The order of the arrays is the same as the input arrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from fastcan.utils import mask_missing_values
+    >>> a = [[1, 2], [3, np.nan], [5, 6]]
+    >>> b = [1, 2, 3]
+    >>> mask_missing_values(a, b)
+    [[[1, 2], [5, 6]], [1, 3]]
+    >>> mask_missing_values(a, b, return_mask=True)
+    array([ True, False,  True])
+    """
+    if len(arrays) == 0:
+        return None
+    check_consistent_length(*arrays)
+    mask_valid = np.all(np.isfinite(np.c_[arrays]), axis=1)
+    if return_mask:
+        return mask_valid
+    return [_safe_indexing(x, mask_valid) for x in arrays]

@@ -1,0 +1,35 @@
+name: Static
+
+on:
+  workflow_call:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.8
+        with:
+          environments: static
+          cache: true
+
+      - name: Re-install local
+        run: |
+          pixi reinstall -e static --frozen fastcan
+
+      - name: Linter
+        run: |
+          pixi run lint
+      - name: Lint Cython
+        run: |
+          pixi run cython-lint
+      - name: Formatter
+        run: |
+          pixi run fmt
+      - name: Type check
+        run: |
+          pixi run type
+      - name: Spell check
+        run: |
+          pixi run spell

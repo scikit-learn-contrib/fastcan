@@ -13,8 +13,8 @@ from ._refine import refine
 
 __all__ = [
     "FastCan",
-    "refine",
     "minibatch",
     "narx",
+    "refine",
     "utils",
 ]

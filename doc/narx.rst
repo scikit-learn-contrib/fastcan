@@ -82,7 +82,7 @@ It should also be noted the different types of predictions in model training.
 ARX and OE model
 ----------------
 
-To better understant the two types of training, it is helpful to know two linear time series model structures,
+To better understand the two types of training, it is helpful to know two linear time series model structures,
 i.e., `ARX (AutoRegressive eXogenous) model <https://www.mathworks.com/help/ident/ref/arx.html>`_ and
 `OE (output error) model <https://www.mathworks.com/help/ident/ref/oe.html>`_.
 

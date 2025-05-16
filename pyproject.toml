@@ -54,29 +54,31 @@ fastcan = { path = ".", editable = true }
 cython = ">=3.0.10"
 meson-python = ">=0.16.0"
 
+[tool.pixi.feature.jupyter.dependencies]
+notebook = "*"
+matplotlib = "*"
+
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
 pytest-cov = "*"
 pandas = "*"
 
-[tool.pixi.feature.fmt.dependencies]
-black = "*"
-
-[tool.pixi.feature.lint.dependencies]
+[tool.pixi.feature.static.dependencies]
+# Static analysis tools
 ruff = "*"
 cython-lint = "*"
-
-[tool.pixi.feature.type.dependencies]
 mypy = "*"
+codespell = "*"
+
 
 [tool.pixi.feature.build.dependencies]
 python-build = "*"
-uv = "*"
+pip = "*"
 
 [tool.pixi.feature.nogil.dependencies]
 python-freethreading = "*"
 meson-python = "*"
-uv = "*"
+pip = "*"
 
 [tool.pixi.feature.nogil.pypi-dependencies]
 scikit-learn = { index = "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" }
@@ -89,9 +91,10 @@ compilers = "*"
 compilers = "*"
 
 [tool.pixi.tasks]
-time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, verbose=0).fit(X, y)'"
-time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
+time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
 profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='$SORT')"''', env = { SORT = "cumtime" } }
+time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", cwd = "tests" }
@@ -100,56 +103,59 @@ test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report $FMT --cov=$PAC
 [tool.pixi.feature.build.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
 build-sdist = "rm -rf dist && python -m build --sdist"
-rebuild = "rm -rf build && uv pip install --no-deps --force-reinstall -e ."
+rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
 
-[tool.pixi.feature.fmt.tasks]
-fmt = { cmd = "black .", cwd = "fastcan" }
+ # Needed on Windows CI to compile with Visual Studio compiler
+ # otherwise Meson detects a MINGW64 platform and use MINGW64
+ # toolchain
+ [tool.pixi.feature.build.target.win-64.tasks]
+ rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e . -Csetup-args=--vsenv"
 
-[tool.pixi.feature.lint.tasks]
+[tool.pixi.feature.static.tasks]
+fmt = "ruff format"
 lint = "ruff check . --fix"
 cython-lint = { cmd = "cython-lint .", cwd = "fastcan" }
-
-[tool.pixi.feature.type.tasks]
 type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
+spell = "codespell"
 
 [tool.pixi.feature.docs.tasks]
 doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "doc", env = { SPHINXBUILD = "sphinx-build", CMD = "html", SOURCEDIR = ".", BUILDDIR = "_build", SPHINXOPTS = "" } }
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
 
 [tool.pixi.feature.nogil.tasks]
-nogil-build = { cmd = "uv pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true" }
-nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, verbose=0).fit(X, y)'", depends-on = [
+nogil-build = { cmd = "pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true" }
+nogil-h = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'", depends-on = [
     "nogil-build",
 ] }
-nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20); s = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends-on = [
+nogil-eta = { cmd = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'", depends-on = [
     "nogil-build",
 ] }
+
+# Needed on Windows CI to compile with Visual Studio compiler
+# otherwise Meson detects a MINGW64 platform and use MINGW64
+# toolchain
+[tool.pixi.feature.nogil.target.win-64.tasks]
+nogil-build = { cmd = "pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true -Csetup-args=--vsenv" }
 
 [tool.pixi.environments]
-dev = ["docs", "test", "build"]
-lint = { features = ["fmt", "lint", "type"], no-default-feature = true }
+dev = ["docs", "test", "build", "jupyter"]
+static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
 
-[tool.black]
-line-length = 88
-preview = true
-exclude = '''
-/(
-    \.eggs         # exclude a few common directories in the
-  | \.git          # root of the project
-  | \.mypy_cache
-  | \.vscode
-  | \.venv
-  | \.ruff_cache
-  | build
-  | dist
-  | doc/_build
-  | doc/auto_examples
-)/
-'''
+[tool.codespell]
+skip = [
+    "./doc/_build",
+    "./doc/auto_examples",
+    "./doc/modules/generated",
+    "./htmlcov",
+    "./build",
+    "./pixi.lock",
+]
+ignore-words-list = [
+    "MIS", # magnetic impedance spectroscopy (MIS)
+]
 
 [tool.ruff]
-# max line length for black
 line-length = 88
 
 exclude = [
@@ -166,16 +172,40 @@ exclude = [
 preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I", "CPY001"]
-
-ignore = [
-    # space before : (needed for how black formats slicing)
-    "E203",
+# all rules can be found here: https://docs.astral.sh/ruff/rules/
+extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF"]
+ignore=[
     # do not assign a lambda expression, use a def
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
+    # E721 gives many false positives.
+    # Use `is` and `is not` for type comparisons, or `isinstance()` for
+    # isinstance checks
+    "E721",
+    # We don't care much about F841.
+    # Local variable ... is assigned to but never used
+    "F841",
+    # some RUF rules trigger too many changes
+    "RUF002",
+    "RUF003",
+    "RUF005",
+    "RUF012",
+    "RUF015",
+    "RUF021",
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
 ]
 
 [tool.ruff.lint.flake8-copyright]
@@ -188,17 +218,15 @@ notice-rgx = "\\#\\ Authors:\\ The\\ fastcan\\ developers\\\r?\\\n\\#\\ SPDX\\-L
 "doc/conf.py" = ["E402"]
 "tests/*" = ["CPY001"]
 "doc/*" = ["CPY001"]
-
+".github/*"=["CPY001"]
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
 # + E501 (line too long) because keeping it < 88 in cython
 # often makes code less readable.
-lint.ignore = [
+ignore = [
     # multiple spaces/tab after comma
     'E24',
-    # space before : (needed for how black formats slicing)
-    'E203',
     # line too long
     'E501',
     # do not assign a lambda expression, use a def

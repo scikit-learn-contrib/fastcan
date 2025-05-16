@@ -1,4 +1,5 @@
 """Test feature selection with mini-batch"""
+
 import numpy as np
 import pytest
 from sklearn.cluster import KMeans
@@ -21,12 +22,9 @@ def test_data_pruning():
         random_state=random_state,
     ).fit(X)
     atoms = kmeans.cluster_centers_
-    indices = minibatch(
-        X.T, atoms.T, n_to_select, batch_size=batch_size, verbose=0
-    )
+    indices = minibatch(X.T, atoms.T, n_to_select, batch_size=batch_size, verbose=0)
     assert np.unique(indices).size == n_to_select
     assert indices.size == n_to_select
-
 
 
 def test_select_minibatch_cls():
@@ -61,6 +59,7 @@ def test_select_minibatch_cls():
     assert np.unique(indices).size == n_to_select
     assert indices.size == n_to_select
 
+
 def test_minibatch_error():
     # Test refine raise error.
     n_samples = 200
@@ -83,4 +82,4 @@ def test_minibatch_error():
     )
 
     with pytest.raises(ValueError, match=r"n_features_to_select .*"):
-        _ = minibatch(X, y, n_features+1, batch_size=3)
+        _ = minibatch(X, y, n_features + 1, batch_size=3)

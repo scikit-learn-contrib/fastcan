@@ -12,7 +12,7 @@ The detailed difference between OLS and OMP can be found in [3]_.
 Here, let's briefly compare the three methods.
 
 
-Assume we have a feature matrix :math:`X_s \in \mathbb{R}^{N\times t}`, which constains
+Assume we have a feature matrix :math:`X_s \in \mathbb{R}^{N\times t}`, which contains
 :math:`t` selected features, and a target vector :math:`y \in \mathbb{R}^{N\times 1}`.
 Then the residual :math:`r \in \mathbb{R}^{N\times 1}` of the least-squares can be
 found by

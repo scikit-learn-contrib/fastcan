@@ -22,10 +22,10 @@ in :class:`FastCan`.
 # the predicted target by a linear regression model) and the target to describe its
 # usefulness, the results are shown in the following figure. It can be seen that
 # Feature 2 is the most useful and Feature 8 is the second. However, does that mean
-# that the total usefullness of Feature 2 + Feature 8 is the sum of their R-squared
+# that the total usefulness of Feature 2 + Feature 8 is the sum of their R-squared
 # scores? Probably not, because there may be redundancy between Feature 2 and Feature 8.
 # Actually, what we want is a kind of usefulness score which has the **superposition**
-# property, so that the usefullness of each feature can be added together without
+# property, so that the usefulness of each feature can be added together without
 # redundancy.
 
 import matplotlib.pyplot as plt
@@ -125,7 +125,7 @@ plot_bars(np.r_[id_selected, id_left], score_1, score_selected)
 # Select the third feature
 # ------------------------
 # Again, let's compute the R-squared between Feature 2 + Feature 8 + Feature i and
-# the target, and the additonal R-squared contributed by the rest of the features is
+# the target, and the additional R-squared contributed by the rest of the features is
 # shown in following figure. It can be found that after selecting Features 2 and 8, the
 # rest of the features can provide a very limited contribution.
 
@@ -145,8 +145,8 @@ plot_bars(np.r_[id_selected, id_left], score_2, score_selected)
 # at the RHS of the dashed lines. The fast computational speed is achieved by
 # orthogonalization, which removes the redundancy between the features. We use the
 # orthogonalization first to makes the rest of features orthogonal to the selected
-# features and then compute their additonal R-squared values. ``eta-cosine`` uses
-# the samilar idea, but has an additonal preprocessing step to compress the features
+# features and then compute their additional R-squared values. ``eta-cosine`` uses
+# the similar idea, but has an additional preprocessing step to compress the features
 # :math:`X \in \mathbb{R}^{N\times n}` and the target
 # :math:`X \in \mathbb{R}^{N\times n}` to :math:`X_c \in \mathbb{R}^{(m+n)\times n}`
 # and :math:`Y_c \in \mathbb{R}^{(m+n)\times m}`.

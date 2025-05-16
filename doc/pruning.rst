@@ -22,9 +22,9 @@ should be selected, as any additional samples can be represented by linear combi
 Therefore, the number to select has to be set to small.
 
 To solve this problem, we use :func:`minibatch` to loose the redundancy check of :class:`FastCan`.
-The original :class:`FastCan` checks the redunancy within :math:`X_s \in \mathbb{R}^{n\times t}`, 
+The original :class:`FastCan` checks the redundancy within :math:`X_s \in \mathbb{R}^{n\times t}`, 
 which contains :math:`t` selected samples and n features,
-and the redunancy within :math:`Y \in \mathbb{R}^{n\times m}`, which contains :math:`m` atoms :math:`y_i`.
+and the redundancy within :math:`Y \in \mathbb{R}^{n\times m}`, which contains :math:`m` atoms :math:`y_i`.
 :func:`minibatch` ranks samples with multiple correlation coefficients between :math:`X_b \in \mathbb{R}^{n\times b}` and :math:`y_i`,
 where :math:`b` is batch size and :math:`b <= t`, instead of canonical correlation coefficients between :math:`X_s` and :math:`Y`,
 which is used in :class:`FastCan`.

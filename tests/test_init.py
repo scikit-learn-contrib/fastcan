@@ -1,8 +1,7 @@
-# ruff: noqa
 """Basic unittests to test functioning of module's top-level"""
 
 try:
-    from fastcan import *
+    from fastcan import *  # noqa: F403
 
     _TOP_IMPORT_ERROR = None
 

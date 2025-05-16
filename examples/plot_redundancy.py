@@ -9,7 +9,7 @@ In this examples, we will compare the performance of feature selectors on the
 datasets, which contain redundant features.
 Here four types of features should be distinguished:
 
-* Unuseful features: the features do not contribute to the target
+* Useless features: the features do not contribute to the target
 * Dependent informative features: the features contribute to the target and form
   the redundant features
 * Redundant features: the features are constructed by linear transformation of

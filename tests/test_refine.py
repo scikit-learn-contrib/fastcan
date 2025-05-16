@@ -1,4 +1,5 @@
 """Test refine"""
+
 import pytest
 from sklearn.datasets import make_classification
 
@@ -38,7 +39,7 @@ def test_select_refine_cls():
     assert selector.scores_.sum() <= scores_1.sum()
     assert selector.scores_.sum() <= scores_23.sum()
     assert selector.scores_.sum() <= scores_all.sum()
-    assert (indices_inc[0]==1) and (indices_inc[1]==5)
+    assert (indices_inc[0] == 1) and (indices_inc[1] == 5)
 
 
 def test_refine_error():

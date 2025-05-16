@@ -13,7 +13,7 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import check_is_fitted
 
-from ._cancorr_fast import _forward_search  # type: ignore
+from ._cancorr_fast import _forward_search  # type: ignore[attr-defined]
 from ._fastcan import FastCan, _prepare_search
 
 

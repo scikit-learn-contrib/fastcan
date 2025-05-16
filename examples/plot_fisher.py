@@ -5,7 +5,7 @@ Fisher's criterion in LDA
 
 .. currentmodule:: fastcan
 
-In this examples, we will demonstrate the cannonical correaltion coefficient
+In this examples, we will demonstrate the canonical correaltion coefficient
 between the features ``X`` and the one-hot encoded target ``y`` has equivalent
 relationship with Fisher's criterion in LDA (Linear Discriminant Analysis).
 """

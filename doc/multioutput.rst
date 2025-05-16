@@ -12,7 +12,7 @@ MIMO (Multi-Input Multi-Output) data. For classification, it can be used for
 multilabel data. Actually, for multiclass classification, which has one output with
 multiple categories, multioutput feature selection can also be useful. The multiclass
 classification can be converted to multilabel classification by one-hot encoding
-target ``y``. The cannonical correaltion coefficient between the features ``X`` and the
+target ``y``. The canonical correaltion coefficient between the features ``X`` and the
 one-hot encoded target ``y`` has equivalent relationship with Fisher's criterion in
 LDA (Linear Discriminant Analysis) [1]_. Applying :class:`FastCan` to the converted
 multioutput data may result in better accuracy in the following classification task

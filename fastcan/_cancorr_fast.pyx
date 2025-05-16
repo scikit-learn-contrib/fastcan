@@ -1,5 +1,5 @@
 """
-Fast feature selection with sum squared canoncial correlation coefficents
+Fast feature selection with sum squared canonical correlation coefficients
 """
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
@@ -11,7 +11,7 @@ from cython.parallel import prange
 from scipy.linalg.cython_blas cimport isamax, idamax
 from sklearn.utils._cython_blas cimport ColMajor, NoTrans
 from sklearn.utils._cython_blas cimport _dot, _scal, _nrm2, _gemm, _axpy
-from sklearn.utils._typedefs cimport int32_t, uint8_t
+from sklearn.utils._typedefs cimport uint8_t
 
 
 @final
@@ -106,7 +106,7 @@ cdef floating _sscvm(
 cdef void _mgsvv(
     const floating* w,          # IN
     const floating* x,          # IN/OUT
-    int n_samples,     # IN
+    int n_samples,              # IN
 ) noexcept nogil:
     """
     Modified Gram-Schmidt process. x = x - w*w.T*x
@@ -133,7 +133,7 @@ cpdef int _forward_search(
     int num_threads,                  # IN
     int verbose,                      # IN
     uint8_t[::1] mask,                # IN/TEMP
-    int32_t[::1] indices,             # OUT
+    int[::1] indices,                 # OUT
     floating[::1] scores,             # OUT
 ) except -1 nogil:
     """
