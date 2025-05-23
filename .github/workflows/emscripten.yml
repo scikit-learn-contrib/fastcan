@@ -1,0 +1,24 @@
+name: Emscripten/Pyodide build
+
+on:
+  workflow_call:
+
+jobs:
+  build-wasm-wheels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build WSAM wheel
+        uses: pypa/cibuildwheel@v2.23.3
+        env:
+          CIBW_PLATFORM: pyodide
+          SKLEARN_SKIP_OPENMP_TEST: "true"
+          SKLEARN_SKIP_NETWORK_TESTS: 1
+          # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
+          CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs tests --durations 20 --showlocals"
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm_wheel
+          path: wasm/*.whl
+          if-no-files-found: error

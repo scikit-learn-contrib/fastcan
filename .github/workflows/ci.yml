@@ -11,6 +11,10 @@ jobs:
   call-test:
     uses: ./.github/workflows/test.yml
     secrets: inherit
+
+  build-wasm-wheel:
+    needs: call-test
+    uses: ./.github/workflows/emscripten.yml
   
   build-sdist:
     runs-on: ubuntu-latest
