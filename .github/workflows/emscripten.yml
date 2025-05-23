@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  build-wasm-wheels:
+  build-wasm-wheel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,8 +14,11 @@ jobs:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
+          CIBW_TEST_REQUIRES: "pytest pandas"
           # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
           CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs tests --durations 20 --showlocals"
+          # scikit-learn wasm wheels are on scientific-python-nightly-wheels
+          CIBW_BUILD_FRONTEND: 'pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:

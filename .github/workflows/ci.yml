@@ -12,7 +12,7 @@ jobs:
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
-  build-wasm-wheel:
+  call-wasm-wheel:
     needs: call-test
     uses: ./.github/workflows/emscripten.yml
   
