@@ -24,6 +24,7 @@ jobs:
           pattern: cibw-*
 
       - name: Publish distribution to PyPI
+        if: github.event.release.prerelease == false
         uses: pypa/gh-action-pypi-publish@release/v1
       
       - name: get wasm dist artifacts
