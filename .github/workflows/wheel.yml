@@ -1,0 +1,57 @@
+name: Wheel build
+
+on:
+  workflow_call:
+
+jobs:
+  build-sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.8
+        with:
+          environments: dev
+          cache: true
+      - name: Re-install local
+        run: |
+          pixi reinstall -e dev --frozen fastcan
+      - name: Build SDist
+        run: |
+          pixi run build-sdist
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  build-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.23.3
+        env:
+          CIBW_BUILD: cp3*-*
+          CIBW_SKIP: pp* *i686* *musllinux* *-macosx_universal2 *-manylinux_ppc64le *-manylinux_s390x
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
+          CIBW_ARCHS_LINUX: auto64
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_ARCHS_WINDOWS: auto64
+          CIBW_BEFORE_ALL_LINUX: yum install -y ninja-build python3-devel
+          # Needed on Windows CI to compile with Visual Studio compiler
+          # otherwise Meson detects a MINGW64 platform and use MINGW64
+          # toolchain
+          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
+          # Include free-threaded support
+          CIBW_ENABLE: cpython-freethreading
+          # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
+          CIBW_BUILD_FRONTEND: 'pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
