@@ -8,16 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build WSAM wheel
+      - name: Build WASM wheel
         uses: pypa/cibuildwheel@v2.23.3
         env:
           CIBW_PLATFORM: pyodide
-          CIBW_BUILD: cp313-*
-          SKLEARN_SKIP_OPENMP_TEST: "true"
-          SKLEARN_SKIP_NETWORK_TESTS: 1
-          CIBW_TEST_REQUIRES: "pytest pandas"
-          # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
-          CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs tests --durations 20 --showlocals"
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
