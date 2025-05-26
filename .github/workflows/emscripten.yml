@@ -16,5 +16,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wasm_wheel
-          path: wasm/*.whl
+          path: ./wheelhouse/*_wasm32.whl
           if-no-files-found: error
