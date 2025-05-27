@@ -98,8 +98,8 @@ FastCan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.
 You can try it in a `REPL <https://pyodide.org/en/stable/console.html>`_ directly in a browser.
 The WASM wheels of FastCan can be installed by
 
->>> import micropip
->>> await micropip.install('URL of the wasm wheel (end with _wasm32.whl)')
+>>> import micropip # doctest: +SKIP
+>>> await micropip.install('URL of the wasm wheel (end with _wasm32.whl)') # doctest: +SKIP
 
 .. note::
    Due to the Cross-Origin Resource Sharing (CORS) block in web browsers,
