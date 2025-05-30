@@ -66,6 +66,10 @@ def test_mask_missing():
     b = rng.random((100, 2))
     c = rng.random(100)
     a[10, 0] = np.nan
+    a_masked = mask_missing_values(a)
+    mask_valid = mask_missing_values(a, return_mask=True)
+    assert a_masked.shape == (99, 10)
+    assert_array_equal(actual=a_masked, desired=a[mask_valid])
     b[20, 1] = np.nan
     c[30] = np.nan
     a_masked, b_masked, c_mask = mask_missing_values(a, b, c)
