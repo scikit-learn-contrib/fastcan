@@ -168,4 +168,7 @@ def mask_missing_values(*arrays, return_mask=False):
     mask_valid = np.all(np.isfinite(np.c_[arrays]), axis=1)
     if return_mask:
         return mask_valid
+    masked_arrays = [_safe_indexing(x, mask_valid) for x in arrays]
+    if len(masked_arrays) == 1:
+        return masked_arrays[0]
     return [_safe_indexing(x, mask_valid) for x in arrays]

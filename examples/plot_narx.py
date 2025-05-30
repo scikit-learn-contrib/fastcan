@@ -108,10 +108,14 @@ poly_terms = make_poly_features(time_shift_vars, poly_ids)
 # whose :math:`X` is the nonlinear terms and :math:`y` is the output signal.
 
 from fastcan import FastCan
+from fastcan.utils import mask_missing_values
+
+# Mask out missing values caused by time-shifting
+poly_terms_masked, y_masked = mask_missing_values(poly_terms, y)
 
 selector = FastCan(
     n_features_to_select=4,  # 4 terms should be selected
-).fit(poly_terms, y)
+).fit(poly_terms_masked, y_masked)
 
 support = selector.get_support()
 selected_poly_ids = poly_ids[support]

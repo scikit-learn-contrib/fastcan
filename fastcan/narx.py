@@ -62,10 +62,10 @@ def make_time_shift_features(X, ids):
     >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
     >>> ids = [[0, 0], [0, 1], [1, 1]]
     >>> make_time_shift_features(X, ids)
-    array([[1., 1., 2.],
-           [3., 1., 2.],
-           [5., 3., 4.],
-           [7., 5., 6.]])
+    array([[ 1., nan, nan],
+           [ 3.,  1.,  2.],
+           [ 5.,  3.,  4.],
+           [ 7.,  5.,  6.]])
     """
     X = check_array(X, ensure_2d=True, dtype=float, ensure_all_finite="allow-nan")
     ids = check_array(ids, ensure_2d=True, dtype=int)
@@ -74,7 +74,7 @@ def make_time_shift_features(X, ids):
     out = np.zeros([n_samples, n_outputs])
     for i, id_temp in enumerate(ids):
         out[:, i] = np.r_[
-            np.full(id_temp[1], X[0, id_temp[0]]),
+            np.full(id_temp[1], np.nan),
             X[: -id_temp[1] or None, id_temp[0]],
         ]
 
@@ -1413,11 +1413,11 @@ def make_narx(
     >>> print_narx(narx)
     | yid |        Term        |   Coef   |
     =======================================
-    |  0  |     Intercept      |  1.054   |
-    |  0  |    y_hat[k-1,0]    |  0.483   |
-    |  0  |   X[k,0]*X[k,0]    |  0.307   |
-    |  0  | X[k-1,0]*X[k-3,0]  |  1.999   |
-    |  0  |  X[k-2,0]*X[k,1]   |  1.527   |
+    |  0  |     Intercept      |  1.050   |
+    |  0  |    y_hat[k-1,0]    |  0.484   |
+    |  0  |   X[k,0]*X[k,0]    |  0.306   |
+    |  0  | X[k-1,0]*X[k-3,0]  |  2.000   |
+    |  0  |  X[k-2,0]*X[k,1]   |  1.528   |
     """
     X = check_array(X, dtype=float, ensure_2d=True, ensure_all_finite="allow-nan")
     y = check_array(y, dtype=float, ensure_2d=False, ensure_all_finite="allow-nan")

@@ -83,8 +83,8 @@ dur = 10
 n_samples = 1000
 
 rng = np.random.default_rng(12345)
-e_train = rng.normal(0, 0.0002, n_samples)
-e_test = rng.normal(0, 0.0002, n_samples)
+e_train = rng.normal(0, 0.0004, n_samples)
+e_test = rng.normal(0, 0.0004, n_samples)
 t = np.linspace(0, dur, n_samples)
 
 sol = odeint(duffing_equation, [0.6, 0.8], t)
@@ -153,12 +153,13 @@ plt.show()
 # The plot above shows that the NARX model cannot capture the dynamics at
 # the left equilibrium shown in the phase portraits. To improve the performance, let us
 # combine the training and test data for model training to include the dynamics of both
-# equilibria. Here, we need to insert `np.nan` to indicate the model that training data
+# equilibria. Here, we need to insert (at least max_delay number of) `np.nan` to
+# indicate the model that training data
 # and test data are from different measurement sessions. The plot shows that the
 # prediction performance of the NARX on test data has been largely improved.
 
-u_all = np.r_[u_train, [[np.nan]], u_test]
-y_all = np.r_[y_train, [np.nan], y_test]
+u_all = np.r_[u_train, [[np.nan]]*max_delay, u_test]
+y_all = np.r_[y_train, [np.nan]*max_delay, y_test]
 narx_model = make_narx(
     X=u_all,
     y=y_all,

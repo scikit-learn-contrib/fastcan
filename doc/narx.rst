@@ -54,7 +54,8 @@ No matter how the discontinuity is caused, :class:`NARX` treats the discontinuou
     >>> import numpy as np
     >>> x0 = np.zeros((3, 2)) # First measurement session has 3 samples with 2 features
     >>> x1 = np.ones((5, 2)) # Second measurement session has 5 samples with 2 features
-    >>> u = np.r_[x0, [[np.nan, np.nan]], x1] # Insert np.nan to break the two measurement sessions
+    >>> max_delay = 2 # Assume the maximum delay for NARX model is 2
+    >>> u = np.r_[x0, [[np.nan, np.nan]]*max_delay, x1] # Insert (at least max_delay number of) np.nan to break the two measurement sessions
 
     It is important to break the different measurement sessions by np.nan, because otherwise,
     the model will assume the time interval between the two measurement sessions is the same as the time interval within a session.
