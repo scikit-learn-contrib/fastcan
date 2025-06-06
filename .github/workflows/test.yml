@@ -27,6 +27,7 @@ jobs:
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
           pixi reinstall -e dev --frozen fastcan -- -Csetup-args=--vsenv
+          pixi reinstall -e nogil --frozen fastcan -- -Csetup-args=--vsenv
 
       - name: Test with pytest
         run: |
