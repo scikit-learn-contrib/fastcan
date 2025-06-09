@@ -39,6 +39,12 @@ jobs:
         run: |
           pixi run -e dev doc
           CMD=doctest pixi run -e dev doc
+      - name: Debug List compiled fastcan extension in build
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "Listing build/cp313t/fastcan directory:"
+          ls -lR build/cp313t/fastcan || true
       - name: Test nogil
         run: |
           pixi run -e nogil nogil-eta
