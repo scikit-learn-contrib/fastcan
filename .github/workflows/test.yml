@@ -28,8 +28,8 @@ jobs:
           # Needed on Windows CI to compile with Visual Studio compiler
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
-          pixi reinstall -e dev --frozen fastcan -- -Csetup-args=--vsenv
-          pixi reinstall -e nogil --frozen fastcan -- -Csetup-args=--vsenv
+          pixi reinstall -e dev --frozen fastcan -- -Csetup-args="--vsenv"
+          pixi reinstall -e nogil --frozen fastcan -- -Csetup-args="--vsenv"
 
       - name: Test with pytest
         run: |
@@ -39,12 +39,6 @@ jobs:
         run: |
           pixi run -e dev doc
           CMD=doctest pixi run -e dev doc
-      - name: Debug List compiled fastcan extension in build
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          export PYTHONPATH=$(pwd)/build/cp313t
-          pixi run -e nogil nogil-eta
       - name: Test nogil
         run: |
           pixi run -e nogil nogil-eta
