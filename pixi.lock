@@ -2989,7 +2989,7 @@ packages:
 - pypi: ./
   name: fastcan
   version: 0.4.0
-  sha256: f32f078f2fc7659c285178bfd2cf8093922dce546545f4a15ac6c0141bc9f6a5
+  sha256: 1a70482b6f80c4fbe1a41dd2b103da26af03ee0f3416484429a7015e07ca71df
   requires_dist:
   - scikit-learn>=1.7.0
   - furo ; extra == 'docs'

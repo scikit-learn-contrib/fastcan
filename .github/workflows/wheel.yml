@@ -41,11 +41,6 @@ jobs:
           CIBW_ARCHS_LINUX: auto64
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_WINDOWS: auto64
-          CIBW_BEFORE_ALL_LINUX: yum install -y ninja-build python3-devel
-          # Needed on Windows CI to compile with Visual Studio compiler
-          # otherwise Meson detects a MINGW64 platform and use MINGW64
-          # toolchain
-          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           # Include free-threaded support
           CIBW_ENABLE: cpython-freethreading
       - name: Upload package

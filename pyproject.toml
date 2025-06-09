@@ -39,6 +39,9 @@ docs = ["furo", "matplotlib", "sphinx_gallery", "sphinx-design"]
 requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]
 build-backend = "mesonpy"
 
+ # Needed on Windows CI to compile with Visual Studio compiler
+ # otherwise Meson detects a MINGW64 platform and use MINGW64
+ # toolchain
 [tool.meson-python.args]
 setup = ['--vsenv']
 
@@ -109,12 +112,6 @@ test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report $FMT --cov=$PAC
 build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
 build-sdist = "rm -rf dist && python -m build --sdist"
 rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
-
- # Needed on Windows CI to compile with Visual Studio compiler
- # otherwise Meson detects a MINGW64 platform and use MINGW64
- # toolchain
- [tool.pixi.feature.build.target.win-64.tasks]
- rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e . -Csetup-args=--vsenv"
 
 [tool.pixi.feature.static.tasks]
 fmt = "ruff format"
