@@ -44,6 +44,7 @@ jobs:
         shell: bash
         run: |
           export PYTHONPATH=$(pwd)/build/cp313t
+          pixi run -e nogil nogil-eta
       - name: Test nogil
         run: |
           pixi run -e nogil nogil-eta
