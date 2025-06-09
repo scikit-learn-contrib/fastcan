@@ -39,6 +39,9 @@ docs = ["furo", "matplotlib", "sphinx_gallery", "sphinx-design"]
 requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]
 build-backend = "mesonpy"
 
+[tool.meson-python.args]
+setup = ['--vsenv']
+
 [tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
