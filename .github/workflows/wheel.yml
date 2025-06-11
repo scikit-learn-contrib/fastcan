@@ -33,9 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.0.0rc3
         env:
-          CIBW_BUILD: cp3*-*
           CIBW_SKIP: "*_i686 *_ppc64le *_s390x *_universal2 *-musllinux_*"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_ARCHS_LINUX: auto
