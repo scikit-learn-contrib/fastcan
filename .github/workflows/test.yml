@@ -43,12 +43,12 @@ jobs:
         run: |
           pixi run -e nogil nogil-eta
       - name: Test coverage
-        if: runner.os == 'Linux'
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           FMT=xml pixi run -e dev test-coverage
       - name: Upload coverage reports to Codecov
-        if: runner.os == 'Linux'
+        if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
