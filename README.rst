@@ -101,9 +101,8 @@ The WASM wheels of FastCan can be installed by
 >>> import micropip # doctest: +SKIP
 >>> await micropip.install('URL of the wasm wheel (end with _wasm32.whl)') # doctest: +SKIP
 
-.. note::
-   Due to the Cross-Origin Resource Sharing (CORS) block in web browsers,
-   you may need `Allow CORS: Access-Control-Allow-Origin Chrome extension <https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf>`_.
+📝 **Note:** Due to the Cross-Origin Resource Sharing (CORS) block in web browsers,
+you may need `Allow CORS: Access-Control-Allow-Origin Chrome extension <https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf>`_.
 
 
 Citation

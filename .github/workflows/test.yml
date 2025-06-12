@@ -25,9 +25,6 @@ jobs:
 
       - name: Re-install local
         run: |
-          # Needed on Windows CI to compile with Visual Studio compiler
-          # otherwise Meson detects a MINGW64 platform and use MINGW64
-          # toolchain
           pixi reinstall -e dev --frozen fastcan
           pixi reinstall -e nogil --frozen fastcan
 
