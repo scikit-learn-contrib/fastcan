@@ -158,8 +158,8 @@ plt.show()
 # and test data are from different measurement sessions. The plot shows that the
 # prediction performance of the NARX on test data has been largely improved.
 
-u_all = np.r_[u_train, [[np.nan]]*max_delay, u_test]
-y_all = np.r_[y_train, [np.nan]*max_delay, y_test]
+u_all = np.r_[u_train, [[np.nan]] * max_delay, u_test]
+y_all = np.r_[y_train, [np.nan] * max_delay, y_test]
 narx_model = make_narx(
     X=u_all,
     y=y_all,
