@@ -574,5 +574,5 @@ def test_nan_split(max_delay):
     poly_terms_masked, y_masked = mask_missing_values(poly_terms, y)
     assert poly_terms_masked.shape[0] == y_masked.shape[0]
     assert poly_terms_masked.shape[0] == n_sessions * (
-        n_samples_per_session - max_delay
+        n_samples_per_session - narx.max_delay_
     )
