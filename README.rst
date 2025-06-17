@@ -104,6 +104,8 @@ The WASM wheels of FastCan can be installed by
 📝 **Note:** Due to the Cross-Origin Resource Sharing (CORS) block in web browsers,
 you may need `Allow CORS: Access-Control-Allow-Origin Chrome extension <https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf>`_.
 
+📝 **Note:** The nightly wasm wheel of FastCan's dependency (i.e. scikit-learn) can be found in `Scientific Python Nightly Wheels <https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/>`_.
+
 
 Citation
 --------
