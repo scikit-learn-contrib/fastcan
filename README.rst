@@ -1,6 +1,6 @@
-FastCan: A Fast Canonical-Correlation-Based Feature Selection Algorithm
-=======================================================================
-|conda| |Codecov| |CI| |Doc| |PythonVersion| |PyPi| |Black| |ruff| |pixi|
+FastCan: A Fast Canonical-Correlation-Based Greedy Search Algorithm
+===================================================================
+|conda| |Codecov| |CI| |Doc| |PythonVersion| |PyPi| |ruff| |pixi|
 
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/fastcan.svg
    :target: https://anaconda.org/conda-forge/fastcan
@@ -20,28 +20,34 @@ FastCan: A Fast Canonical-Correlation-Based Feature Selection Algorithm
 .. |PyPi| image:: https://img.shields.io/pypi/v/fastcan
    :target: https://pypi.org/project/fastcan
 
-.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/psf/black
-
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
    :target: https://github.com/astral-sh/ruff
 
 .. |pixi| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json&style=flat-square
    :target: https://pixi.sh
 
-FastCan is a feature selection method, which has following advantages:
+FastCan is a greedy search algorithm that supports:
 
-#. Extremely **fast**.
+#. Feature selection
 
-#. Support unsupervised feature selection.
+   * Supervised
 
-#. Support multioutput feature selection.
+   * Unsupervised
 
-#. Skip redundant features.
+   * Multioutput
 
-#. Evaluate relative usefulness of features.
+#. Term selection for time series regressors (e.g., NARX models)
 
-Check `Home Page <https://fastcan.readthedocs.io/en/latest/?badge=latest>`_ for more information.
+#. Data pruning (i.e., sample selection)
+
+
+Key advantages:
+
+#. **Extremely fast**
+
+#. **Redundancy-aware** -- accounts for redundancy among features or samples to select the most informative subset
+
+Check `Home Page <https://fastcan.readthedocs.io/en/latest/>`_ for more information.
 
 Installation
 ------------
@@ -84,7 +90,7 @@ NARX Time Series Modelling
 --------------------------
 FastCan can be used for system identification.
 In particular, we provide a submodule `fastcan.narx` to build Nonlinear AutoRegressive eXogenous (NARX) models.
-For more information, check our `Home Page <https://fastcan.readthedocs.io/en/latest/?badge=latest>`_.
+For more information, check our `Home Page <https://fastcan.readthedocs.io/en/latest/>`_.
 
 
 Support Free-Threaded Wheels
