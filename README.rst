@@ -43,9 +43,11 @@ FastCan is a greedy search algorithm that supports:
 
 Key advantages:
 
-#. **Extremely fast**
+#. **Extremely fast** -- Designed for high performance, even with large datasets
 
-#. **Redundancy-aware** -- accounts for redundancy among features or samples to select the most informative subset
+#. **Redundancy-aware** -- Effectively handles feature or sample redundancy to select the most informative subset
+
+#. **Multioutput** -- Natively supports matrix-valued targets for multioutput tasks
 
 Check `Home Page <https://fastcan.readthedocs.io/en/latest/>`_ for more information.
 
