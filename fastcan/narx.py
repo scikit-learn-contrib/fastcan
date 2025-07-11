@@ -669,7 +669,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, `n_features_in_`)
+        X : {array-like, sparse matrix} of shape (n_samples, `n_features_in_`) or None
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, `n_outputs_`)
@@ -700,7 +700,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted Estimator.
         """
-        check_X_params = dict(dtype=float, order="C", ensure_all_finite="allow-nan")
+        check_X_params = dict(
+            dtype=float, order="C", ensure_all_finite="allow-nan", ensure_min_features=0
+        )
         check_y_params = dict(
             ensure_2d=False, dtype=float, order="C", ensure_all_finite="allow-nan"
         )
@@ -717,7 +719,10 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         n_samples, n_features = X.shape
 
         if self.feat_ids is None:
-            feat_ids_ = make_poly_ids(n_features, 1) - 1
+            if n_features == 0:
+                feat_ids_ = make_poly_ids(self.n_outputs_, 1) - 1
+            else:
+                feat_ids_ = make_poly_ids(n_features, 1) - 1
         else:
             feat_ids_ = self.feat_ids
 
@@ -1152,6 +1157,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             order="C",
             reset=False,
             ensure_all_finite="allow-nan",
+            ensure_min_features=0,
         )
         if y_init is None:
             y_init = np.zeros((self.max_delay_, self.n_outputs_))
@@ -1419,7 +1425,13 @@ def make_narx(
     |  0  | X[k-1,0]*X[k-3,0]  |  2.000   |
     |  0  |  X[k-2,0]*X[k,1]   |  1.528   |
     """
-    X = check_array(X, dtype=float, ensure_2d=True, ensure_all_finite="allow-nan")
+    X = check_array(
+        X,
+        dtype=float,
+        ensure_2d=True,
+        ensure_all_finite="allow-nan",
+        ensure_min_features=0,
+    )
     y = check_array(y, dtype=float, ensure_2d=False, ensure_all_finite="allow-nan")
     check_consistent_length(X, y)
     if y.ndim == 1:

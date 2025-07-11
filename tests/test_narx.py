@@ -21,8 +21,12 @@ from fastcan.utils import mask_missing_values
 
 
 def test_narx_is_sklearn_estimator():
+    # Skip 0 feature check for NARX, as AR models have no features
+    expected_failures = {
+        "check_estimators_empty_data_messages": ("NARX can handle 0 feature."),
+    }
     with pytest.warns(UserWarning, match="output_ids got"):
-        check_estimator(NARX())
+        check_estimator(NARX(), expected_failed_checks=expected_failures)
 
 
 def test_poly_ids():
@@ -576,3 +580,38 @@ def test_nan_split(max_delay):
     assert poly_terms_masked.shape[0] == n_sessions * (
         n_samples_per_session - narx.max_delay_
     )
+
+
+def test_default_narx_handles_zero_features():
+    """Check that default NARX handles X with 0 features without error."""
+    X = np.empty((10, 0))
+    y = np.random.rand(10, 1)
+    NARX().fit(X, y)
+
+
+def test_auto_reg():
+    """Test auto-regression with NARX"""
+    rng = np.random.default_rng(12345)
+    n_samples = 100
+    max_delay = 2
+    e0 = rng.normal(0, 0.01, n_samples)
+    e1 = rng.normal(0, 0.01, n_samples)
+    y0 = np.ones(n_samples + max_delay)
+    y1 = np.ones(n_samples + max_delay)
+    for i in range(max_delay, n_samples + max_delay):
+        y0[i] = 0.5 * y0[i - 1] + 0.8 * y1[i - 1] + 1
+        y1[i] = 0.6 * y1[i - 1] - 0.2 * y0[i - 1] * y1[i - 2] + 0.5
+    y = np.c_[y0[max_delay:] + e0, y1[max_delay:] + e1]
+    X = np.empty((n_samples, 0))  # No features, only auto-regression
+
+    model = make_narx(
+        X,
+        y,
+        n_terms_to_select=2,
+        max_delay=max_delay,
+        poly_degree=2,
+        verbose=0,
+    )
+    model.fit(X, y)
+    y_pred = model.predict(X, y_init=y[: model.max_delay_])
+    assert r2_score(y, model.predict(X, y_init=y)) > 0.5
