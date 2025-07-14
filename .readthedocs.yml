@@ -3,7 +3,10 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.13"
-    java: "openjdk-17"
+  # Java is required for PlantUML to generate C4 diagrams
+  commands:
+    - sudo apt-get update
+    - sudo apt-get install -y openjdk-17-jdk
   
   apt_packages:
     - plantuml
