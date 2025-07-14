@@ -8,6 +8,7 @@ build:
   apt_packages:
     - plantuml
     - openjdk-17-jdk
+    - graphviz
 
 sphinx:
    configuration: doc/conf.py
