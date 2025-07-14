@@ -41,8 +41,10 @@ extensions = [
     # Link to other project's documentation (see mapping below)
     "sphinx.ext.intersphinx",
     "sphinx_gallery.gen_gallery",
-    # for dropdown directive
+    # For dropdown directive
     "sphinx_design",
+    # For PlantUML diagrams
+    "sphinxcontrib.plantuml",
 ]
 
 # List of patterns, relative to source directory, that match files and

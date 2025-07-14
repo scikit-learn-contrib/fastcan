@@ -614,4 +614,4 @@ def test_auto_reg():
     )
     model.fit(X, y)
     y_pred = model.predict(X, y_init=y[: model.max_delay_])
-    assert r2_score(y, model.predict(X, y_init=y)) > 0.5
+    assert r2_score(y, y_pred) > 0.5

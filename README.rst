@@ -1,4 +1,4 @@
-FastCan: A Fast Canonical-Correlation-Based Greedy Search Algorithm
+fastcan: A fast canonical-correlation-based greedy search algorithm
 ===================================================================
 |conda| |Codecov| |CI| |Doc| |PythonVersion| |PyPi| |ruff| |pixi|
 
@@ -26,7 +26,7 @@ FastCan: A Fast Canonical-Correlation-Based Greedy Search Algorithm
 .. |pixi| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json&style=flat-square
    :target: https://pixi.sh
 
-FastCan is a greedy search algorithm that supports:
+fastcan is a greedy search algorithm that supports:
 
 #. Feature selection
 
@@ -54,7 +54,7 @@ Check `Home Page <https://fastcan.readthedocs.io/en/latest/>`_ for more informat
 Installation
 ------------
 
-Install **FastCan** via PyPi:
+Install **fastcan** via PyPi:
 
 * Run ``pip install fastcan``
 
@@ -90,21 +90,21 @@ array([0.34617598, 0.95815008])
 
 NARX Time Series Modelling
 --------------------------
-FastCan can be used for system identification.
+fastcan can be used for system identification.
 In particular, we provide a submodule `fastcan.narx` to build Nonlinear AutoRegressive eXogenous (NARX) models.
 For more information, check our `Home Page <https://fastcan.readthedocs.io/en/latest/>`_.
 
 
 Support Free-Threaded Wheels
 ----------------------------
-FastCan has support for free-threaded (also known as nogil) CPython 3.13.
+fastcan has support for free-threaded (also known as nogil) CPython 3.13.
 For more information about free-threaded CPython, check `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_.
 
 Support WASM Wheels
 -------------------
-FastCan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.com/pyodide/pyodide>`_, and they are available on the assets of GitHub releases.
+fastcan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.com/pyodide/pyodide>`_, and they are available on the assets of GitHub releases.
 You can try it in a `REPL <https://pyodide.org/en/stable/console.html>`_ directly in a browser.
-The WASM wheels of FastCan can be installed by
+The WASM wheels of fastcan can be installed by
 
 >>> import micropip # doctest: +SKIP
 >>> await micropip.install('URL of the wasm wheel (end with _wasm32.whl)') # doctest: +SKIP
@@ -112,13 +112,13 @@ The WASM wheels of FastCan can be installed by
 📝 **Note:** Due to the Cross-Origin Resource Sharing (CORS) block in web browsers,
 you may need `Allow CORS: Access-Control-Allow-Origin Chrome extension <https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf>`_.
 
-📝 **Note:** The nightly wasm wheel of FastCan's dependency (i.e. scikit-learn) can be found in `Scientific Python Nightly Wheels <https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/>`_.
+📝 **Note:** The nightly wasm wheel of fastcan's dependency (i.e. scikit-learn) can be found in `Scientific Python Nightly Wheels <https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/>`_.
 
 
 Citation
 --------
 
-FastCan is a Python implementation of the following papers.
+fastcan is a Python implementation of the following papers.
 
 If you use the `h-correlation` method in your work please cite the following reference:
 

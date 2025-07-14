@@ -33,7 +33,7 @@ download = "https://pypi.org/project/fastcan/#files"
 tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
 [project.optional-dependencies]
-docs = ["furo", "matplotlib", "sphinx_gallery", "sphinx-design"]
+docs = ["furo", "matplotlib", "sphinx_gallery", "sphinx-design", "sphinxcontrib-plantuml"]
 
 [build-system]
 requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]

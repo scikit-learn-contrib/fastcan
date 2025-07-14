@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.10
+      - uses: prefix-dev/setup-pixi@v0.8.11
         with:
           environments: dev
           cache: true
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.0.0
+        uses: pypa/cibuildwheel@v3.0.1
         env:
           CIBW_SKIP: "*_i686 *_ppc64le *_s390x *_universal2 *-musllinux_*"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
