@@ -4,8 +4,8 @@ build:
   tools:
     python: "3.13"
   apt_packages:
-    - default-jre
-    - graphviz
+    - default-jre # for plantuml
+    - graphviz # for plantuml
   jobs:
     pre_install:
       - bash scripts/rtd_pre_install.sh
