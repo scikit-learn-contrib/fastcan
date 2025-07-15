@@ -9,7 +9,7 @@ build:
     # Install PlantUML
     pre_install:
       - curl -o ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar -L https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
-      - bash -c 'echo -e "#!/bin/bash\nexec java -Djava.awt.headless=true -jar ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar \"\$@\"" > ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml'
+      - bash -c "echo -e '#!/bin/bash\nexec java -Djava.awt.headless=true -jar ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar \"\$@\"' > ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml"
       - chmod +x ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml
 
 sphinx:
