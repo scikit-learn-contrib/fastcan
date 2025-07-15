@@ -3,14 +3,8 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.13"
-  jobs:
-    post_install:
-      # Download the latest PlantUML jar
-      - wget https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar -P /tmp/
-      # Create an executable wrapper script for Sphinx
-      - echo '#!/bin/sh' > /usr/local/bin/plantuml
-      - echo 'java -jar /tmp/plantuml.jar "$@"' >> /usr/local/bin/plantuml
-      - chmod +x /usr/local/bin/plantuml
+  apt_packages:
+    - plantuml=1:1.2021.14+ds-1
 
 sphinx:
    configuration: doc/conf.py
