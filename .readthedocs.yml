@@ -5,6 +5,7 @@ build:
     python: "3.13"
   apt_packages:
     - default-jre
+    - graphviz
   jobs:
     pre_install:
       - bash scripts/rtd_pre_install.sh

@@ -5,6 +5,7 @@ set -euox pipefail
 
 # Check for required tools
 java -version
+dot -V
 
 # This folder is on PATH and does not require sudo
 # Download latest plantuml.jar from github
