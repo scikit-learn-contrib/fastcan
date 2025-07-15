@@ -7,11 +7,12 @@ build:
     # Install PlantUML
     pre_install:
       - curl -o ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar -L https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
-      - printf '#!/bin/bash\nexec java -Djava.awt.headless=true -jar ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar "$@"' > ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml
+      - echo -e '#!/bin/bash\nexec java -Djava.awt.headless=true -jar ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar "$@"' > ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml
       - chmod +x ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml
 
 sphinx:
    configuration: doc/conf.py
+   fail_on_warning: true
 
 python:
   install:
