@@ -3,8 +3,12 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.13"
-  apt_packages:
-    - plantuml=1:1.2021.14+ds-1
+  jobs:
+    # Install PlantUML
+    pre_install:
+      - curl -o ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar -L https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
+      - printf '#!/bin/bash\nexec java -Djava.awt.headless=true -jar ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml.jar "$@"' > ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml
+      - chmod +x ${READTHEDOCS_VIRTUALENV_PATH}/bin/plantuml
 
 sphinx:
    configuration: doc/conf.py
