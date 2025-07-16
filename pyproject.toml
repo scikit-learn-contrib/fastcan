@@ -105,8 +105,8 @@ profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; f
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
 
 [tool.pixi.feature.test.tasks]
-test = { cmd = "pytest", cwd = "tests" }
-test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report $FMT --cov=$PACKAGE tests/", env = { PACKAGE = "fastcan", FMT = "html" } }
+test = { cmd = "pytest", cwd = "." }
+test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report $FMT --cov=$PACKAGE .", env = { PACKAGE = "fastcan", FMT = "html" } }
 
 [tool.pixi.feature.build.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
@@ -134,11 +134,14 @@ dev = ["docs", "test", "build", "jupyter"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
 
+[tool.coverage.run]
+omit = ["**/tests/*"]
+
 [tool.codespell]
 skip = [
     "./doc/_build",
     "./doc/auto_examples",
-    "./doc/modules/generated",
+    "./doc/generated",
     "./htmlcov",
     "./build",
     "./pixi.lock",
@@ -208,7 +211,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ fastcan\\ developers\\\r?\\\n\\#\\ SPDX\\-L
 # folder.
 "examples/*" = ["E402"]
 "doc/conf.py" = ["E402"]
-"tests/*" = ["CPY001"]
+"**/tests/*" = ["CPY001"]
 "doc/*" = ["CPY001"]
 ".github/*"=["CPY001"]
 

@@ -1,5 +1,5 @@
 """
-Feature selection
+Fast canonical correlation analysis based selector.
 """
 
 # Authors: The fastcan developers

@@ -10,6 +10,8 @@ from sklearn.cross_decomposition import CCA
 from sklearn.utils import _safe_indexing, check_consistent_length, check_X_y
 from sklearn.utils._param_validation import Interval, validate_params
 
+__all__ = ["mask_missing_values", "ols", "ssc"]
+
 
 @validate_params(
     {

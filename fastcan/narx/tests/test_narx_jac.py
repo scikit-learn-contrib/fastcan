@@ -1,12 +1,12 @@
 """Test Jacobian matrix of NARX"""
 
 import numpy as np
-from fastcan._narx_fast import _predict_step  # type: ignore[attr-defined]
 from numpy.testing import assert_allclose, assert_almost_equal, assert_array_equal
 from scipy.integrate import odeint
 from sklearn.metrics import r2_score
 
 from fastcan.narx import NARX, make_narx
+from fastcan.narx._narx_fast import _predict_step  # type: ignore[attr-defined]
 
 
 def test_simple():
@@ -317,16 +317,6 @@ def test_score_nan():
 
     dur = 10
     n_samples = 1000
-
-    y0 = None
-    if y0 is None:
-        n_init = 10
-        x0 = np.linspace(0, 2, n_init)
-        y0_y = np.cos(np.pi * x0)
-        y0_x = np.sin(np.pi * x0)
-        y0 = np.c_[y0_x, y0_y]
-    else:
-        n_init = len(y0)
 
     dur = 10
     n_samples = 1000

@@ -17,30 +17,13 @@ Architecture Diagram
 
 API Reference
 -------------
-.. automodule:: fastcan
+.. autosummary::
+   :toctree: generated/
+   :template: module.rst
 
-   .. rubric:: Classes
-
-   .. autosummary::
-      :toctree: generated/
-
-         FastCan
-   
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree: generated/
-
-         refine
-         minibatch
-   
-   .. rubric:: Submodules
-
-   .. autosummary::
-      :toctree: generated/
-
-         narx
-         utils
+   fastcan
+   fastcan.narx
+   fastcan.utils
 
 Useful Links
 ------------

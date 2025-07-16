@@ -8,6 +8,7 @@
 
     .. autosummary::
         :toctree:
+        :template: class.rst
     {% for item in classes %}
         {{ item }}
     {%- endfor %}
@@ -21,6 +22,7 @@
 
     .. autosummary::
         :toctree:
+        :template: function.rst
     {% for item in functions %}
         {{ item }}
     {%- endfor %}

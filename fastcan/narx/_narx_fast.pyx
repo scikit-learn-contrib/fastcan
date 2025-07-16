@@ -1,5 +1,5 @@
 """
-Fast gradient computation for narx
+Fast computation of prediction and gradient for narx.
 """
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT

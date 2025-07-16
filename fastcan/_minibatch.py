@@ -1,5 +1,5 @@
 """
-Feature selection with mini-batch.
+Mini-batch selection.
 """
 
 # Authors: The fastcan developers

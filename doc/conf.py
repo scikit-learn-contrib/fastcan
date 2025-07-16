@@ -10,8 +10,6 @@
 import importlib.metadata
 from datetime import datetime
 
-# project root
-# sys.path.insert(0, os.path.abspath(".."))
 # General information about the project.
 project = "fastcan"
 copyright = f"2024 - {datetime.now().year}, fastcan developers (MIT License)"
@@ -59,6 +57,7 @@ templates_path = ["templates"]
 
 # generate autosummary even if no references
 autosummary_generate = True
+autosummary_ignore_module_all = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"

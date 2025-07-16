@@ -1,5 +1,5 @@
 """
-Refine fastcan selection results
+Refine fastcan selection results.
 """
 
 # Authors: The fastcan developers

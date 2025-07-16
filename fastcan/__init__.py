@@ -1,6 +1,5 @@
 """
-The implementation of fast canonical correlation analysis based feature selection
-algorithm.
+Fast canonical correlation analysis based greedy search algorithm.
 """
 
 # Authors: The fastcan developers
