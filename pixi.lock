@@ -3610,10 +3610,10 @@ packages:
 - pypi: ./
   name: fastcan
   version: 0.4.0
-  sha256: d77a867eb1089c1057661ebe9f1771dd1b610c1125f23e903ba25a005fede67c
+  sha256: b2a57cb1af21ec1e3e5711cc57f383050eb7d8dee0a7efea608f09f198cecf51
   requires_dist:
   - scikit-learn>=1.7.0
-  - furo ; extra == 'docs'
+  - furo<2025.0.0 ; extra == 'docs'
   - matplotlib ; extra == 'docs'
   - sphinx-gallery ; extra == 'docs'
   - sphinx-design ; extra == 'docs'
