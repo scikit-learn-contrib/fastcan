@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
-dependencies = ["scikit-learn>=1.7.0"]
+dependencies = ["scikit-learn>=1.7.0,!=1.7.1"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -33,7 +33,7 @@ download = "https://pypi.org/project/fastcan/#files"
 tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
 [project.optional-dependencies]
-docs = ["furo<2025.0.0", "matplotlib", "sphinx_gallery", "sphinx-design", "sphinxcontrib-plantuml"]
+docs = ["furo", "matplotlib", "sphinx_gallery", "sphinx-design", "sphinxcontrib-plantuml"]
 
 [build-system]
 requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]
@@ -51,7 +51,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [tool.pixi.dependencies]
 python = ">=3.13.0"
-scikit-learn = ">=1.7.0"
+scikit-learn = ">=1.7.0,!=1.7.1"
 
 [tool.pixi.pypi-dependencies]
 fastcan = { path = ".", editable = true }
@@ -85,7 +85,7 @@ pip = "*"
 python-freethreading = "*"
 
 [tool.pixi.feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.7.0"
+scikit-learn = ">=1.7.0,!=1.7.1"
 fastcan = { path = ".", editable = true }
 
 [tool.pixi.feature.nogil.build-dependencies]
