@@ -11,7 +11,7 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.8.14
         with:
           environments: dev
-          cache: true
+          cache: false
       - name: Re-install local
         run: |
           pixi reinstall -e dev --frozen fastcan
