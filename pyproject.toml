@@ -36,6 +36,7 @@ tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 docs = [
     "furo",
     "matplotlib",
+    "pandas",
     "sphinx_gallery",
     "sphinx-design",
     "sphinxcontrib-plantuml",
