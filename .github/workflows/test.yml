@@ -21,7 +21,7 @@ jobs:
           environments: >-
             dev
             nogil
-          cache: false
+          cache: true
 
       - name: Re-install local
         run: |

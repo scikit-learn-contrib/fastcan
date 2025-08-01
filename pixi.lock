@@ -3653,11 +3653,12 @@ packages:
 - pypi: ./
   name: fastcan
   version: 0.4.0
-  sha256: afd5f9bc4592e32fbc64f63927a491e0977153baa484d5e3bf8aa2d631a4a510
+  sha256: c46670a1e1e7a8a4391a2bb7aa640d46a447aeaa616e2aa2f699db6f7b788540
   requires_dist:
   - scikit-learn>=1.7.0,!=1.7.1
   - furo ; extra == 'docs'
   - matplotlib ; extra == 'docs'
+  - pandas ; extra == 'docs'
   - sphinx-gallery ; extra == 'docs'
   - sphinx-design ; extra == 'docs'
   - sphinxcontrib-plantuml ; extra == 'docs'
