@@ -6,13 +6,14 @@ NARX model.
 # SPDX-License-Identifier: MIT
 
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy.optimize import least_squares
 from sklearn.base import BaseEstimator, MultiOutputMixin, RegressorMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_array, check_consistent_length, column_or_1d
-from sklearn.utils._param_validation import StrOptions, validate_params
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
@@ -65,7 +66,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         E.g., for the polynomial terms 1*u(k-1, 0), 1*u(k, 1),
         and u(k-1, 0)*y(k-2, 0), the delay_ids [[-1, 1], [-1, 0], [1, 2]].
 
-    output_ids : array-like of shape (n_polys,), default=None
+    output_ids : array-like of shape (n_terms,), default=None
         The id numbers indicate which output the polynomial term belongs to.
         It is useful in multi-output case.
 
@@ -74,7 +75,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    coef_ : array of shape (`n_features_in_`,)
+    coef_ : array of shape (n_terms,)
         Estimated coefficients for the linear regression problem.
 
     intercept_ : array of shape (`n_outputs_`,)
@@ -160,6 +161,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     @validate_params(
         {
+            "X": [None, "array-like"],
             "coef_init": [None, StrOptions({"one_step_ahead"}), "array-like"],
             "sample_weight": ["array-like", None],
         },
@@ -171,7 +173,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, `n_features_in_`) or None
+        X : array-like of shape (n_samples, `n_features_in_`) or None
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, `n_outputs_`)
@@ -202,6 +204,10 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted Estimator.
         """
+        none_inputs = False
+        if X is None:  # Auto-regressive model
+            X = np.empty((1, 0), dtype=float)  # Skip validation
+            none_inputs = True
         check_X_params = dict(
             dtype=float, order="C", ensure_all_finite="allow-nan", ensure_min_features=0
         )
@@ -211,7 +217,10 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X, y = validate_data(
             self, X, y, validate_separately=(check_X_params, check_y_params)
         )
-        check_consistent_length(X, y)
+        if none_inputs:
+            X = np.empty((len(y), 0), dtype=float, order="C")  # Create 0 feature input
+        else:
+            check_consistent_length(X, y)
         sample_weight = _check_sample_weight(
             sample_weight, X, dtype=X.dtype, ensure_non_negative=True
         )
@@ -392,6 +401,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             if at_init:
                 y_hat[k] = y_ref[k % n_ref]
+                if not np.all(np.isfinite(y_hat[k])):
+                    at_init = True
+                    init_k = k + 1
             else:
                 y_hat[k] = intercept
                 expression(
@@ -484,7 +496,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         at_init = True
         init_k = 0
         for k in range(n_samples):
-            if not np.all(np.isfinite(X[k])):
+            if not (np.all(np.isfinite(X[k])) and np.all(np.isfinite(y_hat[k]))):
                 at_init = True
                 init_k = k + 1
                 continue
@@ -628,6 +640,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     @validate_params(
         {
+            "X": ["array-like", Interval(Integral, 1, None, closed="left")],
             "y_init": [None, "array-like"],
         },
         prefer_skip_nested_validation=True,
@@ -638,8 +651,10 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, `n_features_in_`)
-            Samples.
+        X : array-like of shape (n_samples, `n_features_in_`) or int
+            When X is an array, it is input data.
+            When (nonlinear) AR model is adopted, where `n_features_in_` is 0,
+            X can be an integer, which indicates the total steps to predict.
 
         y_init : array-like of shape (n_init, `n_outputs_`), default=None
             The initial values for the prediction of y.
@@ -652,15 +667,24 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = validate_data(
-            self,
-            X,
-            dtype=float,
-            order="C",
-            reset=False,
-            ensure_all_finite="allow-nan",
-            ensure_min_features=0,
-        )
+        if isinstance(X, Integral):
+            if self.n_features_in_ == 0:
+                X = np.empty((X, 0), dtype=float, order="C")
+            else:
+                raise ValueError(
+                    "X should be an array-like of shape (n_samples, n_features_in_) "
+                    f"but got an integer {X}, when `n_features_in_` is not 0."
+                )
+        else:
+            X = validate_data(
+                self,
+                X,
+                dtype=float,
+                order="C",
+                reset=False,
+                ensure_all_finite="allow-nan",
+                ensure_min_features=0,
+            )
         if y_init is None:
             y_init = np.zeros((self.max_delay_, self.n_outputs_))
         else:

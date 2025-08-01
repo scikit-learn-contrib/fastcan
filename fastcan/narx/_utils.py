@@ -119,7 +119,7 @@ def print_narx(
 
 @validate_params(
     {
-        "X": ["array-like"],
+        "X": ["array-like", None],
         "y": ["array-like"],
         "n_terms_to_select": [
             Interval(Integral, 1, None, closed="left"),
@@ -253,15 +253,18 @@ def make_narx(
     |  0  | X[k-1,0]*X[k-3,0]  |  2.000   |
     |  0  |  X[k-2,0]*X[k,1]   |  1.528   |
     """
-    X = check_array(
-        X,
-        dtype=float,
-        ensure_2d=True,
-        ensure_all_finite="allow-nan",
-        ensure_min_features=0,
-    )
     y = check_array(y, dtype=float, ensure_2d=False, ensure_all_finite="allow-nan")
-    check_consistent_length(X, y)
+    if X is None:
+        X = np.empty((len(y), 0), dtype=float, order="C")  # Create 0 feature input
+    else:
+        X = check_array(
+            X,
+            dtype=float,
+            ensure_2d=True,
+            ensure_all_finite="allow-nan",
+            ensure_min_features=0,
+        )
+        check_consistent_length(X, y)
     if y.ndim == 1:
         y = y.reshape(-1, 1)
     n_outputs = y.shape[1]

@@ -69,19 +69,27 @@ Getting Started
 ...     [-2.79, -0.02, -0.85 ],
 ...     [-1.34, -0.48, -2.55 ],
 ...     [ 1.92,  1.48,  0.65 ]]
->>> y = [[0, 0], [1, 1], [0, 0], [1, 0]] # Multioutput feature selection
->>> selector = FastCan(n_features_to_select=2, verbose=0).fit(X, y)
+>>> # Multioutput feature selection
+>>> y = [[0, 0], [1, 1], [0, 0], [1, 0]]
+>>> selector = FastCan(
+...     n_features_to_select=2, verbose=0
+... ).fit(X, y)
 >>> selector.get_support()
 array([ True,  True, False])
->>> selector.get_support(indices=True) # Sorted indices
+>>> # Sorted indices
+>>> selector.get_support(indices=True)
 array([0, 1])
->>> selector.indices_ # Indices in selection order
+>>> # Indices in selection order
+>>> selector.indices_
 array([1, 0], dtype=int32)
->>> selector.scores_ # Scores for selected features in selection order
+>>> # Scores for selected features in selection order
+>>> selector.scores_
 array([0.91162413, 0.71089547])
 >>> # Here Feature 2 must be included
->>> selector = FastCan(n_features_to_select=2, indices_include=[2], verbose=0).fit(X, y)
->>> # We can find the feature which is useful when working with Feature 2
+>>> selector = FastCan(
+...     n_features_to_select=2, indices_include=[2], verbose=0
+... ).fit(X, y)
+>>> # The feature which is useful when working with Feature 2
 >>> selector.indices_
 array([2, 0], dtype=int32)
 >>> selector.scores_
@@ -92,7 +100,7 @@ NARX Time Series Modelling
 --------------------------
 fastcan can be used for system identification.
 In particular, we provide a submodule `fastcan.narx` to build Nonlinear AutoRegressive eXogenous (NARX) models.
-For more information, check our `Home Page <https://fastcan.readthedocs.io/en/latest/>`_.
+For more information, check this `NARX model example <https://fastcan.readthedocs.io/en/latest/auto_examples/plot_narx.html>`_.
 
 
 Support Free-Threaded Wheels

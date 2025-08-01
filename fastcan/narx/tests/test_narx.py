@@ -615,3 +615,23 @@ def test_auto_reg():
     model.fit(X, y)
     y_pred = model.predict(X, y_init=y[: model.max_delay_])
     assert r2_score(y, y_pred) > 0.5
+
+    model = make_narx(
+        None,
+        y,
+        n_terms_to_select=2,
+        max_delay=max_delay,
+        poly_degree=2,
+        verbose=0,
+    )
+    model.fit(None, y)
+    y_pred = model.predict(len(y), y_init=y[: model.max_delay_])
+    assert r2_score(y, y_pred) > 0.5
+
+
+def test_auto_reg_error():
+    X = np.empty((10, 1))
+    y = np.random.rand(10, 1)
+    model = NARX().fit(X, y)
+    with pytest.raises(ValueError, match=r"X should be an array-like of shape.*"):
+        model.predict(len(y), y_init=y[: model.max_delay_])
