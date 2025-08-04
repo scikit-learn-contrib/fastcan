@@ -174,21 +174,21 @@ from timeit import repeat
 X = rng.random((3000, 400))
 y = rng.random((3000, 20))
 
-feature_num = np.arange(30, 71, step=10, dtype=int)
+feature_num = np.arange(20, 61, step=10, dtype=int)
 
 
 time_h = np.zeros(len(feature_num), dtype=float)
 time_eta = np.zeros(len(feature_num), dtype=float)
-for i, n_feat in enumerate(feature_num):
+for i, n_feats in enumerate(feature_num):
     times_h = repeat(
-        f"s = FastCan({n_feat + 1}, verbose=0).fit(X, y)",
+        f"s = FastCan({n_feats + 1}, verbose=0).fit(X, y)",
         number=1,
         repeat=10,
         globals=globals(),
     )
     time_h[i] = np.median(times_h)
     times_eta = repeat(
-        f"s = FastCan({n_feat + 1}, eta=True, verbose=0).fit(X, y)",
+        f"s = FastCan({n_feats + 1}, eta=True, verbose=0).fit(X, y)",
         number=1,
         repeat=10,
         globals=globals(),
