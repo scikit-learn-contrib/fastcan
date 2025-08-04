@@ -174,19 +174,25 @@ y = rng.random((3000, 20))
 
 n_features_max = 30
 
+from timeit import repeat
+
 time_h = np.zeros(n_features_max, dtype=float)
 time_eta = np.zeros(n_features_max, dtype=float)
 for i in range(n_features_max):
-    time_h[i] = timeit(
+    times_h = repeat(
         f"s = FastCan({i + 1}, verbose=0).fit(X, y)",
-        number=10,
+        number=1,
+        repeat=10,
         globals=globals(),
     )
-    time_eta[i] = timeit(
+    time_h[i] = np.median(times_h)
+    times_eta = repeat(
         f"s = FastCan({i + 1}, eta=True, verbose=0).fit(X, y)",
-        number=10,
+        number=1,
+        repeat=10,
         globals=globals(),
     )
+    time_eta[i] = np.median(times_eta)
 
 feature_num = np.arange(n_features_max, dtype=int) + 1
 plt.plot(feature_num, time_h, label="h-correlation")
