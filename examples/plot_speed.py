@@ -169,36 +169,38 @@ print(f"Baseline: {r_base}")
 # following iterated selection process, the eta-cosine method will be much faster than
 # the h-correlation method.
 
-X = rng.random((3000, 100))
-y = rng.random((3000, 20))
-
-n_features_max = 30
-
 from timeit import repeat
 
-time_h = np.zeros(n_features_max, dtype=float)
-time_eta = np.zeros(n_features_max, dtype=float)
-for i in range(n_features_max):
+X = rng.random((3000, 400))
+y = rng.random((3000, 20))
+
+feature_num = np.arange(30, 71, step=10, dtype=int)
+
+
+time_h = np.zeros(len(feature_num), dtype=float)
+time_eta = np.zeros(len(feature_num), dtype=float)
+for i, n_feat in enumerate(feature_num):
     times_h = repeat(
-        f"s = FastCan({i + 1}, verbose=0).fit(X, y)",
+        f"s = FastCan({n_feat + 1}, verbose=0).fit(X, y)",
         number=1,
         repeat=10,
         globals=globals(),
     )
     time_h[i] = np.median(times_h)
     times_eta = repeat(
-        f"s = FastCan({i + 1}, eta=True, verbose=0).fit(X, y)",
+        f"s = FastCan({n_feat + 1}, eta=True, verbose=0).fit(X, y)",
         number=1,
         repeat=10,
         globals=globals(),
     )
     time_eta[i] = np.median(times_eta)
 
-feature_num = np.arange(n_features_max, dtype=int) + 1
+
 plt.plot(feature_num, time_h, label="h-correlation")
 plt.plot(feature_num, time_eta, label=r"$\eta$-cosine")
 plt.title("Elapsed Time Comparison")
 plt.xlabel("Number of Selected Features")
 plt.ylabel("Elapsed Time (s)")
+plt.xticks(feature_num)
 plt.legend(loc="lower right")
 plt.show()
