@@ -69,7 +69,7 @@ def print_narx(
     >>> X, y = load_diabetes(return_X_y=True)
     >>> print_narx(NARX().fit(X, y), term_space=10, coef_space=5, float_precision=0)
     | yid |   Term   |Coef |
-    ========================
+    |-----|----------|-----|
     |  0  |Intercept | 152 |
     |  0  |  X[k,0]  | -10 |
     |  0  |  X[k,1]  |-240 |
@@ -102,7 +102,7 @@ def print_narx(
         + f"|{'Term':^{term_space}}"
         + f"|{'Coef':^{coef_space}}|"
     )
-    print("=" * (yid_space + term_space + coef_space + 4))
+    print(f"|{'-'*yid_space}|{'-'*term_space}|{'-'*coef_space}|")
     for i in range(narx.n_outputs_):
         print(
             f"|{i:^{yid_space}}|"
@@ -246,7 +246,7 @@ def make_narx(
     0.0289
     >>> print_narx(narx)
     | yid |        Term        |   Coef   |
-    =======================================
+    |-----|--------------------|----------|
     |  0  |     Intercept      |  1.050   |
     |  0  |    y_hat[k-1,0]    |  0.484   |
     |  0  |   X[k,0]*X[k,0]    |  0.306   |

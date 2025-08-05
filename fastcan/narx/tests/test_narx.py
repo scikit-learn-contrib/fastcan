@@ -517,6 +517,8 @@ def test_print_narx(capsys):
     captured = capsys.readouterr()
     # Check if the header is present in the output
     assert "| yid |        Term        |   Coef   |" in captured.out
+    # Check if the separator line is present
+    assert "|-----|--------------------|----------|" in captured.out
     # Check if the intercept line for yid 0 is present
     assert "|  0  |     Intercept      |" in captured.out
     # Check if the intercept line for yid 1 is present

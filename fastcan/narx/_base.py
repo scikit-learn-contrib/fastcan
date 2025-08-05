@@ -132,7 +132,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
     ...             delay_ids=delay_ids).fit(X, y, coef_init="one_step_ahead")
     >>> print_narx(narx)
     | yid |        Term        |   Coef   |
-    =======================================
+    |-----|--------------------|----------|
     |  0  |     Intercept      |  1.008   |
     |  0  |    y_hat[k-1,0]    |  0.498   |
     |  0  |      X[k-2,0]      |  0.701   |

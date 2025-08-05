@@ -70,6 +70,7 @@ meson-python = ">=0.18.0"
 [tool.pixi.feature.jupyter.dependencies]
 notebook = "*"
 matplotlib = "*"
+pyarrow = "*"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
