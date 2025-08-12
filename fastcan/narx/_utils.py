@@ -102,7 +102,7 @@ def print_narx(
         + f"|{'Term':^{term_space}}"
         + f"|{'Coef':^{coef_space}}|"
     )
-    print(f"|{'-'*yid_space}|{'-'*term_space}|{'-'*coef_space}|")
+    print(f"|{'-' * yid_space}|{'-' * term_space}|{'-' * coef_space}|")
     for i in range(narx.n_outputs_):
         print(
             f"|{i:^{yid_space}}|"

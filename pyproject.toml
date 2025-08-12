@@ -67,6 +67,11 @@ fastcan = { path = ".", editable = true }
 cython = ">=3.1.0"
 meson-python = ">=0.18.0"
 
+[tool.pixi.feature.asv.dependencies]
+asv = "*"
+libmambapy = "*"
+conda-build = "*"
+
 [tool.pixi.feature.jupyter.dependencies]
 notebook = "*"
 matplotlib = "*"
@@ -112,6 +117,11 @@ time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import Fa
 profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='$SORT')"''', env = { SORT = "cumtime" } }
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
 
+[tool.pixi.feature.asv.tasks]
+asv-build = { cmd = "asv machine --machine $MACHINE --yes && asv run --show-stderr -v --machine $MACHINE $EXTRA_ARGS", cwd = "asv_benchmarks", env = { MACHINE = "MacOS-M1", EXTRA_ARGS = "" } }
+asv-publish = { cmd = "asv publish", cwd = "asv_benchmarks" }
+asv-preview = { cmd = "asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
+
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", cwd = "." }
 test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report $FMT --cov=$PACKAGE .", env = { PACKAGE = "fastcan", FMT = "html" } }
@@ -138,7 +148,7 @@ nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan im
 nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
 
 [tool.pixi.environments]
-dev = ["docs", "test", "build", "jupyter"]
+dev = ["docs", "test", "build", "jupyter", "asv"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
 
@@ -153,6 +163,10 @@ skip = [
     "./htmlcov",
     "./build",
     "./pixi.lock",
+    "./asv_benchmarks/env",
+    "./asv_benchmarks/html",
+    "./asv_benchmarks/results",
+    "./asv_benchmarks/benchmarks/cache",
 ]
 ignore-words-list = [
     "MIS", # magnetic impedance spectroscopy (MIS)
@@ -164,10 +178,14 @@ line-length = 88
 exclude = [
     ".git",
     "__pycache__",
+    "build",
     "dist",
     "doc/_build",
     "doc/auto_examples",
-    "build",
+    "asv_benchmarks/env",
+    "asv_benchmarks/html",
+    "asv_benchmarks/results",
+    "asv_benchmarks/benchmarks/cache",
 ]
 
 [tool.ruff.lint]
@@ -222,6 +240,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ fastcan\\ developers\\\r?\\\n\\#\\ SPDX\\-L
 "**/tests/*" = ["CPY001"]
 "doc/*" = ["CPY001"]
 ".github/*" = ["CPY001"]
+"asv_benchmarks/*" = ["CPY001", "TID252"]
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff

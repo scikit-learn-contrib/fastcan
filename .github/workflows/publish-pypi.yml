@@ -18,7 +18,7 @@ jobs:
       id-token: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: dist/
           merge-multiple: true
@@ -27,9 +27,9 @@ jobs:
       - name: Publish distribution to PyPI
         if: github.event.release.prerelease == false
         uses: pypa/gh-action-pypi-publish@release/v1
-      
+
       - name: get wasm dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: wasm_wheel
           path: wasm/
