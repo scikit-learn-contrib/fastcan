@@ -23,8 +23,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up main branch
+        if: github.event_name == 'pull_request'
         run: |
-          git branch -f main origin/main
+          git branch main origin/main
 
       - uses: prefix-dev/setup-pixi@v0.9.0
         with:
@@ -55,8 +56,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up main branch
+        if: github.event_name == 'pull_request'
         run: |
-          git branch -f main origin/main
+          git branch main origin/main
 
       - name: Prepare previous ASV results
         uses: actions/checkout@v5
