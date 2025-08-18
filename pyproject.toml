@@ -118,9 +118,9 @@ profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; f
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
 
 [tool.pixi.feature.asv.tasks]
-asv-build = { cmd = "asv machine --machine $MACHINE --yes && asv run --show-stderr -v --machine $MACHINE $EXTRA_ARGS", cwd = "asv_benchmarks", env = { MACHINE = "MacOS-M1", EXTRA_ARGS = "" } }
-asv-publish = { cmd = "asv publish", cwd = "asv_benchmarks" }
-asv-preview = { cmd = "asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
+asv-build = { cmd = "python -m asv machine --machine $MACHINE --yes && python -m asv run --show-stderr -v --machine $MACHINE $EXTRA_ARGS", cwd = "asv_benchmarks", env = { MACHINE = "MacOS-M1", EXTRA_ARGS = "" } }
+asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
+asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", cwd = "." }
