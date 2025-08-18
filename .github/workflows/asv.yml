@@ -51,6 +51,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up main branch
+        run: |
+          git branch main origin/main
 
       - name: Prepare previous ASV results
         uses: actions/checkout@v5
