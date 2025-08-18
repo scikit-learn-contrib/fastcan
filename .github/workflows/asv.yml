@@ -24,7 +24,7 @@ jobs:
 
       - name: Set up main branch
         run: |
-          git branch main origin/main
+          git branch -f main origin/main
 
       - uses: prefix-dev/setup-pixi@v0.9.0
         with:
@@ -56,7 +56,7 @@ jobs:
 
       - name: Set up main branch
         run: |
-          git branch main origin/main
+          git branch -f main origin/main
 
       - name: Prepare previous ASV results
         uses: actions/checkout@v5
