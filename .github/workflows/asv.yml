@@ -95,14 +95,14 @@ jobs:
       
       - name: Copy results to publish directory
         run: |
-          cp -r asv_benchmarks/results html/
+          cp -r asv_benchmarks/results asv_benchmarks/html/results
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         if: github.event_name == 'push'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html
+          publish_dir: asv_benchmarks/html
           keep_files: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
