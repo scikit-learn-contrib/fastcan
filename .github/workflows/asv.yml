@@ -54,6 +54,7 @@ jobs:
 
       - name: Prepare previous ASV results
         uses: actions/checkout@v5
+        continue-on-error: true
         with:
           ref: gh-pages
           path: gh-pages
