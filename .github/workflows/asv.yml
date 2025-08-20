@@ -99,12 +99,6 @@ jobs:
       - name: Copy results to publish directory
         run: cp -r asv_benchmarks/results asv_benchmarks/html/results
 
-      - name: Upload artifact for PR preview
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: asv_benchmarks/html
-
       - name: Deploy history to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
