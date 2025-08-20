@@ -51,6 +51,9 @@ jobs:
       contents: write
       pages: write
       id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v5
@@ -98,12 +101,13 @@ jobs:
 
       - name: Upload artifact for PR preview
         if: github.event_name == 'pull_request'
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: asv_benchmarks/html
 
       - name: Deploy PR preview
         if: github.event_name == 'pull_request'
+        id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Deploy to GitHub Pages (main)
