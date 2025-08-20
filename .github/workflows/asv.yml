@@ -49,6 +49,8 @@ jobs:
     needs: run-benchmarks
     permissions:
       contents: write
+      pages: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -57,8 +59,7 @@ jobs:
 
       - name: Set up main branch
         if: github.event_name == 'pull_request'
-        run: |
-          git branch main origin/main
+        run: git branch main origin/main
 
       - name: Prepare previous ASV results
         uses: actions/checkout@v5
@@ -90,16 +91,24 @@ jobs:
           cache: true
 
       - name: Generate HTML report
-        run: |
-          pixi run asv-publish
-      
-      - name: Copy results to publish directory
-        run: |
-          cp -r asv_benchmarks/results asv_benchmarks/html/results
+        run: pixi run asv-publish
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Copy results to publish directory
+        run: cp -r asv_benchmarks/results asv_benchmarks/html/results
+
+      - name: Upload artifact for PR preview
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: asv_benchmarks/html
+
+      - name: Deploy PR preview
+        if: github.event_name == 'pull_request'
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy to GitHub Pages (main)
         if: github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: asv_benchmarks/html
