@@ -117,5 +117,5 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.event.repository.fork == false
         uses: actions/deploy-pages@v4
