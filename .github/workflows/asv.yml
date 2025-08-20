@@ -44,6 +44,7 @@ jobs:
           path: asv_benchmarks/results
   
   publish-report:
+    if: github.event_name == 'push' && github.event.repository.fork == false
     name: Build HTML report
     runs-on: ubuntu-latest
     needs: run-benchmarks
@@ -100,7 +101,6 @@ jobs:
         run: cp -r asv_benchmarks/results asv_benchmarks/html/results
 
       - name: Deploy history to gh-pages
-        if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -117,5 +117,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        if: github.event_name == 'push' && github.event.repository.fork == false
         uses: actions/deploy-pages@v4
