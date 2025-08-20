@@ -105,12 +105,7 @@ jobs:
         with:
           path: asv_benchmarks/html
 
-      - name: Deploy PR preview
-        if: github.event_name == 'pull_request'
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: Deploy to GitHub Pages (main)
+      - name: Deploy history to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -120,3 +115,12 @@ jobs:
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           commit_message: ${{ github.event.head_commit.message }}
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: asv_benchmarks/html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

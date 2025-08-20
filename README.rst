@@ -27,7 +27,7 @@ fastcan: A fast canonical-correlation-based greedy search algorithm
    :target: https://pixi.sh
 
 .. |asv| image:: https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat
-   :target: http://contrib.scikit-learn.org/fastcan/
+   :target: https://contrib.scikit-learn.org/fastcan/
 
 fastcan is a greedy search algorithm that supports:
 
