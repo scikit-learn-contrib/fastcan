@@ -117,6 +117,5 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
+        if: github.event_name == 'push'
         uses: actions/deploy-pages@v4
-        with:
-          preview: true
