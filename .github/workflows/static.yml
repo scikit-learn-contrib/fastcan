@@ -14,10 +14,6 @@ jobs:
           environments: static
           cache: true
 
-      - name: Re-install local
-        run: |
-          pixi reinstall -e static --frozen fastcan
-
       - name: Linter
         run: |
           pixi run lint

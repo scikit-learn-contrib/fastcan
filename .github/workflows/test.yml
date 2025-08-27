@@ -23,13 +23,6 @@ jobs:
             nogil
           cache: true
 
-      - name: Re-install local
-        shell: bash
-        run: |
-          rm -rf build
-          pixi reinstall -e dev --frozen fastcan
-          pixi reinstall -e nogil --frozen fastcan
-
       - name: Test with pytest
         run: |
           pixi run -e dev test

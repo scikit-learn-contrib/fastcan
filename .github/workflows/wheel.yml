@@ -12,9 +12,6 @@ jobs:
         with:
           environments: dev
           cache: true
-      - name: Re-install local
-        run: |
-          pixi reinstall -e dev --frozen fastcan
       - name: Build SDist
         run: |
           pixi run build-sdist
