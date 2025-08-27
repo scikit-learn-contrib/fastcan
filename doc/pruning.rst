@@ -37,10 +37,9 @@ Therefore, :func:`minibatch` looses the redundancy check in two ways.
 
 .. rubric:: References
 
-* `"Dictionary-learning-based data pruning for system identification"
-  <https://doi.org/10.48550/arXiv.2502.11484>`_
-  Wang, T., Zhang, S., & Sun L.
-  arXiv (2025).
+* `"Dictionary learning-based data pruning for system identification"
+  <https://doi.org/10.3390/app15179368>`_
+  Wang, T., Zhang, S., Song, M., & Sun, L. Applied Sciences, 15(17), 9368 (2025).
 
 
 .. rubric:: Examples
