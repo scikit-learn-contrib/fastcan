@@ -1,1 +1,1 @@
-{"regressions": []}
+{"regressions": [["narx.NARXBenchmark.time_fit('osa')", "graphs/branch-main/machine-windows-latest/pandas/python-3.13/scikit-learn/narx.NARXBenchmark.time_fit.json", {"machine": "windows-latest"}, 0, 0.0026539299999967627, 0.002525325000000578, [[null, 262, 0.002525325000000578, 0.0026539299999967627]]]]}
