@@ -24,7 +24,9 @@ jobs:
           cache: true
 
       - name: Re-install local
+        shell: bash
         run: |
+          rm -rf build
           pixi reinstall -e dev --frozen fastcan
           pixi reinstall -e nogil --frozen fastcan
 
