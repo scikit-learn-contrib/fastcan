@@ -13,7 +13,6 @@ from scipy.optimize import least_squares
 from sklearn.base import BaseEstimator, MultiOutputMixin, RegressorMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_array, check_consistent_length, column_or_1d
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import (
     _check_sample_weight,
@@ -493,9 +492,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             n_x = n_coefs
             y_ids = output_ids
+
         dydx = np.zeros((n_samples, n_outputs, n_x), dtype=float)
         dcf = np.zeros((max_delay, n_outputs, n_outputs), dtype=float)
-        n_threads = _openmp_effective_n_threads()
 
         _update_dydx(
             X,
@@ -510,7 +509,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             grad_feat_ids,
             dydx,
             dcf,
-            n_threads,
         )
 
         mask_valid = mask_missing_values(y, y_hat, sample_weight_sqrt, return_mask=True)

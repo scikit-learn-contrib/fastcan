@@ -20,7 +20,6 @@ cdef inline void _update_terms(
     const int[:, ::1] feat_ids,     # IN
     const int[:, ::1] delay_ids,    # IN
     const int k,                    # IN
-    const int num_threads,          # IN
 ) noexcept nogil:
     """
     Evaluate all terms for the given features and delays at timestep k.
@@ -195,7 +194,6 @@ cpdef void _update_dydx(
     const int[:, ::1] grad_feat_ids,
     double[:, :, ::1] dydx,       # OUT
     double[:, :, ::1] dcf,        # OUT
-    const int num_threads,          # IN
 ) noexcept nogil:
     """
     Computation of the Jacobian matrix dydx.
@@ -245,7 +243,6 @@ cpdef void _update_dydx(
             feat_ids,
             delay_ids,
             k,
-            num_threads,
         )
 
         # Update constant terms of Jacobian
