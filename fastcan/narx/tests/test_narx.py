@@ -453,7 +453,8 @@ def test_divergence():
     narx = make_narx(X, y, 3, 3, 2)
     narx.fit(X, y, coef_init=[-10, 0, 0, 0])
     y_hat = narx.predict(X, y)
-    assert np.all(y_hat <= 1e20)
+    div_idx = np.where(np.abs(y_hat) > 1e20)[0][0] + 1
+    assert np.all(y_hat[div_idx:] == 0)
 
 
 def test_tp2fd():

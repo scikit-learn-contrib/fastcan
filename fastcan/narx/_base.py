@@ -13,6 +13,7 @@ from scipy.optimize import least_squares
 from sklearn.base import BaseEstimator, MultiOutputMixin, RegressorMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_array, check_consistent_length, column_or_1d
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import (
     _check_sample_weight,
@@ -29,9 +30,8 @@ from ._feature import (
     make_time_shift_features,
 )
 from ._narx_fast import (  # type: ignore[attr-defined]
-    _predict_step,
-    _update_cfd,
-    _update_terms,
+    _predict,
+    _update_dydx,
 )
 
 
@@ -341,7 +341,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     f"({(n_coef_intercept,)}), but got {coef_init.shape}."
                 )
 
-        grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_cfd_ids(
+        grad_yyd_ids, grad_delay_ids, grad_coef_ids, grad_feat_ids = NARX._get_dcf_ids(
             self.feat_ids_, self.delay_ids_, self.output_ids_, X.shape[1]
         )
         sample_weight_sqrt = np.sqrt(sample_weight).reshape(-1, 1)
@@ -350,7 +350,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             x0=coef_init,
             jac=NARX._grad,
             args=(
-                _predict_step,
                 X,
                 y,
                 self.feat_ids_,
@@ -359,9 +358,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.fit_intercept,
                 sample_weight_sqrt,
                 grad_yyd_ids,
+                grad_delay_ids,
                 grad_coef_ids,
                 grad_feat_ids,
-                grad_delay_ids,
             ),
             **params,
         )
@@ -374,64 +373,17 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     @staticmethod
-    def _predict(
-        expression,
-        X,
-        y_ref,
-        coef,
-        intercept,
-        feat_ids,
-        delay_ids,
-        output_ids,
-    ):
-        n_samples = X.shape[0]
-        n_ref, n_outputs = y_ref.shape
-        max_delay = np.max(delay_ids)
-        y_hat = np.zeros((n_samples, n_outputs), dtype=float)
-        at_init = True
-        init_k = 0
-        for k in range(n_samples):
-            if not np.all(np.isfinite(X[k])):
-                at_init = True
-                init_k = k + 1
-                y_hat[k] = np.nan
-                continue
-            if k - init_k == max_delay:
-                at_init = False
-
-            if at_init:
-                y_hat[k] = y_ref[k % n_ref]
-                if not np.all(np.isfinite(y_hat[k])):
-                    at_init = True
-                    init_k = k + 1
-            else:
-                y_hat[k] = intercept
-                expression(
-                    X,
-                    y_hat,
-                    y_hat[k],
-                    coef,
-                    feat_ids,
-                    delay_ids,
-                    output_ids,
-                    k,
-                )
-            if np.any(y_hat[k] > 1e20):
-                y_hat[k:] = 1e20
-                return y_hat
-        return y_hat
-
-    @staticmethod
-    def _get_cfd_ids(feat_ids, delay_ids, output_ids, n_features_in):
+    def _get_dcf_ids(feat_ids, delay_ids, output_ids, n_features_in):
         """
-        Get ids of CFD (Coef, Feature, and Delay) matrix to update dyn(k)/dx.
+        Get ids of DCF (Delay, Coef, and Feature) matrix to update dyn(k)/dx.
         Maps coefficients to their corresponding features and delays.
         """
 
-        # Initialize cfd_ids as a list of lists n_outputs *  n_outputs * max_delay
-        # axis-0 (i): [dy0(k)/dx, dy1(k)/dx, ..., dyn(k)/dx]
-        # axis-1 (j): [dy0(k-d)/dx, dy1(k-d)/dx, ..., dyn(k-d)/dx]
-        # axis-2 (d): [dyj(k-1)/dx, dyj(k-2)/dx, ..., dyj(k-max_delay)/dx]
+        # Initialize dcf_ids as a list of lists max_delay * n_outputs * n_outputs
+        # axis-0 (d): [dyj(k-1)/dx, dyj(k-2)/dx, ..., dyj(k-max_delay)/dx]
+        # axis-1 (i): [dy0(k)/dx, dy1(k)/dx, ..., dyn(k)/dx]
+        # axis-2 (j): [dy0(k-d)/dx, dy1(k-d)/dx, ..., dyn(k-d)/dx]
+
         grad_yyd_ids = []
         grad_coef_ids = []
         grad_feat_ids = []
@@ -447,106 +399,20 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 if feat_id >= n_features_in and delay_id > 0:
                     col_y_id = feat_id - n_features_in  # y(k-1, id)
                     grad_yyd_ids.append([row_y_id, col_y_id, delay_id - 1])
+                    grad_delay_ids.append(np.delete(term_delay_ids, var_id))
                     grad_coef_ids.append(coef_id)
                     grad_feat_ids.append(np.delete(term_feat_ids, var_id))
-                    grad_delay_ids.append(np.delete(term_delay_ids, var_id))
 
         return (
-            np.array(grad_yyd_ids, dtype=np.int32),
+            np.array(grad_yyd_ids, dtype=np.int32, ndmin=2),
+            np.array(grad_delay_ids, dtype=np.int32, ndmin=2),
             np.array(grad_coef_ids, dtype=np.int32),
-            np.array(grad_feat_ids, dtype=np.int32),
-            np.array(grad_delay_ids, dtype=np.int32),
+            np.array(grad_feat_ids, dtype=np.int32, ndmin=2),
         )
-
-    @staticmethod
-    def _update_dydx(
-        X,
-        y_hat,
-        coef,
-        feat_ids,
-        delay_ids,
-        output_ids,
-        fit_intercept,
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
-    ):
-        """
-        Computation of the Jacobian matrix dydx.
-
-        Returns
-        -------
-        dydx : ndarray of shape (n_samples, n_outputs, n_x)
-            Jacobian matrix of the outputs with respect to coefficients and intercepts.
-        """
-        n_samples, n_y = y_hat.shape
-        max_delay = np.max(delay_ids)
-        n_coefs = feat_ids.shape[0]
-        if fit_intercept:
-            n_x = n_coefs + n_y  # Total number of coefficients and intercepts
-            y_ids = np.r_[output_ids, np.arange(n_y)]
-        else:
-            n_x = n_coefs
-            y_ids = output_ids
-
-        x_ids = np.arange(n_x)
-
-        dydx = np.zeros((n_samples, n_y, n_x), dtype=float)
-        at_init = True
-        init_k = 0
-        for k in range(n_samples):
-            if not (np.all(np.isfinite(X[k])) and np.all(np.isfinite(y_hat[k]))):
-                at_init = True
-                init_k = k + 1
-                continue
-            if k - init_k == max_delay:
-                at_init = False
-
-            if at_init:
-                continue
-            # Compute terms for time step k
-            terms = np.ones(n_x, dtype=float)
-            _update_terms(
-                X,
-                y_hat,
-                terms,
-                feat_ids,
-                delay_ids,
-                k,
-            )
-
-            # Update constant terms of Jacobian
-            dydx[k, y_ids, x_ids] = terms
-
-            # Update dynamic terms of Jacobian
-            if max_delay > 0 and grad_yyd_ids.size > 0:
-                cfd = np.zeros((n_y, n_y, max_delay), dtype=float)
-                _update_cfd(
-                    X,
-                    y_hat,
-                    cfd,
-                    coef,
-                    grad_yyd_ids,
-                    grad_coef_ids,
-                    grad_feat_ids,
-                    grad_delay_ids,
-                    k,
-                )
-                for d in range(max_delay):
-                    dydx[k] += cfd[:, :, d] @ dydx[k - d - 1]
-
-            # Handle divergence
-            if np.any(dydx[k] > 1e20):
-                dydx[k:] = 1e20
-                break
-
-        return dydx
 
     @staticmethod
     def _loss(
         coef_intercept,
-        expression,
         X,
         y,
         feat_ids,
@@ -557,16 +423,16 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         *args,
     ):
         # Sum of squared errors
-        n_outputs = y.shape[1]
+        n_samples, n_y = y.shape
         if fit_intercept:
-            coef = coef_intercept[:-n_outputs]
-            intercept = coef_intercept[-n_outputs:]
+            coef = coef_intercept[:-n_y]
+            intercept = coef_intercept[-n_y:]
         else:
             coef = coef_intercept
-            intercept = np.zeros(n_outputs, dtype=float)
+            intercept = np.zeros(n_y, dtype=float)
 
-        y_hat = NARX._predict(
-            expression,
+        y_hat = np.zeros((n_samples, n_y), dtype=float)
+        _predict(
             X,
             y,
             coef,
@@ -574,6 +440,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             feat_ids,
             delay_ids,
             output_ids,
+            y_hat,
         )
 
         y_masked, y_hat_masked, sample_weight_sqrt_masked = mask_missing_values(
@@ -585,7 +452,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
     @staticmethod
     def _grad(
         coef_intercept,
-        expression,
         X,
         y,
         feat_ids,
@@ -594,12 +460,12 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         fit_intercept,
         sample_weight_sqrt,
         grad_yyd_ids,
+        grad_delay_ids,
         grad_coef_ids,
         grad_feat_ids,
-        grad_delay_ids,
     ):
         # Sum of squared errors
-        n_outputs = y.shape[1]
+        n_samples, n_outputs = y.shape
         if fit_intercept:
             coef = coef_intercept[:-n_outputs]
             intercept = coef_intercept[-n_outputs:]
@@ -607,8 +473,8 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             coef = coef_intercept
             intercept = np.zeros(n_outputs, dtype=float)
 
-        y_hat = NARX._predict(
-            expression,
+        y_hat = np.zeros((n_samples, n_outputs), dtype=float)
+        _predict(
             X,
             y,
             coef,
@@ -616,19 +482,35 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             feat_ids,
             delay_ids,
             output_ids,
+            y_hat,
         )
-        dydx = NARX._update_dydx(
+
+        max_delay = np.max(delay_ids)
+        n_coefs = feat_ids.shape[0]
+        if fit_intercept:
+            n_x = n_coefs + n_outputs  # Total number of coefficients and intercepts
+            y_ids = np.r_[output_ids, np.arange(n_outputs, dtype=np.int32)]
+        else:
+            n_x = n_coefs
+            y_ids = output_ids
+        dydx = np.zeros((n_samples, n_outputs, n_x), dtype=float)
+        dcf = np.zeros((max_delay, n_outputs, n_outputs), dtype=float)
+        n_threads = _openmp_effective_n_threads()
+
+        _update_dydx(
             X,
             y_hat,
             coef,
             feat_ids,
             delay_ids,
-            output_ids,
-            fit_intercept,
+            y_ids,
             grad_yyd_ids,
+            grad_delay_ids,
             grad_coef_ids,
             grad_feat_ids,
-            grad_delay_ids,
+            dydx,
+            dcf,
+            n_threads,
         )
 
         mask_valid = mask_missing_values(y, y_hat, sample_weight_sqrt, return_mask=True)
@@ -702,8 +584,8 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     f"`y_init` should have {self.n_outputs_} outputs "
                     f"but got {y_init.shape[1]}."
                 )
-        y_hat = NARX._predict(
-            _predict_step,
+        y_hat = np.zeros((X.shape[0], self.n_outputs_), dtype=float)
+        _predict(
             X,
             y_init,
             self.coef_,
@@ -711,6 +593,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self.feat_ids_,
             self.delay_ids_,
             self.output_ids_,
+            y_hat,
         )
         if self.n_outputs_ == 1:
             y_hat = y_hat.flatten()

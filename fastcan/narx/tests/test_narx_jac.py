@@ -6,7 +6,7 @@ from scipy.integrate import odeint
 from sklearn.metrics import r2_score
 
 from fastcan.narx import NARX, make_narx
-from fastcan.narx._narx_fast import _predict_step  # type: ignore[attr-defined]
+from fastcan.narx._narx_fast import _predict  # type: ignore[attr-defined]
 
 
 def test_simple():
@@ -26,8 +26,8 @@ def test_simple():
     intercept = np.array([1], dtype=float)
     sample_weight = np.array([1, 1, 1], dtype=float).reshape(-1, 1)
 
-    y_hat = NARX._predict(
-        _predict_step,
+    y_hat = np.zeros_like(y, dtype=float)
+    _predict(
         X=X,
         y_ref=y,
         coef=coef,
@@ -35,6 +35,7 @@ def test_simple():
         feat_ids=feat_ids,
         delay_ids=delay_ids,
         output_ids=output_ids,
+        y_hat=y_hat,
     )
 
     assert_array_equal(y_hat, y)
@@ -42,8 +43,8 @@ def test_simple():
     delta_w = 0.00001
     coef_1 = np.array([0.4 + delta_w, 1])
 
-    y_hat_1 = NARX._predict(
-        _predict_step,
+    y_hat_1 = np.zeros_like(y, dtype=float)
+    _predict(
         X=X,
         y_ref=y,
         coef=coef_1,
@@ -51,6 +52,7 @@ def test_simple():
         feat_ids=feat_ids,
         delay_ids=delay_ids,
         output_ids=output_ids,
+        y_hat=y_hat_1,
     )
 
     grad_truth = np.array(
@@ -65,12 +67,11 @@ def test_simple():
         ]
     )
 
-    grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_cfd_ids(
+    grad_yyd_ids, grad_delay_ids, grad_coef_ids, grad_feat_ids = NARX._get_dcf_ids(
         feat_ids, delay_ids, output_ids, 1
     )
     grad = NARX._grad(
         np.r_[coef_1, intercept],
-        _predict_step,
         X,
         y,
         feat_ids,
@@ -79,15 +80,14 @@ def test_simple():
         True,
         np.sqrt(sample_weight),
         grad_yyd_ids,
+        grad_delay_ids,
         grad_coef_ids,
         grad_feat_ids,
-        grad_delay_ids,
     )
 
     assert_almost_equal(grad.sum(axis=0), grad_truth, decimal=4)
     grad_0 = NARX._grad(
         np.r_[coef_1, 0],
-        _predict_step,
         X,
         y,
         feat_ids,
@@ -96,13 +96,12 @@ def test_simple():
         True,
         np.sqrt(sample_weight),
         grad_yyd_ids,
+        grad_delay_ids,
         grad_coef_ids,
         grad_feat_ids,
-        grad_delay_ids,
     )
     grad = NARX._grad(
         coef_1,
-        _predict_step,
         X,
         y,
         feat_ids,
@@ -111,9 +110,9 @@ def test_simple():
         False,
         np.sqrt(sample_weight),
         grad_yyd_ids,
+        grad_delay_ids,
         grad_coef_ids,
         grad_feat_ids,
-        grad_delay_ids,
     )
     assert_almost_equal(grad.sum(axis=0), grad_0.sum(axis=0)[:-1])
 
@@ -198,12 +197,11 @@ def test_complex():
     intercept = np.array([1, 0.5])
 
     # NARX Jacobian
-    grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_cfd_ids(
+    grad_yyd_ids, grad_delay_ids, grad_coef_ids, grad_feat_ids = NARX._get_dcf_ids(
         feat_ids, delay_ids, output_ids, X.shape[1]
     )
     grad = NARX._grad(
         np.r_[coef, intercept],
-        _predict_step,
         X,
         y,
         feat_ids,
@@ -212,14 +210,14 @@ def test_complex():
         True,
         np.sqrt(np.ones((y.shape[0], 1))),
         grad_yyd_ids,
+        grad_delay_ids,
         grad_coef_ids,
         grad_feat_ids,
-        grad_delay_ids,
     )
 
     # Numerical gradient
-    y_hat_0 = NARX._predict(
-        _predict_step,
+    y_hat_0 = np.zeros_like(y, dtype=float)
+    _predict(
         X=X,
         y_ref=y,
         coef=coef,
@@ -227,6 +225,7 @@ def test_complex():
         feat_ids=feat_ids,
         delay_ids=delay_ids,
         output_ids=output_ids,
+        y_hat=y_hat_0,
     )
     e_0 = y_hat_0 - y
 
@@ -241,8 +240,8 @@ def test_complex():
             intercept_1 = np.copy(intercept)
             intercept_1[i - len(coef)] += delta_w
 
-        y_hat_1 = NARX._predict(
-            _predict_step,
+        y_hat_1 = np.zeros_like(y, dtype=float)
+        _predict(
             X=X,
             y_ref=y,
             coef=coef_1,
@@ -250,6 +249,7 @@ def test_complex():
             feat_ids=feat_ids,
             delay_ids=delay_ids,
             output_ids=output_ids,
+            y_hat=y_hat_1,
         )
 
         e_1 = y_hat_1 - y
@@ -259,7 +259,6 @@ def test_complex():
 
     grad = NARX._grad(
         coef,
-        _predict_step,
         X,
         y,
         feat_ids,
@@ -268,19 +267,20 @@ def test_complex():
         False,
         np.sqrt(np.ones((y.shape[0], 1))),
         grad_yyd_ids,
+        grad_delay_ids,
         grad_coef_ids,
         grad_feat_ids,
-        grad_delay_ids,
     )
-    y_hat_0 = NARX._predict(
-        _predict_step,
+    y_hat_0 = np.zeros_like(y, dtype=float)
+    _predict(
         X=X,
         y_ref=y,
         coef=coef,
-        intercept=[0, 0],
+        intercept=np.array([0, 0], dtype=float),
         feat_ids=feat_ids,
         delay_ids=delay_ids,
         output_ids=output_ids,
+        y_hat=y_hat_0,
     )
     e_0 = y_hat_0 - y
 
@@ -288,15 +288,16 @@ def test_complex():
         coef_1 = np.copy(coef)
         coef_1[i] += delta_w
 
-        y_hat_1 = NARX._predict(
-            _predict_step,
+        y_hat_1 = np.zeros_like(y, dtype=float)
+        _predict(
             X=X,
             y_ref=y,
             coef=coef_1,
-            intercept=[0, 0],
+            intercept=np.array([0, 0], dtype=float),
             feat_ids=feat_ids,
             delay_ids=delay_ids,
             output_ids=output_ids,
+            y_hat=y_hat_1,
         )
 
         e_1 = y_hat_1 - y
