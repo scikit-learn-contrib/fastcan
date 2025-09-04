@@ -205,7 +205,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         """
         none_inputs = False
         if X is None:  # Auto-regressive model
-            X = np.empty((1, 0), dtype=float)  # Skip validation
+            X = np.empty((1, 0), dtype=float, order="C")  # Skip validation
             none_inputs = True
         check_X_params = dict(
             dtype=float, order="C", ensure_all_finite="allow-nan", ensure_min_features=0
@@ -572,6 +572,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_init,
                 ensure_2d=False,
                 dtype=float,
+                order="C",
                 ensure_min_samples=0,
                 ensure_all_finite="allow-nan",
             )
