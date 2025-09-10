@@ -1,6 +1,6 @@
 [project]
 name = "fastcan"
-version = "0.4.0"
+version = "0.4.1"
 description = "A fast canonical-correlation-based feature selection method"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
