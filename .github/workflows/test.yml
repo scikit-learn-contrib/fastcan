@@ -21,11 +21,12 @@ jobs:
           environments: >-
             dev
             nogil
-          cache: false
+          cache: true
 
-      - name: Rebuild fastcan
+      - name: Re-install local
         run: |
-          pixi run rebuild
+          pixi reinstall -e dev --frozen fastcan
+          pixi reinstall -e nogil --frozen fastcan
 
       - name: Test with pytest
         run: |

@@ -12,11 +12,7 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.9.0
         with:
           environments: static
-          cache: false
-
-      - name: Rebuild fastcan
-        run: |
-          pixi run rebuild
+          cache: true
 
       - name: Linter
         run: |
