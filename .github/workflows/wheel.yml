@@ -12,6 +12,9 @@ jobs:
         with:
           environments: dev
           cache: false
+      - name: Rebuild fastcan
+        run: |
+          pixi run rebuild
       - name: Build SDist
         run: |
           pixi run build-sdist

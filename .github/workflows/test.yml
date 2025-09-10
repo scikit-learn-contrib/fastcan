@@ -23,6 +23,10 @@ jobs:
             nogil
           cache: false
 
+      - name: Rebuild fastcan
+        run: |
+          pixi run rebuild
+
       - name: Test with pytest
         run: |
           pixi run -e dev test

@@ -14,6 +14,10 @@ jobs:
           environments: static
           cache: false
 
+      - name: Rebuild fastcan
+        run: |
+          pixi run rebuild
+
       - name: Linter
         run: |
           pixi run lint

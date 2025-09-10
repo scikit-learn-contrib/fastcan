@@ -32,6 +32,10 @@ jobs:
           environments: dev
           cache: false
 
+      - name: Rebuild fastcan
+        run: |
+          pixi run rebuild
+
       - name: Run benchmarks
         shell: bash
         run: |
@@ -93,6 +97,10 @@ jobs:
         with:
           environments: dev
           cache: false
+
+      - name: Rebuild fastcan
+        run: |
+          pixi run rebuild
 
       - name: Generate HTML report
         run: pixi run asv-publish
