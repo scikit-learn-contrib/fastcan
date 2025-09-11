@@ -223,6 +223,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         sample_weight = _check_sample_weight(
             sample_weight, X, dtype=X.dtype, ensure_non_negative=True
         )
+        # store the number of dimension of the target to predict an array of
+        # similar shape at predict
+        self._y_ndim = y.ndim
         if y.ndim == 1:
             y = y.reshape(-1, 1)
         self.n_outputs_ = y.shape[1]
@@ -536,14 +539,15 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             When (nonlinear) AR model is adopted, where `n_features_in_` is 0,
             X can be an integer, which indicates the total steps to predict.
 
-        y_init : array-like of shape (n_init, `n_outputs_`), default=None
+        y_init : array-like of shape (n_init,) or (n_init, `n_outputs_`), default=None
             The initial values for the prediction of y.
             It should at least have one sample.
 
         Returns
         -------
-        y_hat : array-like of shape (n_samples,)
-            Returns predicted values.
+        y_hat : array-like of shape (n_samples,) or (n_samples, `n_outputs_`)
+            Returns predicted values. The number of dimensions is the same as that
+            of y in :term:`fit`.
         """
         check_is_fitted(self)
 
@@ -594,7 +598,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self.output_ids_,
             y_hat,
         )
-        if self.n_outputs_ == 1:
+        if self._y_ndim == 1:
             y_hat = y_hat.flatten()
         return y_hat
 

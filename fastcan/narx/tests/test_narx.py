@@ -646,3 +646,24 @@ def test_auto_reg_error():
     model = NARX().fit(X, y)
     with pytest.raises(ValueError, match=r"X should be an array-like of shape.*"):
         model.predict(len(y), y_init=y[: model.max_delay_])
+
+def test_predict_ndim():
+    """Test the ndim of predict output"""
+    X = np.random.rand(10, 2)
+    y = np.random.rand(10)
+    time_shift_ids = np.array([[0, 1], [1, 1]])
+    poly_ids = np.array([[1, 1], [2, 2]])
+    feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
+
+    model = NARX(
+        feat_ids=feat_ids,
+        delay_ids=delay_ids,
+        output_ids=None,
+    )
+    model.fit(X, y)
+    y_hat = model.predict(X, y_init=y[: model.max_delay_])
+    assert y_hat.ndim == 1
+
+    model.fit(X, y.reshape(-1, 1))
+    y_hat = model.predict(X, y_init=y[: model.max_delay_])
+    assert y_hat.ndim == 2
