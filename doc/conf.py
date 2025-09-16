@@ -43,6 +43,8 @@ extensions = [
     "sphinx_design",
     # For PlantUML diagrams
     "sphinxcontrib.plantuml",
+    # For interactive examples via JupyterLite
+    'jupyterlite_sphinx',
 ]
 
 # List of patterns, relative to source directory, that match files and
@@ -67,7 +69,7 @@ pygments_style = "sphinx"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 # Third-party theme: pip install furo
 html_theme = "furo"
-html_static_path = ["images"]
+html_static_path = ["images", "css"]
 
 
 # intersphinx configuration
@@ -79,3 +81,14 @@ sphinx_gallery_conf = {
     "examples_dirs": ["../examples"],
     "gallery_dirs": ["auto_examples"],
 }
+
+# -----------------------------------------------------------------------------
+# Interactive documentation examples via JupyterLite
+# -----------------------------------------------------------------------------
+
+global_enable_try_examples = True
+try_examples_global_button_text = "Try it in your browser!"
+try_examples_global_warning_text = (
+    "If you encounter any issues, please report them on the"
+    " [fastcan issue tracker](https://github.com/scikit-learn-contrib/fastcan/issues)."
+)

@@ -40,6 +40,8 @@ docs = [
     "sphinx_gallery",
     "sphinx-design",
     "sphinxcontrib-plantuml",
+    "jupyterlite-sphinx",
+    "jupyterlite-pyodide-kernel",
 ]
 
 [build-system]
@@ -66,6 +68,10 @@ fastcan = { path = ".", editable = true }
 [tool.pixi.build-dependencies]
 cython = ">=3.1.0"
 meson-python = ">=0.18.0"
+
+[tool.pixi.feature.wasm.dependencies]
+pip = "*"
+pyodide-build = "*"
 
 [tool.pixi.feature.asv.dependencies]
 asv = "*"
@@ -142,16 +148,23 @@ spell = "codespell"
 [tool.pixi.feature.docs.tasks]
 doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "doc", env = { SPHINXBUILD = "sphinx-build", CMD = "html", SOURCEDIR = ".", BUILDDIR = "_build", SPHINXOPTS = "" } }
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
+doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
 
 [tool.pixi.feature.nogil.tasks]
 nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
-
 nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+
+[tool.pixi.feature.wasm.tasks]
+wasm-compatible = "pyodide xbuildenv search -a"
+wasm-toolchain = { cmd = "pyodide xbuildenv install $VERSION", env = { VERSION = "0.27.7" }, depends-on = ["wasm-compatible"] }
+wasm-setup-emsdk = { cmd = "PYODIDE_EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) && ./emsdk install $PYODIDE_EMSCRIPTEN_VERSION && ./emsdk activate $PYODIDE_EMSCRIPTEN_VERSION", cwd = "../emsdk", depends-on = ["wasm-toolchain"] }
+wasm-build = { cmd = "bash -c 'source ../emsdk/emsdk_env.sh && pyodide build'", depends-on = ["wasm-setup-emsdk"] }
 
 [tool.pixi.environments]
 dev = ["docs", "test", "build", "jupyter", "asv"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
+wasm = { features = ["wasm"], no-default-feature = true }
 
 [tool.coverage.run]
 omit = ["**/tests/*"]
