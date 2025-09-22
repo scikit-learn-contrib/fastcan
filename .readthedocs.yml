@@ -11,7 +11,7 @@ build:
       - bash scripts/rtd_pre_install.sh
 
 conda:
-  environment: doc/rtd-environment.yml
+  environment: rtd-environment.yml
 
 sphinx:
    configuration: doc/conf.py
