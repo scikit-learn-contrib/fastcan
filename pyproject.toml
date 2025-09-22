@@ -40,7 +40,7 @@ docs = [
     "sphinx_gallery",
     "sphinx-design",
     "sphinxcontrib-plantuml",
-    "jupyterlite-sphinx",
+    "jupyterlite-sphinx>=0.20.0",
     "jupyterlite-xeus",
     "sphinx<8.2",
 ]

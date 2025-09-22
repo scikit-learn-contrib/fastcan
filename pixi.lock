@@ -667,7 +667,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/34/2b07b72bee02a63241d654f5d8af87a2de977c59638eec41ca356ab915cd/furo-2025.7.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/15/1d9160819d1e6e018d15de0e98b9297d0a09cfcfdc73add6e24ee3b2b83c/jupyterlite_core-0.5.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/41/fb/7e3db926bba6c3b7a80f86c52cd8f0bcd323222e4611f5f65ee23eedb6a7/jupyterlite_sphinx-0.22.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ac/9c/1f7b8363e55cf20e7d7b6e73e7f011276f79d8b388dfbfb39f6724a7af15/jupyterlite_sphinx-0.21.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d6/eb/92a4f7ccb22aead64ac22fe5e61834b5320988a113c8dec3bd8097c0353b/jupyterlite_xeus-3.1.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/36/86/751ec86adb66104d15e650b704f89dddd64ba29283178b9651b9bc84b624/jupytext-1.17.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl
@@ -1063,7 +1063,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/34/2b07b72bee02a63241d654f5d8af87a2de977c59638eec41ca356ab915cd/furo-2025.7.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/15/1d9160819d1e6e018d15de0e98b9297d0a09cfcfdc73add6e24ee3b2b83c/jupyterlite_core-0.5.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/41/fb/7e3db926bba6c3b7a80f86c52cd8f0bcd323222e4611f5f65ee23eedb6a7/jupyterlite_sphinx-0.22.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ac/9c/1f7b8363e55cf20e7d7b6e73e7f011276f79d8b388dfbfb39f6724a7af15/jupyterlite_sphinx-0.21.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d6/eb/92a4f7ccb22aead64ac22fe5e61834b5320988a113c8dec3bd8097c0353b/jupyterlite_xeus-3.1.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/36/86/751ec86adb66104d15e650b704f89dddd64ba29283178b9651b9bc84b624/jupytext-1.17.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl
@@ -1429,7 +1429,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/34/2b07b72bee02a63241d654f5d8af87a2de977c59638eec41ca356ab915cd/furo-2025.7.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/15/1d9160819d1e6e018d15de0e98b9297d0a09cfcfdc73add6e24ee3b2b83c/jupyterlite_core-0.5.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/41/fb/7e3db926bba6c3b7a80f86c52cd8f0bcd323222e4611f5f65ee23eedb6a7/jupyterlite_sphinx-0.22.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ac/9c/1f7b8363e55cf20e7d7b6e73e7f011276f79d8b388dfbfb39f6724a7af15/jupyterlite_sphinx-0.21.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d6/eb/92a4f7ccb22aead64ac22fe5e61834b5320988a113c8dec3bd8097c0353b/jupyterlite_xeus-3.1.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/36/86/751ec86adb66104d15e650b704f89dddd64ba29283178b9651b9bc84b624/jupytext-1.17.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl
@@ -1795,7 +1795,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/34/2b07b72bee02a63241d654f5d8af87a2de977c59638eec41ca356ab915cd/furo-2025.7.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/15/1d9160819d1e6e018d15de0e98b9297d0a09cfcfdc73add6e24ee3b2b83c/jupyterlite_core-0.5.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/41/fb/7e3db926bba6c3b7a80f86c52cd8f0bcd323222e4611f5f65ee23eedb6a7/jupyterlite_sphinx-0.22.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ac/9c/1f7b8363e55cf20e7d7b6e73e7f011276f79d8b388dfbfb39f6724a7af15/jupyterlite_sphinx-0.21.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d6/eb/92a4f7ccb22aead64ac22fe5e61834b5320988a113c8dec3bd8097c0353b/jupyterlite_xeus-3.1.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/36/86/751ec86adb66104d15e650b704f89dddd64ba29283178b9651b9bc84b624/jupytext-1.17.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl
@@ -2140,7 +2140,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/34/2b07b72bee02a63241d654f5d8af87a2de977c59638eec41ca356ab915cd/furo-2025.7.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/46/15/1d9160819d1e6e018d15de0e98b9297d0a09cfcfdc73add6e24ee3b2b83c/jupyterlite_core-0.5.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/41/fb/7e3db926bba6c3b7a80f86c52cd8f0bcd323222e4611f5f65ee23eedb6a7/jupyterlite_sphinx-0.22.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ac/9c/1f7b8363e55cf20e7d7b6e73e7f011276f79d8b388dfbfb39f6724a7af15/jupyterlite_sphinx-0.21.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d6/eb/92a4f7ccb22aead64ac22fe5e61834b5320988a113c8dec3bd8097c0353b/jupyterlite_xeus-3.1.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/36/86/751ec86adb66104d15e650b704f89dddd64ba29283178b9651b9bc84b624/jupytext-1.17.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl
@@ -6671,7 +6671,7 @@ packages:
 - pypi: ./
   name: fastcan
   version: 0.4.1
-  sha256: 41ee3188510dd5e635ea9d981f9d2cfe4a9fae8a17b696ce5a993c28a06aa473
+  sha256: 8fa40e5047c3cd0ab72c4fefaf165b7fc34998a8681411671dbd4c5af9ecadd7
   requires_dist:
   - scikit-learn>=1.7.0,!=1.7.1
   - furo ; extra == 'docs'
@@ -6680,7 +6680,7 @@ packages:
   - sphinx-gallery ; extra == 'docs'
   - sphinx-design ; extra == 'docs'
   - sphinxcontrib-plantuml ; extra == 'docs'
-  - jupyterlite-sphinx ; extra == 'docs'
+  - jupyterlite-sphinx>=0.20.0 ; extra == 'docs'
   - jupyterlite-xeus ; extra == 'docs'
   - sphinx<8.2 ; extra == 'docs'
   requires_python: '>=3.10'
@@ -8145,15 +8145,15 @@ packages:
   - pytest-xdist ; extra == 'test'
   - jupyterlab-server>=2.8.1,<3 ; extra == 'translation'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/41/fb/7e3db926bba6c3b7a80f86c52cd8f0bcd323222e4611f5f65ee23eedb6a7/jupyterlite_sphinx-0.22.0-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/ac/9c/1f7b8363e55cf20e7d7b6e73e7f011276f79d8b388dfbfb39f6724a7af15/jupyterlite_sphinx-0.21.0-py3-none-any.whl
   name: jupyterlite-sphinx
-  version: 0.22.0
-  sha256: 8d1acf3982a8bc4526e189efbb8b0da8bec7f6fca99b5fbe9ea5f7f113e66b22
+  version: 0.21.0
+  sha256: 196badd828151725f5befdbcf65748eca59a3c0a8b082fa6eea49d2010dd97ee
   requires_dist:
   - docutils
   - jupyter-server
   - jupyterlab-server
-  - jupyterlite-core>=0.2,<0.8
+  - jupyterlite-core>=0.2,<0.7
   - jupytext
   - nbformat
   - sphinx>=4
