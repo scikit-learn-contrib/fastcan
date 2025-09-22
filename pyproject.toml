@@ -42,6 +42,7 @@ docs = [
     "sphinxcontrib-plantuml",
     "jupyterlite-sphinx",
     "jupyterlite-xeus",
+    "sphinx<8.2",
 ]
 
 [build-system]
