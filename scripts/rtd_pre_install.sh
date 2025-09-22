@@ -9,10 +9,11 @@ dot -V
 
 # This folder is on PATH and does not require sudo
 # Download latest plantuml.jar from github
-curl -o ${CONDA_PREFIX}/bin/plantuml.jar -L https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
+mkdir -p "${HOME}/.local/bin"
+curl -o "${HOME}/.local/bin/plantuml.jar" -L https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
 # Create an executable script for plantuml
-printf '#!/bin/bash\nexec java -Djava.awt.headless=true -jar ${CONDA_PREFIX}/bin/plantuml.jar "$@"' > ${CONDA_PREFIX}/bin/plantuml
-chmod +x ${CONDA_PREFIX}/bin/plantuml
+printf '#!/bin/bash\nexec java -Djava.awt.headless=true -jar "${HOME}/.local/bin/plantuml.jar" "$@"\n' > "${HOME}/.local/bin/plantuml"
+chmod +x "${HOME}/.local/bin/plantuml"
 
 # Check plantuml version
 plantuml -version
