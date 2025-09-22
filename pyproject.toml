@@ -5,11 +5,11 @@ description = "A fast canonical-correlation-based feature selection method"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
 ]
-requires-python = ">=3.10"
+requires-python = "==3.9"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
-dependencies = ["scikit-learn>=1.7.0,!=1.7.1"]
+dependencies = ["scikit-learn==1.6.1"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,10 +19,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -43,7 +40,7 @@ docs = [
 ]
 
 [build-system]
-requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]
+requires = ["meson-python==0.16.0", "Cython==3.0.10", "scikit-learn==1.6.1"]
 build-backend = "mesonpy"
 
 # Needed on Windows CI to compile with Visual Studio compiler
@@ -57,20 +54,15 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [tool.pixi.dependencies]
-python = ">=3.13.0"
-scikit-learn = ">=1.7.0,!=1.7.1"
+python = "==3.9"
+scikit-learn = "==1.6.1"
 
 [tool.pixi.pypi-dependencies]
 fastcan = { path = ".", editable = true }
 
 [tool.pixi.build-dependencies]
-cython = ">=3.1.0"
-meson-python = ">=0.18.0"
-
-[tool.pixi.feature.asv.dependencies]
-asv = "*"
-libmambapy = "*"
-conda-build = "*"
+cython = "==3.0.10"
+meson-python = "==0.16.0"
 
 [tool.pixi.feature.jupyter.dependencies]
 notebook = "*"
@@ -94,17 +86,6 @@ codespell = "*"
 python-build = "*"
 pip = "*"
 
-[tool.pixi.feature.nogil.dependencies]
-python-freethreading = "*"
-
-[tool.pixi.feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.7.0,!=1.7.1"
-fastcan = { path = ".", editable = true }
-
-[tool.pixi.feature.nogil.build-dependencies]
-cython = ">=3.1.0"
-meson-python = ">=0.18.0"
-
 [tool.pixi.target.osx-64.build-dependencies]
 compilers = "*"
 
@@ -117,11 +98,6 @@ time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import Fa
 profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='$SORT')"''', env = { SORT = "cumtime" } }
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
 profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='$SORT')"''', env = { SORT = "tottime" } }
-
-[tool.pixi.feature.asv.tasks]
-asv-build = { cmd = "python -m asv machine --machine $MACHINE --yes && python -m asv run --show-stderr -v --machine $MACHINE $EXTRA_ARGS", cwd = "asv_benchmarks", env = { MACHINE = "MacOS-M1", EXTRA_ARGS = "" } }
-asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
-asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", cwd = "." }
@@ -143,15 +119,9 @@ spell = "codespell"
 doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "doc", env = { SPHINXBUILD = "sphinx-build", CMD = "html", SOURCEDIR = ".", BUILDDIR = "_build", SPHINXOPTS = "" } }
 doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
 
-[tool.pixi.feature.nogil.tasks]
-nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
-
-nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
-
 [tool.pixi.environments]
-dev = ["docs", "test", "build", "jupyter", "asv"]
+dev = ["docs", "test", "build", "jupyter"]
 static = { features = ["static"], no-default-feature = true }
-nogil = { features = ["nogil"], no-default-feature = true }
 
 [tool.coverage.run]
 omit = ["**/tests/*"]
@@ -164,10 +134,6 @@ skip = [
     "./htmlcov",
     "./build",
     "./pixi.lock",
-    "./asv_benchmarks/env",
-    "./asv_benchmarks/html",
-    "./asv_benchmarks/results",
-    "./asv_benchmarks/benchmarks/cache",
 ]
 ignore-words-list = [
     "MIS", # magnetic impedance spectroscopy (MIS)
@@ -183,10 +149,6 @@ exclude = [
     "dist",
     "doc/_build",
     "doc/auto_examples",
-    "asv_benchmarks/env",
-    "asv_benchmarks/html",
-    "asv_benchmarks/results",
-    "asv_benchmarks/benchmarks/cache",
 ]
 
 [tool.ruff.lint]
@@ -241,7 +203,6 @@ notice-rgx = "\\#\\ Authors:\\ The\\ fastcan\\ developers\\\r?\\\n\\#\\ SPDX\\-L
 "**/tests/*" = ["CPY001"]
 "doc/*" = ["CPY001"]
 ".github/*" = ["CPY001"]
-"asv_benchmarks/*" = ["CPY001", "TID252"]
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff

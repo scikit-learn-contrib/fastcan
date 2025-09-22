@@ -20,7 +20,6 @@ jobs:
         with:
           environments: >-
             dev
-            nogil
           cache: true
 
       - name: Re-install local
@@ -36,9 +35,6 @@ jobs:
         run: |
           pixi run -e dev doc
           CMD=doctest pixi run -e dev doc
-      - name: Test nogil
-        run: |
-          pixi run -e nogil nogil-eta
       - name: Test coverage
         if: matrix.os == 'ubuntu-latest'
         shell: bash

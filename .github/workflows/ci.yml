@@ -3,18 +3,14 @@ name: CI
 on:
   workflow_call:
   push:
-    branches: ["main"]
+    branches: ["py39"]
   pull_request:
-    branches: ["main"]
+    branches: ["py39"]
 
 jobs:
   call-test:
     uses: ./.github/workflows/test.yml
     secrets: inherit
-
-  call-wasm-wheel:
-    needs: call-test
-    uses: ./.github/workflows/emscripten.yml
   
   call-wheel:
     needs: call-test

@@ -42,7 +42,7 @@ def ssc(X, y):
     >>> X = [[1], [-1], [0]]
     >>> y = [[0], [1], [-1]]
     >>> ssc(X, y)
-    np.float64(0.25)
+    0.25
     """
     X, y = check_X_y(
         X, y, dtype=float, ensure_2d=True, multi_output=True, ensure_min_samples=2
