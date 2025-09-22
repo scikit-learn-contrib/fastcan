@@ -41,7 +41,7 @@ docs = [
     "sphinx-design",
     "sphinxcontrib-plantuml",
     "jupyterlite-sphinx",
-    "jupyterlite-pyodide-kernel",
+    "jupyterlite-xeus",
 ]
 
 [build-system]
@@ -147,7 +147,7 @@ spell = "codespell"
 
 [tool.pixi.feature.docs.tasks]
 doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "doc", env = { SPHINXBUILD = "sphinx-build", CMD = "html", SOURCEDIR = ".", BUILDDIR = "_build", SPHINXOPTS = "" } }
-doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples", cwd = "doc", env = { BUILDDIR = "_build" } }
+doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples jupyterlite_contents", cwd = "doc", env = { BUILDDIR = "_build" } }
 doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
 
 [tool.pixi.feature.nogil.tasks]
