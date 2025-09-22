@@ -7,7 +7,7 @@ dependencies:
   - furo
   - matplotlib
   - pandas
-  - sphinx_gallery
+  - sphinx-gallery
   - sphinx-design
   - sphinxcontrib-plantuml
   - jupyterlite-sphinx
