@@ -5,7 +5,7 @@ description = "A fast canonical-correlation-based feature selection method"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
 ]
-requires-python = "==3.9"
+requires-python = ">=3.9,<3.10"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
@@ -54,7 +54,7 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [tool.pixi.dependencies]
-python = "==3.9"
+python = ">=3.9,<3.10"
 scikit-learn = "==1.6.1"
 
 [tool.pixi.pypi-dependencies]
