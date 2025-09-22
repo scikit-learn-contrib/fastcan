@@ -367,7 +367,7 @@ def test_mulit_output_error():
         narx.fit(X, y)
         narx.predict(X, y_init=[1, 1, 1])
 
-    with pytest.raises(ValueError, match="`feat_ids` should not contain rows that.*"):
+    with pytest.raises(ValueError, match=r"`feat_ids` should not contain rows that.*"):
         narx = NARX(
             feat_ids=np.array([[0, 1], [-1, -1]]),
             delay_ids=np.array([[0, 1], [-1, -1]]),

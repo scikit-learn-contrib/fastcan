@@ -25,7 +25,6 @@ jobs:
       - name: Re-install local
         run: |
           pixi reinstall -e dev --frozen fastcan
-          pixi reinstall -e nogil --frozen fastcan
 
       - name: Test with pytest
         run: |
@@ -35,14 +34,3 @@ jobs:
         run: |
           pixi run -e dev doc
           CMD=doctest pixi run -e dev doc
-      - name: Test coverage
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          FMT=xml pixi run -e dev test-coverage
-      - name: Upload coverage reports to Codecov
-        if: matrix.os == 'ubuntu-latest'
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
