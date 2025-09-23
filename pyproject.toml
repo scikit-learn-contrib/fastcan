@@ -120,18 +120,18 @@ compilers = "*"
 [tool.pixi.tasks]
 time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
 time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
-profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='$SORT')"''', env = { SORT = "cumtime" } }
+profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "cumtime" }] }
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
-profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='$SORT')"''', env = { SORT = "tottime" } }
+profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "tottime" }] }
 
 [tool.pixi.feature.asv.tasks]
-asv-build = { cmd = "python -m asv machine --machine $MACHINE --yes && python -m asv run --show-stderr -v --machine $MACHINE $EXTRA_ARGS", cwd = "asv_benchmarks", env = { MACHINE = "MacOS-M1", EXTRA_ARGS = "" } }
+asv-build = { cmd = "python -m asv machine --machine {{ MACHINE }} --yes && python -m asv run --show-stderr -v --machine {{ MACHINE }} {{ EXTRA_ARGS }}", cwd = "asv_benchmarks", args = [{ arg = "MACHINE", default = "MacOS-M1" }, { arg = "EXTRA_ARGS", default = "" }] }
 asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
 asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", cwd = "." }
-test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report $FMT --cov=$PACKAGE .", env = { PACKAGE = "fastcan", FMT = "html" } }
+test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }} .", args = [{ arg = "PACKAGE", default = "fastcan" }, { arg = "FMT", default = "html" }] }
 
 [tool.pixi.feature.build.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
@@ -146,8 +146,8 @@ type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
 spell = "codespell"
 
 [tool.pixi.feature.docs.tasks]
-doc = { cmd = "$SPHINXBUILD -M $CMD $SOURCEDIR $BUILDDIR $SPHINXOPTS", cwd = "doc", env = { SPHINXBUILD = "sphinx-build", CMD = "html", SOURCEDIR = ".", BUILDDIR = "_build", SPHINXOPTS = "" } }
-doc-clean = { cmd = "rm -rf $BUILDDIR generated auto_examples jupyterlite_contents", cwd = "doc", env = { BUILDDIR = "_build" } }
+doc = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [{ arg = "SPHINXBUILD", default = "sphinx-build" }, { arg = "CMD", default = "html" }, { arg = "SOURCEDIR", default = "." }, { arg = "BUILDDIR", default = "_build" }, { arg = "SPHINXOPTS", default = "" }] }
+doc-clean = { cmd = "rm -rf {{ BUILDDIR }} generated auto_examples jupyterlite_contents", cwd = "doc", args = [{ arg = "BUILDDIR", default = "_build" }] }
 doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
 
 [tool.pixi.feature.nogil.tasks]

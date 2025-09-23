@@ -39,7 +39,7 @@ jobs:
       - name: Run benchmarks
         shell: bash
         run: |
-          MACHINE=${{ matrix.os }} pixi run asv-build
+          pixi run asv-build ${{ matrix.os }}
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4

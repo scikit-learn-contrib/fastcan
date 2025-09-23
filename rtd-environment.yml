@@ -11,6 +11,7 @@ dependencies:
   - sphinx-design
   - sphinxcontrib-plantuml
   - jupyterlite-sphinx
+  - plantuml
   - pip:
       - .
       - jupyterlite-xeus >=2.1.2
