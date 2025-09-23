@@ -34,3 +34,4 @@ doc/sg_execution_times.rst
 doc/.jupyterlite.doit.db
 doc/jupyterlite_contents/
 doc/_contents/
+emsdk/
