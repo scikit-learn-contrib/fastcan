@@ -6,9 +6,6 @@ build:
   apt_packages:
     - default-jre # for plantuml
     - graphviz # for plantuml
-  jobs:
-    pre_install:
-      - bash scripts/rtd_pre_install.sh
 
 conda:
   environment: rtd-environment.yml
