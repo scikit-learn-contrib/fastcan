@@ -5,6 +5,9 @@ Forecasting with (Nonlinear) AR models
 
 .. currentmodule:: fastcan.narx
 
+.. note::
+    This example can NOT be run with JupyterLite so far.
+
 In this examples, we will demonstrate how to use :func:`make_narx` to build (nonlinear)
 AutoRegressive (AR) models for time-series forecasting.
 The time series used isthe monthly average atmospheric CO2 concentrations
