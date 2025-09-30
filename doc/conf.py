@@ -10,6 +10,8 @@
 import importlib.metadata
 from datetime import datetime
 
+from sphinx_gallery.notebook import add_code_cell
+
 # General information about the project.
 project = "fastcan"
 copyright = f"2024 - {datetime.now().year}, fastcan developers (MIT License)"
@@ -44,7 +46,7 @@ extensions = [
     # For PlantUML diagrams
     "sphinxcontrib.plantuml",
     # For interactive examples via JupyterLite
-    'jupyterlite_sphinx',
+    "jupyterlite_sphinx",
 ]
 
 # List of patterns, relative to source directory, that match files and
@@ -77,11 +79,6 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
 }
 
-sphinx_gallery_conf = {
-    "examples_dirs": ["../examples"],
-    "gallery_dirs": ["auto_examples"],
-}
-
 # -----------------------------------------------------------------------------
 # Interactive documentation examples via JupyterLite
 # -----------------------------------------------------------------------------
@@ -92,3 +89,47 @@ try_examples_global_warning_text = (
     "If you encounter any issues, please report them on the"
     " [fastcan issue tracker](https://github.com/scikit-learn-contrib/fastcan/issues)."
 )
+
+
+def notebook_modification_function(notebook_content, notebook_filename):
+    notebook_content_str = str(notebook_content)
+    dummy_notebook_content = {"cells": []}
+    code_lines = []
+
+    if "fetch_" in notebook_content_str:
+        code_lines.extend(
+            [
+                "import pyodide_http",
+                "pyodide_http.patch_all()",
+            ]
+        )
+    # always import matplotlib and pandas to avoid Pyodide limitation with
+    # imports inside functions
+    code_lines.extend(
+        [
+            "import matplotlib",
+            "import pandas",
+        ]
+    )
+
+    if code_lines:
+        code_lines = ["# JupyterLite-specific code"] + code_lines
+        code = "\n".join(code_lines)
+        add_code_cell(dummy_notebook_content, code)
+
+    notebook_content["cells"] = (
+        dummy_notebook_content["cells"] + notebook_content["cells"]
+    )
+
+
+# -----------------------------------------------------------------------------
+suppress_warnings = [
+    # Ignore new warning in Sphinx 7.3.0 while pickling environment:
+    #   WARNING: cannot cache unpickable configuration value: 'sphinx_gallery_conf'
+    "config.cache",
+]
+sphinx_gallery_conf = {
+    "examples_dirs": ["../examples"],
+    "gallery_dirs": ["auto_examples"],
+    "jupyterlite": {"notebook_modification_function": notebook_modification_function},
+}

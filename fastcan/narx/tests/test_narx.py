@@ -647,6 +647,7 @@ def test_auto_reg_error():
     with pytest.raises(ValueError, match=r"X should be an array-like of shape.*"):
         model.predict(len(y), y_init=y[: model.max_delay_])
 
+
 def test_predict_ndim():
     """Test the ndim of predict output"""
     X = np.random.rand(10, 2)

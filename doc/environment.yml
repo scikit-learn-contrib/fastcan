@@ -5,4 +5,7 @@ channels:
 dependencies:
   - xeus-python
   - matplotlib
+  - pandas
   - fastcan
+  - pip:
+    - pyodide-http

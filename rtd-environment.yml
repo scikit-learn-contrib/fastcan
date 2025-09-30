@@ -14,4 +14,4 @@ dependencies:
   - plantuml
   - pip:
       - .
-      - jupyterlite-xeus >=2.1.2
+      - jupyterlite-xeus

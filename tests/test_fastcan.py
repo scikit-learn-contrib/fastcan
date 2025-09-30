@@ -52,7 +52,7 @@ def test_select_kbest_classif():
     ssc = correlation_filter.scores_.sum()
     # Test whether the ssc from the fastcan is consistent
     # with the mcc from the linear regression
-    assert_almost_equal(actual=ssc, desired=gtruth_ssc)
+    assert abs(ssc - gtruth_ssc) < 1e-5
 
     support = correlation_filter.get_support()
     gtruth = np.zeros(n_features)
