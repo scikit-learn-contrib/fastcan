@@ -5,8 +5,6 @@ dependencies:
   - micromamba
   - pip
   - furo
-  - matplotlib
-  - pandas
   - sphinx-gallery
   - sphinx-design
   - sphinxcontrib-plantuml
