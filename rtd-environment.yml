@@ -10,6 +10,7 @@ dependencies:
   - sphinxcontrib-plantuml
   - jupyterlite-sphinx
   - plantuml
+  - matplotlib
   - pip:
       - .
       - jupyterlite-xeus
