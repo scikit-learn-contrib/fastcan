@@ -4,7 +4,7 @@ channels:
 dependencies:
   - micromamba
   - pip
-  - furo
+  - pydata-sphinx-theme
   - sphinx-gallery
   - sphinx-design
   - sphinxcontrib-plantuml

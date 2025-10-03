@@ -69,9 +69,9 @@ pygments_style = "sphinx"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-# Third-party theme: pip install furo
-html_theme = "furo"
+html_theme = "pydata_sphinx_theme"
 html_static_path = ["images", "css"]
+html_css_files = ["fastcan.css"]
 
 
 # intersphinx configuration

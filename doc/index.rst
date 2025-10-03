@@ -1,11 +1,24 @@
-+-----------------------------------------+-----------------------------------------+-----------------------------------------+-----------------------------------------+
-| .. figure:: images/tongji-logo.jpg      | .. figure:: images/sheffield-logo.svg   | .. figure:: images/shmc.png             | .. figure:: images/DRG-logo.png         |
-|   :target: https://www.tongji.edu.cn/   |   :target: https://www.sheffield.ac.uk/ |   :target: https://shmc.tongji.edu.cn/  |   :target: https://drg.ac.uk/           |
-|   :figwidth: 70pt                       |   :figwidth: 70pt                       |   :figwidth: 70pt                       |   :figwidth: 70pt                       |
-|   :alt: Tongji                          |   :alt: Sheffield                       |   :alt: SHMC                            |   :alt: DRG                             |
-|                                         |                                         |                                         |                                         |
-|                                         |                                         |                                         |                                         |
-+-----------------------------------------+-----------------------------------------+-----------------------------------------+-----------------------------------------+
+.. |tongji| image:: images/tongji-logo.jpg
+   :target: https://www.tongji.edu.cn/
+   :width: 70pt
+   :alt: Tongji
+
+.. |sheffield| image:: images/sheffield-logo.svg
+   :target: https://www.sheffield.ac.uk/
+   :width: 70pt
+   :alt: Sheffield
+
+.. |shmc| image:: images/shmc.png
+   :target: https://shmc.tongji.edu.cn/
+   :width: 70pt
+   :alt: SHMC
+
+.. |drg| image:: images/DRG-logo.png
+   :target: https://drg.ac.uk/
+   :width: 70pt
+   :alt: DRG
+
+.. centered:: |tongji| |sheffield| |shmc| |drg|
 
 .. include:: ../README.rst
 
