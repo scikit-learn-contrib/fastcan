@@ -20,12 +20,14 @@ jobs:
         with:
           environments: >-
             dev
+            docs
             nogil
           cache: true
 
       - name: Re-install local
         run: |
           pixi reinstall -e dev --frozen fastcan
+          pixi reinstall -e docs --frozen fastcan
           pixi reinstall -e nogil --frozen fastcan
 
       - name: Test with pytest
@@ -34,8 +36,8 @@ jobs:
       - name: Test with doctest
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pixi run -e dev doc
-          pixi run -e dev doc sphinx-build doctest
+          pixi run -e docs doc
+          pixi run -e docs doc sphinx-build doctest
       - name: Test nogil
         run: |
           pixi run -e nogil nogil-eta

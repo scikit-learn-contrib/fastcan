@@ -32,18 +32,6 @@ source = "https://github.com/scikit-learn-contrib/fastcan"
 download = "https://pypi.org/project/fastcan/#files"
 tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
-[project.optional-dependencies]
-docs = [
-    "pydata-sphinx-theme",
-    "matplotlib",
-    "pandas",
-    "sphinx_gallery",
-    "sphinx-design",
-    "sphinxcontrib-plantuml",
-    "jupyterlite-sphinx",
-    "jupyterlite-xeus",
-]
-
 [build-system]
 requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]
 build-backend = "mesonpy"
@@ -69,6 +57,18 @@ fastcan = { path = ".", editable = true }
 cython = ">=3.1.0"
 meson-python = ">=0.18.0"
 
+[tool.pixi.feature.docs.dependencies]
+pydata-sphinx-theme = "*"
+matplotlib = "*"
+pandas = "*"
+sphinx-gallery = "*"
+sphinx-design = "*"
+sphinxcontrib-plantuml = "*"
+jupyterlite-sphinx = "*"
+jupyterlite-xeus = "*"
+pip = "*" # Required by xeus environment creation
+graphviz = "<13"
+
 [tool.pixi.feature.docs.target.win-64.dependencies]
 plantuml = "*"
 
@@ -76,6 +76,9 @@ plantuml = "*"
 plantuml = "*"
 
 [tool.pixi.feature.docs.target.osx-arm64.dependencies]
+plantuml = "*"
+
+[tool.pixi.feature.docs.target.osx-64.dependencies]
 plantuml = "*"
 
 [tool.pixi.feature.wasm.dependencies]
@@ -140,7 +143,7 @@ asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
 asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
 
 [tool.pixi.feature.test.tasks]
-test = { cmd = "pytest", cwd = "." }
+test = "pytest ./tests ./fastcan/narx/tests"
 test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }} .", args = [{ arg = "PACKAGE", default = "fastcan" }, { arg = "FMT", default = "html" }] }
 
 [tool.pixi.feature.build.tasks]
@@ -153,12 +156,19 @@ fmt = "ruff format"
 lint = "ruff check . --fix"
 cython-lint = { cmd = "cython-lint .", cwd = "fastcan" }
 type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
-spell = "codespell"
+spell = "codespell fastcan"
 
 [tool.pixi.feature.docs.tasks]
 doc = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [{ arg = "SPHINXBUILD", default = "sphinx-build" }, { arg = "CMD", default = "html" }, { arg = "SOURCEDIR", default = "." }, { arg = "BUILDDIR", default = "_build" }, { arg = "SPHINXOPTS", default = "" }] }
 doc-clean = { cmd = "rm -rf {{ BUILDDIR }} generated auto_examples jupyterlite_contents .jupyterlite.doit.db _contents _output .cache", cwd = "doc", args = [{ arg = "BUILDDIR", default = "_build" }] }
 doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
+doc-plantuml = { cmd = "plantuml -tsvg {{ SOURCE }} -o {{ OUTPUT }}", cwd = "doc", args = [{ arg = "SOURCE", default = "diagram.puml" }, { arg = "OUTPUT", default = "_build" }] }
+# The setting (pixi config set --local run-post-link-scripts insecure) is required before install the environment,
+# otherwise graphviz will not generate its plugin config. See:
+# https://github.com/prefix-dev/pixi/blob/8aad97b5ac6482cdf0d3167fdaf0cb26328cc9c4/CHANGELOG.md?plain=1#L899
+doc-plantuml-test = "plantuml -testdot"
+doc-jupyterlite-debug = { cmd = "jupyter-lite build --debug --output-dir {{ OUTPUT }}", cwd = "doc", args = [{ arg = "OUTPUT", default = "_output" }] }
+
 
 [tool.pixi.feature.nogil.tasks]
 nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
@@ -176,7 +186,8 @@ pyodide-download = '''bash -c "[ -d pyodide ] || (LATEST_TAG=$(curl -s https://a
 pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directory .", cwd = "pyodide", depends-on = ["pyodide-download", "pyodide-build-recipe"] }
 
 [tool.pixi.environments]
-dev = ["docs", "test", "build", "jupyter", "asv"]
+dev = ["test", "build", "jupyter", "asv"]
+docs = ["docs"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
@@ -196,6 +207,7 @@ skip = [
     "./asv_benchmarks/html",
     "./asv_benchmarks/results",
     "./asv_benchmarks/benchmarks/cache",
+    "./emsdk",
 ]
 ignore-words-list = [
     "MIS", # magnetic impedance spectroscopy (MIS)
