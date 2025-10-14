@@ -8351,7 +8351,7 @@ packages:
 - pypi: ./
   name: fastcan
   version: 0.4.1
-  sha256: 0c3bd4756f12a17bb430db6172b64124f1833e15085fa57c9d7e53801d2f30b5
+  sha256: 07bc539901f32163cadb6d96549d0b169fcc4577e48a210c96fc82b04e953309
   requires_dist:
   - scikit-learn>=1.7.0,!=1.7.1
   requires_python: '>=3.10'

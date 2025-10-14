@@ -144,7 +144,7 @@ asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-o
 
 [tool.pixi.feature.test.tasks]
 test = "pytest"
-test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "PACKAGE", default = "fastcan" }, { arg = "FMT", default = "html" }] }
+test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "FMT", default = "html" }, { arg = "PACKAGE", default = "fastcan" }] }
 
 [tool.pixi.feature.build.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
