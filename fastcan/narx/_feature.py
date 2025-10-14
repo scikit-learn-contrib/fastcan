@@ -6,6 +6,7 @@ Time-series features for NARX model.
 # SPDX-License-Identifier: MIT
 
 import math
+import warnings
 from itertools import combinations_with_replacement
 from numbers import Integral
 
@@ -198,12 +199,16 @@ def make_poly_features(X, ids):
             None,
             Interval(Integral, 1, None, closed="left"),
         ],
+        "max_poly": [None, Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
     },
     prefer_skip_nested_validation=True,
 )
 def make_poly_ids(
     n_features=1,
     degree=1,
+    max_poly=None,
+    random_state=None,
 ):
     """Generate ids for polynomial features.
     (variable_index, variable_index, ...)
@@ -216,6 +221,15 @@ def make_poly_ids(
 
     degree : int, default=1
         The maximum degree of polynomial features.
+
+    max_poly : int, default=None
+        Maximum number of ids of polynomial features to generate.
+        Randomly selected by reservoir sampling.
+        If None, all possible ids are returned.
+
+    random_state : int or RandomState instance, default=None
+        Used when `max_poly` is not None to subsample ids of polynomial features.
+        See :term:`Glossary <random_state>` for details.
 
     Returns
     -------
@@ -236,29 +250,45 @@ def make_poly_ids(
            [1, 2, 2],
            [2, 2, 2]])
     """
-    n_outputs = math.comb(n_features + degree, degree) - 1
-    if n_outputs > np.iinfo(np.intp).max:
+    n_total = math.comb(n_features + degree, degree) - 1
+    if n_total > np.iinfo(np.intp).max:
         msg = (
-            "The output that would result from the current configuration would"
-            f" have {n_outputs} features which is too large to be"
-            f" indexed by {np.intp().dtype.name}."
+            "The current configuration would "
+            f"result in {n_total} features which is too large to be "
+            f"indexed by {np.intp().dtype.name}."
         )
         raise ValueError(msg)
-
-    ids = np.array(
-        list(
-            combinations_with_replacement(
-                range(n_features + 1),
-                degree,
-            )
+    if n_total > 10_000_000:
+        warnings.warn(
+            "Total number of polynomial features is larger than 10,000,000! "
+            f"The current configuration would result in {n_total} features. "
+            "This may take a while.",
+            UserWarning,
         )
-    )
+    if max_poly is not None and max_poly < n_total:
+        # reservoir sampling
+        rng = np.random.default_rng(random_state)
+        reservoir = []
+        for i, comb in enumerate(
+            combinations_with_replacement(range(n_features + 1), degree)
+        ):
+            if i < max_poly:
+                reservoir.append(comb)
+            else:
+                j = rng.integers(0, i + 1)
+                if j < max_poly:
+                    reservoir[j] = comb
+        ids = np.array(reservoir)
+    else:
+        ids = np.array(
+            list(combinations_with_replacement(range(n_features + 1), degree))
+        )
 
     const_id = np.where((ids == 0).all(axis=1))
     return np.delete(ids, const_id, 0)  # remove the constant feature
 
 
-def _valiate_time_shift_poly_ids(
+def _validate_time_shift_poly_ids(
     time_shift_ids, poly_ids, n_samples=None, n_features=None, n_outputs=None
 ):
     if n_samples is None:
@@ -496,7 +526,7 @@ def tp2fd(time_shift_ids, poly_ids):
     [[-1  1]
      [ 2  3]]
     """
-    _time_shift_ids, _poly_ids = _valiate_time_shift_poly_ids(
+    _time_shift_ids, _poly_ids = _validate_time_shift_poly_ids(
         time_shift_ids,
         poly_ids,
     )

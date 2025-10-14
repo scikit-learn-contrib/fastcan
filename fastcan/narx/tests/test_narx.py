@@ -29,9 +29,17 @@ def test_narx_is_sklearn_estimator():
         check_estimator(NARX(), expected_failed_checks=expected_failures)
 
 
-def test_poly_ids():
-    with pytest.raises(ValueError, match=r"The output that would result from the .*"):
+def test_poly_ids(monkeypatch):
+    with pytest.raises(ValueError, match=r"The current configuration would .*"):
         make_poly_ids(10, 1000)
+
+    # Mock combinations_with_replacement to avoid heavy computation
+    monkeypatch.setattr(
+        "fastcan.narx._feature.combinations_with_replacement",
+        lambda *args, **kwargs: iter([[0, 0]]),
+    )
+    with pytest.warns(UserWarning, match=r"Total number of polynomial features .*"):
+        make_poly_ids(18, 10)
 
 
 def test_time_ids():
@@ -551,6 +559,57 @@ def test_make_narx_refine_print(capsys):
     )
     captured = capsys.readouterr()
     assert "No. of iterations: " in captured.out
+
+
+def test_make_narx_max_candidates():
+    """Test max_candidates and random_state in make_narx."""
+    rng = np.random.default_rng(12345)
+    X = rng.random((100, 2))
+    y = rng.random((100, 1))
+    max_delay = 3
+    poly_degree = 10
+    n_terms_to_select = 5
+    max_candidates = 20
+
+    # With the same random_state, the results should be identical
+    narx1 = make_narx(
+        X,
+        y,
+        n_terms_to_select=n_terms_to_select,
+        max_delay=max_delay,
+        poly_degree=poly_degree,
+        max_candidates=max_candidates,
+        random_state=123,
+        verbose=0,
+    )
+    narx2 = make_narx(
+        X,
+        y,
+        n_terms_to_select=n_terms_to_select,
+        max_delay=max_delay,
+        poly_degree=poly_degree,
+        max_candidates=max_candidates,
+        random_state=123,
+        verbose=0,
+    )
+    assert_array_equal(narx1.feat_ids, narx2.feat_ids)
+    assert_array_equal(narx1.delay_ids, narx2.delay_ids)
+
+    # With different random_state, the results should be different
+    narx3 = make_narx(
+        X,
+        y,
+        n_terms_to_select=n_terms_to_select,
+        max_delay=max_delay,
+        poly_degree=poly_degree,
+        max_candidates=max_candidates,
+        random_state=456,
+        verbose=0,
+    )
+    assert not np.array_equal(narx1.feat_ids, narx3.feat_ids)
+
+    # Check if number of selected terms is correct
+    assert narx1.feat_ids.shape[0] == n_terms_to_select
 
 
 @pytest.mark.parametrize("max_delay", [1, 3, 7, 10])

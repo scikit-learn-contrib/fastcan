@@ -143,8 +143,8 @@ asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
 asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
 
 [tool.pixi.feature.test.tasks]
-test = "pytest ./tests ./fastcan/narx/tests"
-test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }} .", args = [{ arg = "PACKAGE", default = "fastcan" }, { arg = "FMT", default = "html" }] }
+test = "pytest"
+test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "PACKAGE", default = "fastcan" }, { arg = "FMT", default = "html" }] }
 
 [tool.pixi.feature.build.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
@@ -191,6 +191,12 @@ docs = ["docs"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
+
+[tool.pytest.ini_options]
+testpaths = [ 
+    "./tests",
+    "./fastcan/narx/tests",
+]
 
 [tool.coverage.run]
 omit = ["**/tests/*"]

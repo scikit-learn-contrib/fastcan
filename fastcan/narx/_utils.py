@@ -7,7 +7,11 @@ from numbers import Integral
 
 import numpy as np
 from scipy.stats import rankdata
-from sklearn.utils import check_array, check_consistent_length, column_or_1d
+from sklearn.utils import (
+    check_array,
+    check_consistent_length,
+    column_or_1d,
+)
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import check_is_fitted
 
@@ -132,6 +136,8 @@ def print_narx(
             Interval(Integral, 1, None, closed="left"),
         ],
         "fit_intercept": ["boolean"],
+        "max_candidates": [None, Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
         "include_zero_delay": [None, "array-like"],
         "static_indices": [None, "array-like"],
         "refine_verbose": ["verbose"],
@@ -155,6 +161,8 @@ def make_narx(
     poly_degree=1,
     *,
     fit_intercept=True,
+    max_candidates=None,
+    random_state=None,
     include_zero_delay=None,
     static_indices=None,
     refine_verbose=1,
@@ -185,6 +193,15 @@ def make_narx(
 
     fit_intercept : bool, default=True
         Whether to fit the intercept. If set to False, intercept will be zeros.
+
+    max_candidates : int, default=None
+        Maximum number of candidate polynomial terms retained before selection.
+        Randomly selected by reservoir sampling.
+        If None, all candidates are considered.
+
+    random_state : int or RandomState instance, default=None
+        Used when `max_candidates` is not None to subsample candidate terms.
+        See :term:`Glossary <random_state>` for details.
 
     include_zero_delay : {None, array-like} of shape (n_features,) default=None
         Whether to include the original (zero-delay) features.
@@ -306,6 +323,8 @@ def make_narx(
     poly_ids_all = make_poly_ids(
         time_shift_ids_all.shape[0],
         poly_degree,
+        max_poly=max_candidates,
+        random_state=random_state,
     )
     poly_terms = make_poly_features(time_shift_vars, poly_ids_all)
 
