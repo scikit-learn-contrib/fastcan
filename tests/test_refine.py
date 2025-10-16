@@ -6,7 +6,7 @@ from sklearn.datasets import make_classification
 from fastcan import FastCan, refine
 
 
-def test_select_refine_cls():
+def test_select_refine_cls(capsys):
     # Test whether refine work correctly with random samples.
     n_samples = 200
     n_features = 20
@@ -30,6 +30,8 @@ def test_select_refine_cls():
 
     selector = FastCan(n_to_select).fit(X, y)
     _, scores_1 = refine(selector, drop=1)
+    captured = capsys.readouterr()
+    assert "No. of iterations: 19," in captured.out
     _, scores_23 = refine(selector, drop=[2, 3], verbose=0)
     _, scores_all = refine(selector, drop="all", max_iter=20, verbose=1)
 

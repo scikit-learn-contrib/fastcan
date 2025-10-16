@@ -120,7 +120,7 @@ def refine(selector, drop=1, max_iter=None, verbose=1):
     indices_temp = best_indices
     for drop_n in drop:
         i = 0
-        while i < n_features:
+        while i < n_features_to_select:
             rolled_indices = np.r_[
                 indices_include, np.roll(indices_temp[n_inclusions:], -1)
             ]
