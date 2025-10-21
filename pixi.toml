@@ -1,0 +1,145 @@
+[workspace]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
+
+[dependencies]
+python = ">=3.10"
+scikit-learn = ">=1.7.0,!=1.7.1"
+cython = ">=3.1.0" # build dependencies
+meson-python = ">=0.18.0" # build dependencies
+
+[target.osx-64.dependencies]
+compilers = "*" # build dependencies
+
+[target.osx-arm64.dependencies]
+compilers = "*" # build dependencies
+
+[pypi-dependencies]
+fastcan = { path = ".", editable = true }
+
+[feature.docs.dependencies]
+pydata-sphinx-theme = "*"
+matplotlib = "*"
+pandas = "*"
+sphinx-gallery = "*"
+sphinx-design = "*"
+sphinxcontrib-plantuml = "*"
+jupyterlite-sphinx = "*"
+jupyterlite-xeus = "*"
+pip = "*" # Required by xeus environment creation
+graphviz = "<13"
+
+[feature.docs.target.win-64.dependencies]
+plantuml = "*"
+
+[feature.docs.target.linux-64.dependencies]
+plantuml = "*"
+
+[feature.docs.target.osx-arm64.dependencies]
+plantuml = "*"
+
+[feature.docs.target.osx-64.dependencies]
+plantuml = "*"
+
+[feature.wasm.dependencies]
+pip = "*"
+pyodide-build = "*"
+prettier = "*"
+
+[feature.asv.dependencies]
+asv = "*"
+libmambapy = "*"
+conda-build = "*"
+
+[feature.jupyter.dependencies]
+notebook = "*"
+matplotlib = "*"
+pyarrow = "*"
+
+[feature.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+pandas = "*"
+
+[feature.static.dependencies]
+# Static analysis tools
+ruff = "*"
+cython-lint = "*"
+mypy = "*"
+codespell = "*"
+
+
+[feature.build.dependencies]
+python-build = "*"
+pip = "*"
+
+[feature.nogil.dependencies]
+python-freethreading = "*"
+cython = ">=3.1.0" # build dependencies
+meson-python = ">=0.18.0" # build dependencies
+
+[feature.nogil.pypi-dependencies]
+scikit-learn = ">=1.7.0,!=1.7.1"
+fastcan = { path = ".", editable = true }
+
+[tasks]
+time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
+time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "cumtime" }] }
+time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
+profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "tottime" }] }
+
+[feature.asv.tasks]
+asv-build = { cmd = "python -m asv machine --machine {{ MACHINE }} --yes && python -m asv run --show-stderr -v --machine {{ MACHINE }} {{ EXTRA_ARGS }}", cwd = "asv_benchmarks", args = [{ arg = "MACHINE", default = "MacOS-M1" }, { arg = "EXTRA_ARGS", default = "" }] }
+asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
+asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
+
+[feature.test.tasks]
+test = "pytest"
+test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "FMT", default = "html" }, { arg = "PACKAGE", default = "fastcan" }] }
+
+[feature.build.tasks]
+build-wheel = "rm -rf dist && python -m build -wnx -Cinstall-args=--tags=runtime,python-runtime,devel"
+build-sdist = "rm -rf dist && python -m build --sdist"
+rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
+
+[feature.static.tasks]
+fmt = "ruff format"
+lint = "ruff check . --fix"
+cython-lint = { cmd = "cython-lint .", cwd = "fastcan" }
+type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
+spell = "codespell fastcan"
+
+[feature.docs.tasks]
+doc = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [{ arg = "SPHINXBUILD", default = "sphinx-build" }, { arg = "CMD", default = "html" }, { arg = "SOURCEDIR", default = "." }, { arg = "BUILDDIR", default = "_build" }, { arg = "SPHINXOPTS", default = "" }] }
+doc-clean = { cmd = "rm -rf {{ BUILDDIR }} generated auto_examples jupyterlite_contents .jupyterlite.doit.db _contents _output .cache", cwd = "doc", args = [{ arg = "BUILDDIR", default = "_build" }] }
+doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
+doc-plantuml = { cmd = "plantuml -tsvg {{ SOURCE }} -o {{ OUTPUT }}", cwd = "doc", args = [{ arg = "SOURCE", default = "diagram.puml" }, { arg = "OUTPUT", default = "_build" }] }
+# The setting (pixi config set --local run-post-link-scripts insecure) is required before install the environment,
+# otherwise graphviz will not generate its plugin config. See:
+# https://github.com/prefix-dev/pixi/blob/8aad97b5ac6482cdf0d3167fdaf0cb26328cc9c4/CHANGELOG.md?plain=1#L899
+doc-plantuml-test = "plantuml -testdot"
+doc-jupyterlite-debug = { cmd = "jupyter-lite build --debug --output-dir {{ OUTPUT }}", cwd = "doc", args = [{ arg = "OUTPUT", default = "_output" }] }
+
+
+[feature.nogil.tasks]
+nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
+nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+
+[feature.wasm.tasks]
+emsdk-clone = "bash -c '[ -d emsdk ] || git clone https://github.com/emscripten-core/emsdk.git emsdk'"
+pyodide-compatible = "pyodide xbuildenv search -a"
+pyodide-toolchain = { cmd = "LATEST_COMPATIBLE=$(pyodide xbuildenv search -a | grep '│ Yes' | head -n 1 | awk -F '│' '{print $2}' | xargs) && pyodide xbuildenv install $LATEST_COMPATIBLE" }
+emsdk-setup = { cmd = "PYODIDE_EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) && ./emsdk install $PYODIDE_EMSCRIPTEN_VERSION && ./emsdk activate $PYODIDE_EMSCRIPTEN_VERSION", cwd = "emsdk", depends-on = ["emsdk-clone", "pyodide-toolchain"] }
+pyodide-build = { cmd = "bash -c 'source emsdk/emsdk_env.sh && pyodide build'", depends-on = ["emsdk-setup"] }
+pyodide-create-recipe = "rm -rf packages && pyodide skeleton pypi fastcan"
+pyodide-build-recipe = { cmd = "rm -rf dist && bash -c 'source emsdk/emsdk_env.sh && pyodide build-recipes fastcan --install'", depends-on = ["emsdk-setup"] }
+pyodide-download = '''bash -c "[ -d pyodide ] || (LATEST_TAG=$(curl -s https://api.github.com/repos/pyodide/pyodide/releases/latest | grep \"tag_name\" | cut -d \" -f4) && curl -L https://github.com/pyodide/pyodide/releases/download/${LATEST_TAG}/pyodide-${LATEST_TAG}.tar.bz2 | tar -xjf -)"'''
+pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directory .", cwd = "pyodide", depends-on = ["pyodide-download", "pyodide-build-recipe"] }
+
+[environments]
+dev = ["test", "build", "jupyter", "asv"]
+docs = ["docs"]
+static = { features = ["static"], no-default-feature = true }
+nogil = { features = ["nogil"], no-default-feature = true }
+wasm = { features = ["wasm"], no-default-feature = true }

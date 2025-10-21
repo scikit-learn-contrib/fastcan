@@ -113,8 +113,10 @@ For more information about free-threaded CPython, check `how to install a free-t
 
 Support WASM Wheels
 -------------------
-fastcan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.com/pyodide/pyodide>`_, and they are available on the assets of GitHub releases.
-You can try it in a `REPL <https://pyodide.org/en/stable/console.html>`_ directly in a browser.
+fastcan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.com/pyodide/pyodide>`_.
+You can try it in a `REPL <https://pyodide.org/en/stable/console.html>`_ directly in a browser, without installation.
+However, the version of fastcan may be delayed in pyodide. If the latest fastcan WASM wheels are required, you can find them
+on the assets of GitHub releases, and the installation is required.
 The WASM wheels of fastcan can be installed by
 
 >>> import micropip # doctest: +SKIP
