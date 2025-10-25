@@ -5,7 +5,6 @@ Fast canonical correlation analysis based selector.
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
-from copy import deepcopy
 from numbers import Integral, Real
 
 import numpy as np
@@ -17,7 +16,8 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ._cancorr_fast import _forward_search  # type: ignore[attr-defined]
+from ._beam import _beam_search
+from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
 
 
 class FastCan(SelectorMixin, BaseEstimator):
@@ -45,6 +45,13 @@ class FastCan(SelectorMixin, BaseEstimator):
         When abs(w.T*x) > `tol`, the modified Gram-Schmidt is failed as
         the feature `x` is linear dependent to the selected features,
         and `mask` for that feature will True.
+
+    beam_width : int, default=1
+        The beam width for beam search.
+        When `beam_width` = 1, use greedy search.
+        When `beam_width` > 1, use beam search.
+
+        .. versionadded:: 0.5
 
     verbose : int, default=1
         The verbosity level.
@@ -114,6 +121,9 @@ class FastCan(SelectorMixin, BaseEstimator):
         "indices_exclude": [None, "array-like"],
         "eta": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="neither")],
+        "beam_width": [
+            Interval(Integral, 1, None, closed="left"),
+        ],
         "verbose": ["verbose"],
     }
 
@@ -125,6 +135,7 @@ class FastCan(SelectorMixin, BaseEstimator):
         indices_exclude=None,
         eta=False,
         tol=0.01,
+        beam_width=1,
         verbose=1,
     ):
         self.n_features_to_select = n_features_to_select
@@ -132,6 +143,7 @@ class FastCan(SelectorMixin, BaseEstimator):
         self.indices_exclude = indices_exclude
         self.eta = eta
         self.tol = tol
+        self.beam_width = beam_width
         self.verbose = verbose
 
     def fit(self, X, y):
@@ -204,15 +216,16 @@ class FastCan(SelectorMixin, BaseEstimator):
                 "`indices_include` and `indices_exclude` should not have intersection."
             )
 
-        n_candidates = (
-            n_features - self.indices_exclude_.size - self.n_features_to_select
-        )
-        if n_candidates < 0:
+        if (
+            n_features - self.indices_exclude_.size
+            < self.n_features_to_select + self.beam_width - 1
+        ):
             raise ValueError(
-                "n_features - n_features_to_select - n_exclusions should >= 0."
+                "n_features - n_exclusions should >= "
+                "n_features_to_select + beam_width - 1."
             )
-        if self.n_features_to_select - self.indices_include_.size < 0:
-            raise ValueError("n_features_to_select - n_inclusions should >= 0.")
+        if self.n_features_to_select < self.indices_include_.size:
+            raise ValueError("n_features_to_select should >= n_inclusions.")
 
         if self.eta:
             xy_hstack = np.hstack((X, y))
@@ -235,9 +248,28 @@ class FastCan(SelectorMixin, BaseEstimator):
             self.indices_exclude_,
         )
 
+        if self.beam_width > 1:
+            indices = _beam_search(
+                X=self.X_transformed_.copy(order="F"),
+                V=self.y_transformed_,
+                n_features_to_select=self.n_features_to_select,
+                beam_width=self.beam_width,
+                indices_include=list(self.indices_include_.copy()),
+                mask_exclude=mask.astype(bool, copy=True),
+                tol=self.tol,
+                verbose=self.verbose,
+            )
+
+            indices, scores, mask = _prepare_search(
+                n_features,
+                self.n_features_to_select,
+                indices,
+                self.indices_exclude_,
+            )
+
         n_threads = _openmp_effective_n_threads()
-        _forward_search(
-            X=deepcopy(self.X_transformed_),
+        _greedy_search(
+            X=self.X_transformed_.copy(order="F"),
             V=self.y_transformed_,
             t=self.n_features_to_select,
             tol=self.tol,

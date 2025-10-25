@@ -125,7 +125,7 @@ cdef void _mgsvv(
 
 
 @final
-cpdef int _forward_search(
+cpdef int _greedy_search(
     floating[::1, :] X,               # IN/OUT
     floating[::1, :] V,               # IN
     int t,                            # IN

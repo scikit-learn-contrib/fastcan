@@ -5,7 +5,6 @@ Mini-batch selection.
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
-from copy import deepcopy
 from numbers import Integral, Real
 
 import numpy as np
@@ -13,7 +12,7 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_X_y
 
-from ._cancorr_fast import _forward_search  # type: ignore[attr-defined]
+from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
 from ._fastcan import _prepare_search
 
 
@@ -118,8 +117,8 @@ def minibatch(X, y, n_features_to_select=1, batch_size=1, tol=0.01, verbose=1):
                 indices_select,
             )
             try:
-                _forward_search(
-                    X=deepcopy(X_transformed_),
+                _greedy_search(
+                    X=np.copy(X_transformed_, order="F"),
                     V=y_i,
                     t=batch_size_temp,
                     tol=tol,
@@ -130,7 +129,7 @@ def minibatch(X, y, n_features_to_select=1, batch_size=1, tol=0.01, verbose=1):
                     scores=scores,
                 )
             except RuntimeError:
-                # If the batch size is too large, _forward_search cannot find enough
+                # If the batch size is too large, _greedy_search cannot find enough
                 # samples to form a non-singular matrix. Then, reduce the batch size.
                 indices = indices[indices != -1]
                 batch_size_temp = indices.size

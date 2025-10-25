@@ -18,7 +18,7 @@ jobs:
       id-token: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           path: dist/
           merge-multiple: true
@@ -29,7 +29,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: get wasm dist artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: wasm_wheel
           path: wasm/

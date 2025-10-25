@@ -5,7 +5,6 @@ Refine fastcan selection results.
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
-from copy import deepcopy
 from numbers import Integral
 
 import numpy as np
@@ -13,7 +12,7 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import check_is_fitted
 
-from ._cancorr_fast import _forward_search  # type: ignore[attr-defined]
+from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
 from ._fastcan import FastCan, _prepare_search
 
 
@@ -88,7 +87,7 @@ def refine(selector, drop=1, max_iter=None, verbose=1):
     Indices: [1 2] , SSC: 1.00000
     """
     check_is_fitted(selector)
-    X_transformed_ = deepcopy(selector.X_transformed_)
+    X_transformed_ = np.copy(selector.X_transformed_, order="F")
     n_features = selector.n_features_in_
     n_features_to_select = selector.n_features_to_select
     indices_include = selector.indices_include_
@@ -130,7 +129,7 @@ def refine(selector, drop=1, max_iter=None, verbose=1):
                 rolled_indices[:-drop_n],
                 indices_exclude,
             )
-            _forward_search(
+            _greedy_search(
                 X=X_transformed_,
                 V=selector.y_transformed_,
                 t=selector.n_features_to_select,

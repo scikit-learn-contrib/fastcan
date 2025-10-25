@@ -19,7 +19,8 @@ def test_fastcan_is_sklearn_estimator():
     check_estimator(FastCan())
 
 
-def test_select_kbest_classif():
+@pytest.mark.parametrize("beam_width", [1, 3])
+def test_select_kbest_classif(beam_width):
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the k best heuristic
@@ -47,6 +48,7 @@ def test_select_kbest_classif():
 
     correlation_filter = FastCan(
         n_features_to_select=n_informative,
+        beam_width=beam_width,
     )
     correlation_filter.fit(X, y)
     ssc = correlation_filter.scores_.sum()
@@ -60,7 +62,8 @@ def test_select_kbest_classif():
     assert_array_equal(support, gtruth)
 
 
-def test_indices_include_exclude():
+@pytest.mark.parametrize("beam_width", [1, 2])
+def test_indices_include_exclude(beam_width):
     # Test whether fastcan can select informative features based
     # on some pre-include features and pre-exclude features
     n_samples = 20
@@ -80,10 +83,14 @@ def test_indices_include_exclude():
     )
 
     include_filter = FastCan(
-        n_features_to_select=n_informative, indices_include=indices_params
+        n_features_to_select=n_informative,
+        indices_include=indices_params,
+        beam_width=beam_width,
     )
     exclude_filter = FastCan(
-        n_features_to_select=n_informative, indices_exclude=indices_params
+        n_features_to_select=n_informative,
+        indices_exclude=indices_params,
+        beam_width=beam_width,
     )
     include_filter.fit(X, y)
     exclude_filter.fit(X, y)
@@ -129,7 +136,8 @@ def test_ssc_consistent_with_cca():
     assert_almost_equal(actual=ssc, desired=gtruth_ssc)
 
 
-def test_h_eta_consistency():
+@pytest.mark.parametrize("beam_width", [1, 2])
+def test_h_eta_consistency(beam_width):
     # Test whether the ssc got from h-correlation is
     # consistent with the ssc got from eta-cosine
     n_samples = 200
@@ -148,11 +156,16 @@ def test_h_eta_consistency():
         random_state=0,
     )
 
-    h_correlation = FastCan(n_features_to_select=n_to_select, eta=False)
-    eta_cosine = FastCan(n_features_to_select=n_to_select, eta=True)
+    h_correlation = FastCan(
+        n_features_to_select=n_to_select, eta=False, beam_width=beam_width
+    )
+    eta_cosine = FastCan(
+        n_features_to_select=n_to_select, eta=True, beam_width=beam_width
+    )
     h_correlation.fit(X, y)
     eta_cosine.fit(X, y)
-    assert_array_almost_equal(h_correlation.scores_, eta_cosine.scores_)
+    assert_array_almost_equal(h_correlation.scores_.sum(), eta_cosine.scores_.sum())
+    assert set(h_correlation.indices_) == set(eta_cosine.indices_)
 
 
 def test_raise_errors():
@@ -224,10 +237,10 @@ def test_raise_errors():
     with pytest.raises(ValueError, match=r"`indices_include` and `indices_exclu.*"):
         selector_include_exclude_intersect.fit(X, y)
 
-    with pytest.raises(ValueError, match=r"n_features - n_features_to_select - n_e.*"):
+    with pytest.raises(ValueError, match=r"n_features - n_exclusions should.*"):
         selector_n_candidates.fit(X, y)
 
-    with pytest.raises(ValueError, match=r"n_features_to_select - n_inclusions sho.*"):
+    with pytest.raises(ValueError, match=r"n_features_to_select should.*"):
         selector_too_many_inclusions.fit(X, y)
 
 
@@ -247,6 +260,3 @@ def test_cython_errors():
     with pytest.raises(RuntimeError, match=r"No candidate feature can .*"):
         # No candidate
         selector_no_cand.fit(np.c_[x_sub, x_sub[:, 0] + x_sub[:, 1]], y)
-
-
-test_indices_include_exclude()
