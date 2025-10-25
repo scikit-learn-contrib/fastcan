@@ -1,1 +1,1 @@
-{"regressions": []}
+{"regressions": [["narx.NARXBenchmark.time_fit('msa')", "graphs/branch-main/machine-ubuntu-latest/pandas/python-3.13/scikit-learn/narx.NARXBenchmark.time_fit.json", {"machine": "ubuntu-latest"}, 1, 2.259871071500001, 1.4764277759999942, [[null, 291, 1.4764277759999942, 2.259871071500001]]]]}
