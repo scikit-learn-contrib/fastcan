@@ -237,7 +237,7 @@ def test_raise_errors():
     with pytest.raises(ValueError, match=r"`indices_include` and `indices_exclu.*"):
         selector_include_exclude_intersect.fit(X, y)
 
-    with pytest.raises(ValueError, match=r"n_features - n_exclusions should.*"):
+    with pytest.raises(ValueError, match=r"n_features_to_select should <=.*"):
         selector_n_candidates.fit(X, y)
 
     with pytest.raises(ValueError, match=r"n_features_to_select should.*"):

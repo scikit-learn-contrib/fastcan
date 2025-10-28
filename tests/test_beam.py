@@ -34,6 +34,15 @@ def test_beam_error():
     y = rng.normal(size=n_samples)
 
     X = X_origin.copy()
+    # Should pass without error
+    FastCan(n_features_to_select=1, beam_width=n_features).fit(X, y)
+    # Should raise an error
+    with pytest.raises(ValueError, match=r"beam_width should <= .*"):
+        FastCan(n_features_to_select=1, indices_include=[0], beam_width=n_features).fit(
+            X, y
+        )
+
+    X = X_origin.copy()
     X[:, [0, 1, 2]] = 0  # Zero feature
     with pytest.raises(ValueError, match=r"Beam Search: Not enough valid candidates.*"):
         FastCan(n_features_to_select=17, beam_width=3).fit(X, y)

@@ -216,16 +216,20 @@ class FastCan(SelectorMixin, BaseEstimator):
                 "`indices_include` and `indices_exclude` should not have intersection."
             )
 
-        if (
-            n_features - self.indices_exclude_.size
-            < self.n_features_to_select + self.beam_width - 1
-        ):
+        if n_features - self.indices_exclude_.size < self.n_features_to_select:
             raise ValueError(
-                "n_features - n_exclusions should >= "
-                "n_features_to_select + beam_width - 1."
+                "n_features_to_select should <= n_features - n_exclusions."
             )
         if self.n_features_to_select < self.indices_include_.size:
             raise ValueError("n_features_to_select should >= n_inclusions.")
+
+        if (
+            self.beam_width
+            > n_features - self.indices_exclude_.size - self.indices_include_.size
+        ):
+            raise ValueError(
+                "beam_width should <= n_features - n_exclusions - n_inclusions."
+            )
 
         if self.eta:
             xy_hstack = np.hstack((X, y))
