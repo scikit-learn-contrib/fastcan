@@ -1,6 +1,6 @@
 {
     "fastcan.FastCanBenchmark.peakmem_fit": {
-        "code": "class FastCanBenchmark:\n    def peakmem_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n            else:\n                eta = True\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "code": "class FastCanBenchmark:\n    def peakmem_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n                beam_width = 1\n            elif alg == \"eta\":\n                eta = True\n                beam_width = 1\n            else:\n                eta = False\n                beam_width = 10\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n                beam_width=beam_width\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "name": "fastcan.FastCanBenchmark.peakmem_fit",
         "param_names": [
             "task",
@@ -13,17 +13,18 @@
             ],
             [
                 "'h'",
-                "'eta'"
+                "'eta'",
+                "'beam'"
             ]
         ],
         "setup_cache_key": "fastcan:21",
         "timeout": 500,
         "type": "peakmemory",
         "unit": "bytes",
-        "version": "2bff765ceeba8ebc662b40d48a34ddfce3f9cb16bc048bc6e29b325c0710512a"
+        "version": "3e96153aee5759f513cde3d17bc0f00a4ead968e0356605bfab7dac5562ea713"
     },
     "fastcan.FastCanBenchmark.peakmem_transform": {
-        "code": "class FastCanBenchmark:\n    def peakmem_transform(self, *args):\n        self.estimator.transform(self.X)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n            else:\n                eta = True\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "code": "class FastCanBenchmark:\n    def peakmem_transform(self, *args):\n        self.estimator.transform(self.X)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n                beam_width = 1\n            elif alg == \"eta\":\n                eta = True\n                beam_width = 1\n            else:\n                eta = False\n                beam_width = 10\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n                beam_width=beam_width\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "name": "fastcan.FastCanBenchmark.peakmem_transform",
         "param_names": [
             "task",
@@ -36,17 +37,18 @@
             ],
             [
                 "'h'",
-                "'eta'"
+                "'eta'",
+                "'beam'"
             ]
         ],
         "setup_cache_key": "fastcan:21",
         "timeout": 500,
         "type": "peakmemory",
         "unit": "bytes",
-        "version": "ccc7a4f9ab9c2cfb2e82498a9466498ca9b2fb7c395e9f79c674074bb4018c00"
+        "version": "e296f0d878505ce505e2bfd57dad3154f644b5b16d22443b624003d04a134c6e"
     },
     "fastcan.FastCanBenchmark.time_fit": {
-        "code": "class FastCanBenchmark:\n    def time_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n            else:\n                eta = True\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "code": "class FastCanBenchmark:\n    def time_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n                beam_width = 1\n            elif alg == \"eta\":\n                eta = True\n                beam_width = 1\n            else:\n                eta = False\n                beam_width = 10\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n                beam_width=beam_width\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "min_run_count": 2,
         "name": "fastcan.FastCanBenchmark.time_fit",
         "number": 0,
@@ -61,7 +63,8 @@
             ],
             [
                 "'h'",
-                "'eta'"
+                "'eta'",
+                "'beam'"
             ]
         ],
         "repeat": 0,
@@ -71,11 +74,11 @@
         "timeout": 500,
         "type": "time",
         "unit": "seconds",
-        "version": "ae78b5ad8412ea9ee1a07ff7915c371a2bcc7c71e2a074520211654c4b317b6a",
+        "version": "158f8e7ba20facf08c1e12c8533110dc303d252ea42c12b0a62e8a9d1e25e04c",
         "warmup_time": -1
     },
     "fastcan.FastCanBenchmark.time_transform": {
-        "code": "class FastCanBenchmark:\n    def time_transform(self, *args):\n        self.estimator.transform(self.X)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n            else:\n                eta = True\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "code": "class FastCanBenchmark:\n    def time_transform(self, *args):\n        self.estimator.transform(self.X)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n                beam_width = 1\n            elif alg == \"eta\":\n                eta = True\n                beam_width = 1\n            else:\n                eta = False\n                beam_width = 10\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n                beam_width=beam_width\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "min_run_count": 2,
         "name": "fastcan.FastCanBenchmark.time_transform",
         "number": 0,
@@ -90,7 +93,8 @@
             ],
             [
                 "'h'",
-                "'eta'"
+                "'eta'",
+                "'beam'"
             ]
         ],
         "repeat": 0,
@@ -100,11 +104,11 @@
         "timeout": 500,
         "type": "time",
         "unit": "seconds",
-        "version": "f567e4f5fce03709f2a8ba3b3e0989b74b5dcb32c2b83c7a3a2880f978e89f74",
+        "version": "97d67879db594ce4834e0d0943407fd260fc9ec80fa4ae2c0f9ea47b4fa7fedb",
         "warmup_time": -1
     },
     "fastcan.FastCanBenchmark.track_test_score": {
-        "code": "class FastCanBenchmark:\n    def track_test_score(self, *args):\n        task, _ = args\n        X_t = self.estimator.transform(self.X_val)\n        if task == \"classif\":\n            clf = LinearDiscriminantAnalysis()\n            clf.fit(X_t, self.y_val)\n            return float(clf.score(X_t, self.y_val))\n        else:\n            reg = LinearRegression()\n            reg.fit(X_t, self.y_val)\n            return float(reg.score(X_t, self.y_val))\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n            else:\n                eta = True\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "code": "class FastCanBenchmark:\n    def track_test_score(self, *args):\n        task, _ = args\n        X_t = self.estimator.transform(self.X_val)\n        if task == \"classif\":\n            clf = LinearDiscriminantAnalysis()\n            clf.fit(X_t, self.y_val)\n            return float(clf.score(X_t, self.y_val))\n        else:\n            reg = LinearRegression()\n            reg.fit(X_t, self.y_val)\n            return float(reg.score(X_t, self.y_val))\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n                beam_width = 1\n            elif alg == \"eta\":\n                eta = True\n                beam_width = 1\n            else:\n                eta = False\n                beam_width = 10\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n                beam_width=beam_width\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "name": "fastcan.FastCanBenchmark.track_test_score",
         "param_names": [
             "task",
@@ -117,17 +121,18 @@
             ],
             [
                 "'h'",
-                "'eta'"
+                "'eta'",
+                "'beam'"
             ]
         ],
         "setup_cache_key": "fastcan:21",
         "timeout": 500,
         "type": "track",
         "unit": "unit",
-        "version": "cb7d948ad21f20387c2971eae1703cf93c1f12021a23768380d3c5466ca156fb"
+        "version": "ceaa48cdc0944abe7e06c308c07f978db8d14aba308458bd0d698bda6410546c"
     },
     "fastcan.FastCanBenchmark.track_train_score": {
-        "code": "class FastCanBenchmark:\n    def track_train_score(self, *args):\n        task, _ = args\n        X_t = self.estimator.transform(self.X)\n        if task == \"classif\":\n            clf = LinearDiscriminantAnalysis()\n            clf.fit(X_t, self.y)\n            return float(clf.score(X_t, self.y))\n        else:\n            reg = LinearRegression()\n            reg.fit(X_t, self.y)\n            return float(reg.score(X_t, self.y))\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n            else:\n                eta = True\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "code": "class FastCanBenchmark:\n    def track_train_score(self, *args):\n        task, _ = args\n        X_t = self.estimator.transform(self.X)\n        if task == \"classif\":\n            clf = LinearDiscriminantAnalysis()\n            clf.fit(X_t, self.y)\n            return float(clf.score(X_t, self.y))\n        else:\n            reg = LinearRegression()\n            reg.fit(X_t, self.y)\n            return float(reg.score(X_t, self.y))\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass FastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            _, alg = params\n            X, _, y, _ = self.make_data(params)\n    \n            if alg == \"h\":\n                eta = False\n                beam_width = 1\n            elif alg == \"eta\":\n                eta = True\n                beam_width = 1\n            else:\n                eta = False\n                beam_width = 10\n            estimator = FastCan(\n                n_features_to_select=20,\n                eta=eta,\n                beam_width=beam_width\n            )\n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "name": "fastcan.FastCanBenchmark.track_train_score",
         "param_names": [
             "task",
@@ -140,14 +145,15 @@
             ],
             [
                 "'h'",
-                "'eta'"
+                "'eta'",
+                "'beam'"
             ]
         ],
         "setup_cache_key": "fastcan:21",
         "timeout": 500,
         "type": "track",
         "unit": "unit",
-        "version": "fd8a3aceddb21b108152ae90e36f9021df59130b996bf33156f1b75479f1d12e"
+        "version": "6b5cf9db68de0c3f3ee806376df44c882b1b3555d6db4f71685842aece9206e6"
     },
     "narx.NARXBenchmark.peakmem_fit": {
         "code": "class NARXBenchmark:\n    def peakmem_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass NARXBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            X, _, y, _ = self.make_data(params)\n            estimator = make_narx(\n                X,\n                y,\n                n_terms_to_select=self.n_terms_to_select,\n                max_delay=self.max_delay,\n                poly_degree=self.poly_degree,\n            )\n    \n            estimator = estimator.fit(X, y, coef_init=\"one_step_ahead\")\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
