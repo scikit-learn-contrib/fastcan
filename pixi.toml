@@ -88,6 +88,7 @@ time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import Fa
 profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "cumtime" }] }
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
 profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "tottime" }] }
+time-beam = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(20, beam_width=3, verbose=0).fit(X, y)'"
 
 [feature.asv.tasks]
 asv-build = { cmd = "python -m asv machine --machine {{ MACHINE }} --yes && python -m asv run --show-stderr -v --machine {{ MACHINE }} {{ EXTRA_ARGS }}", cwd = "asv_benchmarks", args = [{ arg = "MACHINE", default = "MacOS-M1" }, { arg = "EXTRA_ARGS", default = "" }] }

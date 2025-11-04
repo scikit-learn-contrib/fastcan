@@ -16,7 +16,7 @@ class FastCanBenchmark(Benchmark):
     """
 
     param_names = ["task", "alg"]
-    params = (["classif", "reg"], ["h", "eta"])
+    params = (["classif", "reg"], ["h", "eta", "beam"])
 
     def setup_cache(self):
         """Pickle a fitted estimator for all combinations of parameters"""
@@ -30,11 +30,17 @@ class FastCanBenchmark(Benchmark):
 
             if alg == "h":
                 eta = False
-            else:
+                beam_width = 1
+            elif alg == "eta":
                 eta = True
+                beam_width = 1
+            else:
+                eta = False
+                beam_width = 10
             estimator = FastCan(
                 n_features_to_select=20,
                 eta=eta,
+                beam_width=beam_width
             )
             estimator.fit(X, y)
 
