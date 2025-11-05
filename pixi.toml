@@ -14,6 +14,9 @@ compilers = "*" # build dependencies
 [target.osx-arm64.dependencies]
 compilers = "*" # build dependencies
 
+[target.win-64.dependencies]
+compilers = "*" # build dependencies
+
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
 
