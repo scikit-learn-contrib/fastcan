@@ -27,7 +27,7 @@ jobs:
         run: |
           git branch main origin/main
 
-      - uses: prefix-dev/setup-pixi@v0.9.0
+      - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           environments: dev
           cache: true
@@ -93,7 +93,7 @@ jobs:
             cp -r "$d"/* "asv_benchmarks/results/"
           done
 
-      - uses: prefix-dev/setup-pixi@v0.9.0
+      - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           environments: dev
           cache: true

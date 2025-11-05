@@ -3,8 +3,8 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [dependencies]
-python = ">=3.10"
-scikit-learn = ">=1.7.0,!=1.7.1"
+python = ">=3.9"
+scikit-learn = ">=1.6.0"
 cython = ">=3.1.0" # build dependencies
 meson-python = ">=0.18.0" # build dependencies
 
@@ -79,7 +79,7 @@ cython = ">=3.1.0" # build dependencies
 meson-python = ">=0.18.0" # build dependencies
 
 [feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.7.0,!=1.7.1"
+scikit-learn = ">=1.6.0"
 fastcan = { path = ".", editable = true }
 
 [tasks]
@@ -138,9 +138,14 @@ pyodide-build-recipe = { cmd = "rm -rf dist && bash -c 'source emsdk/emsdk_env.s
 pyodide-download = '''bash -c "[ -d pyodide ] || (LATEST_TAG=$(curl -s https://api.github.com/repos/pyodide/pyodide/releases/latest | grep \"tag_name\" | cut -d \" -f4) && curl -L https://github.com/pyodide/pyodide/releases/download/${LATEST_TAG}/pyodide-${LATEST_TAG}.tar.bz2 | tar -xjf -)"'''
 pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directory .", cwd = "pyodide", depends-on = ["pyodide-download", "pyodide-build-recipe"] }
 
+[feature.py39.dependencies]
+python = "==3.9.0"
+scikit-learn = "==1.6.0"
+
 [environments]
 dev = ["test", "build", "jupyter", "asv"]
 docs = ["docs"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
+py39 = { features = ["py39", "test"] }

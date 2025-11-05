@@ -13,7 +13,7 @@ def _beam_search(
     X, V, n_features_to_select, beam_width, indices_include, mask_exclude, tol, verbose
 ):
     """
-    Perform beam search to find the best subset of features.
+    Beam search with SSC.
 
     Parameters:
     X : np.ndarray
@@ -48,12 +48,16 @@ def _beam_search(
             X_support, X_selected = _prepare_candidates(
                 X, mask_exclude, indices_include
             )
+            if X_selected.shape[1] == 0:
+                beams_scores = np.sum((X.T @ V) ** 2, axis=1)
+                beams_scores[~X_support] = 0
+            else:
+                W_selected = orth(X_selected)
+                selected_score = np.sum((W_selected.T @ V) ** 2)
+                beams_scores = _gram_schmidt(
+                    X, X_support, X_selected, selected_score, V, tol
+                )
             beams_selected_ids = [indices_include for _ in range(beam_width)]
-            W_selected = orth(X_selected)
-            selected_score = np.sum((W_selected.T @ V) ** 2)
-            beams_scores = _gram_schmidt(
-                X, X_support, X_selected, selected_score, V, tol
-            )
             beams_selected_ids, top_k_scores = _select_top_k(
                 beams_scores[None, :],
                 beams_selected_ids,
@@ -123,11 +127,9 @@ def _select_top_k(
     return new_ids_selected, top_k_scores
 
 
-def _gram_schmidt(X, X_support, X_selected, selected_score, V, tol, modified=True):
+def _gram_schmidt(X, X_support, X_selected, selected_score, V, tol):
     X = np.copy(X)
-    if modified:
-        # Change to Modified Gram-Schmidt
-        W_selected = orth(X_selected)
+    W_selected = orth(X_selected) # Change to Modified Gram-Schmidt
     scores = np.zeros(X.shape[1])
     for i, support in enumerate(X_support):
         if not support:

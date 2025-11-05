@@ -5,11 +5,11 @@ description = "A fast canonical-correlation-based greedy search algorithm"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
-dependencies = ["scikit-learn>=1.7.0,!=1.7.1"]
+dependencies = ["scikit-learn>=1.6.0"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,6 +19,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -33,7 +34,7 @@ download = "https://pypi.org/project/fastcan/#files"
 tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
 [build-system]
-requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.7.0"]
+requires = ["meson-python>=0.18.0", "Cython>=3.1.0", "scikit-learn>=1.6.0"]
 build-backend = "mesonpy"
 
 # Needed on Windows CI to compile with Visual Studio compiler
