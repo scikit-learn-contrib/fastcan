@@ -141,6 +141,8 @@ pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directo
 [feature.py39.dependencies]
 python = "==3.9.0"
 scikit-learn = "==1.6.0"
+meson-python = "==0.16.0"
+cython = "==3.0.10"
 
 [environments]
 dev = ["test", "build", "jupyter", "asv"]

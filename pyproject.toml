@@ -34,7 +34,13 @@ download = "https://pypi.org/project/fastcan/#files"
 tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
 [build-system]
-requires = ["meson-python>=0.16.0", "Cython>=3.0.10", "scikit-learn>=1.6.0"]
+requires = [
+    "scikit-learn>=1.6.0",
+    "meson-python>=0.18.0; python_version > '3.9'",
+    "Cython>=3.1.0; python_version > '3.9'",
+    "meson-python==0.16.0; python_version == '3.9'",
+    "Cython==3.0.10; python_version == '3.9'",
+]
 build-backend = "mesonpy"
 
 # Needed on Windows CI to compile with Visual Studio compiler
