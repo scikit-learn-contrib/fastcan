@@ -74,9 +74,9 @@ python-build = "*"
 pip = "*"
 
 [feature.nogil.dependencies]
-python-freethreading = "*"
-cython = ">=3.1.0,<3.2" # build dependencies
-meson-python = ">=0.18.0,<0.19" # build dependencies
+python-freethreading = "<3.14"
+cython = ">=3.1.0" # build dependencies
+meson-python = ">=0.18.0" # build dependencies
 
 [feature.nogil.pypi-dependencies]
 scikit-learn = ">=1.6.0"
