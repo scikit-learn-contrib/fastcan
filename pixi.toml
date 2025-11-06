@@ -5,16 +5,13 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 [dependencies]
 python = ">=3.9"
 scikit-learn = ">=1.6.0"
-cython = ">=3.1.0" # build dependencies
-meson-python = ">=0.18.0" # build dependencies
+cython = ">=3.0.10" # build dependencies
+meson-python = ">=0.16.0" # build dependencies
 
 [target.osx-64.dependencies]
 compilers = "*" # build dependencies
 
 [target.osx-arm64.dependencies]
-compilers = "*" # build dependencies
-
-[target.win-64.dependencies]
 compilers = "*" # build dependencies
 
 [pypi-dependencies]
