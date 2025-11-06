@@ -3395,7 +3395,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_8.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2025.10.5-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.0-py314hd8ed1ab_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/cython-3.2.0-py314h3f98dc2_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/cython-3.1.6-py314h3f98dc2_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-75.1-he02047a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.44-h1aa0949_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.7.1-hecca717_0.conda
@@ -3436,7 +3436,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/bzip2-1.0.8-h4777abc_8.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2025.10.5-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.0-py314hd8ed1ab_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.2.0-py314haf28eb1_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.1.6-py314haf28eb1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/ld_impl_linux-aarch64-2.44-hd32f0e1_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/libexpat-2.7.1-hfae3067_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/libffi-3.5.2-hd65408f_0.conda
@@ -3473,7 +3473,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/bzip2-1.0.8-h500dc9f_8.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2025.10.5-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.0-py314hd8ed1ab_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-64/cython-3.2.0-py314hfec9462_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/cython-3.1.6-py314hfec9462_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/libcxx-21.1.5-h3d58e20_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/libexpat-2.7.1-h21dd04a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/libffi-3.5.2-h750e83c_0.conda
@@ -3506,7 +3506,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-hd037594_8.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2025.10.5-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.0-py314hd8ed1ab_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.2.0-py314hf6a52d9_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.1.6-py314hf6a52d9_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/icu-75.1-hfee45f7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-21.1.5-hf598326_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.7.1-hec049ff_0.conda
@@ -3540,7 +3540,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/bzip2-1.0.8-h0ad9c76_8.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2025.10.5-h4c7d964_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.0-py314hd8ed1ab_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.2.0-py314h18447e6_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.1.6-py314h18447e6_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libexpat-2.7.1-hac47afa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libffi-3.5.2-h52bdfb6_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/liblzma-5.8.1-h2466b09_2.conda
@@ -8832,6 +8832,21 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3222886
   timestamp: 1711834224669
+- conda: https://conda.anaconda.org/conda-forge/linux-64/cython-3.1.6-py314h3f98dc2_0.conda
+  sha256: b98eeca5740c19ff12a8895cd6ff0aeb2f638338f04c7aa39bd281a680b3029b
+  md5: 3166a69285ba116d1dbc17d8bd7b20c7
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
+  - libstdcxx >=14
+  - python >=3.14,<3.15.0a0
+  - python_abi 3.14.* *_cp314t
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/cython?source=hash-mapping
+  size: 2212771
+  timestamp: 1761235624050
 - conda: https://conda.anaconda.org/conda-forge/linux-64/cython-3.2.0-py313hc80a56d_0.conda
   sha256: 632115d3a5611233372bc36d0d166b37f6bcc222bdc18944bd7755c0e91bdb8e
   md5: f5852c5411d6fc5fe44077ae6726a42e
@@ -8860,20 +8875,6 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3795247
   timestamp: 1762343246791
-- conda: https://conda.anaconda.org/conda-forge/linux-64/cython-3.2.0-py314h3f98dc2_0.conda
-  sha256: 2be5c4c634f595643cbe6cce6a7ec2d44a9a525575b6853c6b9a701f8e75ed93
-  md5: c1cc889180a7dcb8481ddf931689712b
-  depends:
-  - __glibc >=2.17,<3.0.a0
-  - libgcc >=14
-  - libstdcxx >=14
-  - python >=3.14,<3.15.0a0
-  - python_abi 3.14.* *_cp314t
-  license: Apache-2.0
-  purls:
-  - pkg:pypi/cython?source=hash-mapping
-  size: 2251153
-  timestamp: 1762342625576
 - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.0.10-py39h387a81e_0.conda
   sha256: ef925b07e1180a4824263cfcb8edac8c47db1c3ba0b9ecf58ec754c8344a8068
   md5: 0e917a89f77c978d152099357bd75b22
@@ -8889,6 +8890,21 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3141820
   timestamp: 1711834358610
+- conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.1.6-py314haf28eb1_0.conda
+  sha256: cc72ba709832164570c50729fbba0b237e9e15da196ee23a9bf36b2d8c43a90a
+  md5: b4d051dc4df7ca78edd1060cfbd64494
+  depends:
+  - libgcc >=14
+  - libstdcxx >=14
+  - python >=3.14,<3.15.0a0
+  - python >=3.14,<3.15.0a0 *_cp314t
+  - python_abi 3.14.* *_cp314t
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/cython?source=hash-mapping
+  size: 2206012
+  timestamp: 1761234899173
 - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.2.0-py312he940de5_0.conda
   sha256: 11dbcfe2fd15a93a7aed0c166b315d10c447088841e3b6ba6daf9dc3a22c43ce
   md5: 50307c6357773f916df110a2c7346f98
@@ -8931,20 +8947,6 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3697747
   timestamp: 1762342810286
-- conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.2.0-py314haf28eb1_0.conda
-  sha256: cc79cdb169d6469f66357a0fe8f8a29525710a0d7d36a23580bce27e89daf32b
-  md5: fe76f7aaad58b430783034009e18ee39
-  depends:
-  - libgcc >=14
-  - libstdcxx >=14
-  - python >=3.14,<3.15.0a0
-  - python >=3.14,<3.15.0a0 *_cp314t
-  - python_abi 3.14.* *_cp314t
-  license: Apache-2.0
-  purls:
-  - pkg:pypi/cython?source=hash-mapping
-  size: 2250410
-  timestamp: 1762342458323
 - conda: https://conda.anaconda.org/conda-forge/osx-64/cython-3.0.10-py39hd253f6c_0.conda
   sha256: fc2166384dbcaf9808fec1ecc124dd31151ae00f8a3612447d264456018c51a3
   md5: 11625ca11c0a27eda2a0bc1032f7364d
@@ -8958,6 +8960,20 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 2919392
   timestamp: 1711834529112
+- conda: https://conda.anaconda.org/conda-forge/osx-64/cython-3.1.6-py314hfec9462_0.conda
+  sha256: 816fdaf5cea341f556e11bbec1067509e5d1b204783c6a2337a1070295ed34e3
+  md5: 77cbaaaf0ccbb27c1476fdeedf5dd774
+  depends:
+  - __osx >=10.13
+  - libcxx >=19
+  - python >=3.14,<3.15.0a0
+  - python_abi 3.14.* *_cp314t
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/cython?source=hash-mapping
+  size: 2209597
+  timestamp: 1761234966624
 - conda: https://conda.anaconda.org/conda-forge/osx-64/cython-3.2.0-py313hdeca933_0.conda
   sha256: 37242d1140a61cc9a407ddf6b6b84ce3946d8e34b32eed089325dc91cdf40792
   md5: de11668ca9e9ee6eb28eac02ecbf2386
@@ -8984,19 +9000,6 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3542199
   timestamp: 1762342665644
-- conda: https://conda.anaconda.org/conda-forge/osx-64/cython-3.2.0-py314hfec9462_0.conda
-  sha256: 4b7e923cf5870b86d5be400afca0533d2d5107fe6b0a0ddcb31788d27a6d3fb0
-  md5: ede1f0f2ca8105a55bfab420ed2caf5a
-  depends:
-  - __osx >=10.13
-  - libcxx >=19
-  - python >=3.14,<3.15.0a0
-  - python_abi 3.14.* *_cp314t
-  license: Apache-2.0
-  purls:
-  - pkg:pypi/cython?source=hash-mapping
-  size: 2256696
-  timestamp: 1762342698281
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.0.10-py39hf3050f2_0.conda
   sha256: 192aa29268e277569a39e7660338460499a9ed368433e79ba8daff8098a6a686
   md5: f8fc353d7de6ab63f5a17d050d30886a
@@ -9011,6 +9014,21 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 2895849
   timestamp: 1711834585247
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.1.6-py314hf6a52d9_0.conda
+  sha256: a2d5e9f816f546afc285d842b6f1270acbfd1b61857297c3cdab33a56f9eb89e
+  md5: 8957a7670297ab0c090b531c34601db6
+  depends:
+  - __osx >=11.0
+  - libcxx >=19
+  - python >=3.14,<3.15.0a0
+  - python >=3.14,<3.15.0a0 *_cp314t
+  - python_abi 3.14.* *_cp314t
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/cython?source=hash-mapping
+  size: 3900035
+  timestamp: 1761235301636
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.2.0-py313h66a7184_0.conda
   sha256: 7ede3f2dcefd25cb28927b407c206bf8a7878d8ad1f8578ba89ed079e936b75d
   md5: 4b0618bfd954de42a14129aca7ba9e77
@@ -9039,20 +9057,6 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3500994
   timestamp: 1762343006177
-- conda: https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.2.0-py314hf6a52d9_0.conda
-  sha256: c9d5de2ee2f237993d164d0f4ffdc64bf766da8cfc39a95d98e83bd00e6b33ac
-  md5: 3e0c26c4c485765ce662283da008b70e
-  depends:
-  - __osx >=11.0
-  - libcxx >=19
-  - python >=3.14,<3.15.0a0
-  - python >=3.14,<3.15.0a0 *_cp314t
-  - python_abi 3.14.* *_cp314t
-  license: Apache-2.0
-  purls:
-  - pkg:pypi/cython?source=hash-mapping
-  size: 3961208
-  timestamp: 1762342910647
 - conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.0.10-py39h99910a6_0.conda
   sha256: 80704883c09cd6fe4772024233f3d62a69ced0516b1e1b539fdd5628e67d770e
   md5: 8ebc2fca8a6840d0694f37e698f4e59c
@@ -9068,6 +9072,21 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 2698202
   timestamp: 1711834700065
+- conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.1.6-py314h18447e6_0.conda
+  sha256: 1791593752f8b16b12cf535e6e3f508fd3c1dee15d788d708c070ff366bb0af9
+  md5: dba1d5b09bacbba999e9fd65a7796072
+  depends:
+  - python >=3.14,<3.15.0a0
+  - python_abi 3.14.* *_cp314t
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/cython?source=hash-mapping
+  size: 2227408
+  timestamp: 1761234983886
 - conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.2.0-py313h560b0a0_0.conda
   sha256: e0ca8829ada14859a0704e4d5e095f14c2fd97ffa57e1bfd4dee03d2cc5b1106
   md5: 4cc1573f9d0c9da62e290b23e14682b9
@@ -9082,20 +9101,6 @@ packages:
   - pkg:pypi/cython?source=hash-mapping
   size: 3300242
   timestamp: 1762342752598
-- conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.2.0-py314h18447e6_0.conda
-  sha256: 18c50f5849ac03860598299a82b1a05b7255d1ab6114e426d165e59471ffbaa4
-  md5: 5d73c446ea3e5c98aaa1465b27ee198d
-  depends:
-  - python >=3.14,<3.15.0a0
-  - python_abi 3.14.* *_cp314t
-  - ucrt >=10.0.20348.0
-  - vc >=14.3,<15
-  - vc14_runtime >=14.44.35208
-  license: Apache-2.0
-  purls:
-  - pkg:pypi/cython?source=hash-mapping
-  size: 2273228
-  timestamp: 1762342540242
 - conda: https://conda.anaconda.org/conda-forge/win-64/cython-3.2.0-py314h344ed54_0.conda
   sha256: 6d4d1014fcc79abec0cc2f8eb3847c0dd5966dcc01633da52fd3b541005ac0fb
   md5: 76c9df75192fad40e700166a1ffa7895
