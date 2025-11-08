@@ -45,17 +45,17 @@ def _beam_search(
 
     for i in range(n_features_to_select - n_inclusions):
         if i == 0:
-            X_support, X_selected = _prepare_candidates(
+            mask, X_selected = _prepare_candidates(
                 X, mask_exclude, indices_include
             )
             if X_selected.shape[1] == 0:
                 beams_scores = np.sum((X.T @ V) ** 2, axis=1)
-                beams_scores[~X_support] = 0
+                beams_scores[mask] = 0
             else:
                 W_selected = orth(X_selected)
                 selected_score = np.sum((W_selected.T @ V) ** 2)
-                beams_scores = _gram_schmidt(
-                    X, X_support, X_selected, selected_score, V, tol
+                beams_scores = _mgs_ssc(
+                    X, V, W_selected, mask, selected_score, tol
                 )
             beams_selected_ids = [indices_include for _ in range(beam_width)]
             beams_selected_ids, top_k_scores = _select_top_k(
@@ -66,11 +66,12 @@ def _beam_search(
             continue
         beams_scores = np.zeros((beam_width, n_features))
         for beam_idx in range(beam_width):
-            X_support, X_selected = _prepare_candidates(
+            mask, X_selected = _prepare_candidates(
                 X, mask_exclude, beams_selected_ids[beam_idx]
             )
-            beams_scores[beam_idx] = _gram_schmidt(
-                X, X_support, X_selected, top_k_scores[beam_idx], V, tol
+            W_selected = orth(X_selected)
+            beams_scores[beam_idx] = _mgs_ssc(
+                X, V, W_selected, mask, top_k_scores[beam_idx], tol
             )
         beams_selected_ids, top_k_scores = _select_top_k(
             beams_scores,
@@ -92,10 +93,10 @@ def _beam_search(
 
 
 def _prepare_candidates(X, mask_exclude, indices_selected):
-    X_support = np.copy(~mask_exclude)
-    X_support[indices_selected] = False
+    mask = np.copy(mask_exclude)
+    mask[indices_selected] = True
     X_selected = X[:, indices_selected]
-    return X_support, X_selected
+    return mask, X_selected
 
 
 def _select_top_k(
@@ -127,31 +128,22 @@ def _select_top_k(
     return new_ids_selected, top_k_scores
 
 
-def _gram_schmidt(X, X_support, X_selected, selected_score, V, tol):
+def _mgs_ssc(X, V, W_selected, mask, selected_score, tol):
     X = np.copy(X)
-    W_selected = orth(X_selected) # Change to Modified Gram-Schmidt
-    scores = np.zeros(X.shape[1])
-    for i, support in enumerate(X_support):
-        if not support:
-            continue
-        xi = X[:, i : i + 1]
-        for j in range(W_selected.shape[1]):
-            proj = W_selected[:, j : j + 1].T @ xi
-            xi -= proj * W_selected[:, j : j + 1]
-        wi, X_support[i] = _safe_normalize(xi)
-        if not X_support[i]:
-            continue
-        if np.any(np.abs(wi.T @ W_selected) > tol):
-            X_support[i] = False
-            continue
-        scores[i] = np.sum((wi.T @ V) ** 2)
+    proj = W_selected.T @ X
+    X -= W_selected @ proj
+    W, non_zero_mask = _safe_normalize(X)
+    mask |= non_zero_mask
+    linear_independent_mask = np.any(np.abs(W.T @ W_selected) > tol, axis=1)
+    mask |= linear_independent_mask
+    scores = np.sum((W.T @ V) ** 2, axis=1)
     scores += selected_score
-    scores[~X_support] = 0
+    scores[mask] = 0
     return scores
 
 
 def _safe_normalize(X):
     norm = np.linalg.norm(X, axis=0)
-    non_zero_support = norm != 0
-    norm[~non_zero_support] = 1
-    return X / norm, non_zero_support
+    non_zero_mask = norm == 0
+    norm[non_zero_mask] = 1
+    return X / norm, non_zero_mask

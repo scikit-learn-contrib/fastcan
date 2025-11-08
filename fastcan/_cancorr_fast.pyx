@@ -47,7 +47,7 @@ cdef int _iamax(
 
 
 @final
-cdef bint _normv(
+cdef uint8_t _normv(
     const floating* x,          # IN/OUT
     int n_samples,              # IN
 ) noexcept nogil:
