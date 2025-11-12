@@ -3,10 +3,11 @@
 import numpy as np
 import pytest
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris, make_classification
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.preprocessing import OneHotEncoder
 
 from fastcan import minibatch
+from fastcan.utils import ssc
 
 
 def test_data_pruning():
@@ -60,7 +61,7 @@ def test_select_minibatch_cls():
     assert indices.size == n_to_select
 
 
-def test_minibatch_error():
+def test_minibatch_error_warning():
     # Test refine raise error.
     n_samples = 200
     n_features = 20
@@ -83,3 +84,37 @@ def test_minibatch_error():
 
     with pytest.raises(ValueError, match=r"n_features_to_select .*"):
         _ = minibatch(X, y, n_features + 1, batch_size=3)
+
+    Y = OneHotEncoder(sparse_output=False).fit_transform(y.reshape(-1, 1))
+    Y[:, 0] = 1
+    with pytest.warns(
+        UserWarning, match=r"Contain constant targets, whose indices are .*"
+    ):
+        _ = minibatch(X, Y, 5, batch_size=3)
+
+
+def test_minibatch_ssc_aligned(capsys):
+    # Test whether ssc of minibatch aligns with the true ssc score
+    n_features = 20
+    n_targets = 5
+    n_to_select = 10
+    X, y = make_regression(
+        n_samples=100,
+        n_features=n_features,
+        n_informative=10,
+        n_targets=n_targets,
+        noise=0.1,
+        random_state=0,
+    )
+
+    # The last batch of features are selected for the last target.
+    # The number of features selected per target is n_to_select // n_targets
+    n_features_per_target = n_to_select // n_targets
+    indices = minibatch(X, y, n_to_select, batch_size=n_features_per_target + 1)
+    captured = capsys.readouterr()
+
+    gtruth_ssc = ssc(X[:, indices[-n_features_per_target:]], y[:, [-1]])
+    assert (
+        f"Progress: {n_to_select}/{n_to_select}, "
+        f"Batch SSC: {gtruth_ssc:.5f}" in captured.out
+    )

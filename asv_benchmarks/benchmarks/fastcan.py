@@ -37,11 +37,7 @@ class FastCanBenchmark(Benchmark):
             else:
                 eta = False
                 beam_width = 10
-            estimator = FastCan(
-                n_features_to_select=20,
-                eta=eta,
-                beam_width=beam_width
-            )
+            estimator = FastCan(n_features_to_select=20, eta=eta, beam_width=beam_width)
             estimator.fit(X, y)
 
             est_path = get_estimator_path(self, params)

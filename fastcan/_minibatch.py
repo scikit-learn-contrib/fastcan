@@ -5,6 +5,7 @@ Mini-batch selection.
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
+import warnings
 from numbers import Integral, Real
 
 import numpy as np
@@ -12,6 +13,7 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_X_y
 
+from ._beam import _safe_normalize
 from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
 from ._fastcan import _prepare_search
 
@@ -101,11 +103,18 @@ def minibatch(X, y, n_features_to_select=1, batch_size=1, tol=0.01, verbose=1):
         )
     )
     X_transformed_ = X - X.mean(0)
-    y_transformed_ = y - y.mean(0)
+    y_transformed_, const_mask = _safe_normalize(y - y.mean(0))
+    if const_mask.any():
+        warnings.warn(
+            f"Contain constant targets, whose indices are {np.where(const_mask)[0]}.",
+            UserWarning,
+        )
     indices_include = np.zeros(0, dtype=int)  # just an empty array
     indices_select = np.zeros(0, dtype=int)
 
     for i in range(n_outputs):
+        if const_mask[i]:
+            continue
         y_i = y_transformed_[:, [i]]
         n_selected_i = 0
         while n_to_select_split[i] > n_selected_i:
@@ -137,7 +146,9 @@ def minibatch(X, y, n_features_to_select=1, batch_size=1, tol=0.01, verbose=1):
             n_selected_i += batch_size_temp
             if verbose == 1:
                 print(
-                    f"Progress: {indices_select.size}/{n_features_to_select}", end="\r"
+                    f"Progress: {indices_select.size}/{n_features_to_select}, "
+                    f"Batch SSC: {scores.sum():.5f}",
+                    end="\r",
                 )
     if verbose == 1:
         print()
