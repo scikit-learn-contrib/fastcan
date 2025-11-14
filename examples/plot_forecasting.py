@@ -94,7 +94,7 @@ x_test = np.arange(start=1958.25, stop=current_month, step=1 / 12)
 # Nonlinear AR model
 # ------------------
 # We can use :func:`make_narx` to easily build a nonlinear AR model, which does not
-# has a input. Therefore, the input ``X`` is set as ``None``.
+# has an input. Therefore, the input ``X`` is set as ``None``.
 # :func:`make_narx` will search 10 polynomial terms, whose maximum degree is 2 and
 # maximum delay is 9.
 
