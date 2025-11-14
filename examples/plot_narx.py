@@ -124,7 +124,7 @@ selected_poly_ids = poly_ids[support]
 # %%
 # Build NARX model
 # ----------------
-# As the reduced polynomial NARX is a linear function of the nonlinear tems,
+# As the reduced polynomial NARX is a linear function of the nonlinear terms,
 # the coefficient of each term can be easily estimated by ordinary least squares.
 # In the printed NARX model, it is found that :class:`FastCan` selects the correct
 # terms and the coefficients are close to the true values.
