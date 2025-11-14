@@ -47,7 +47,7 @@ y = y[max_delay:] + e
 X = np.c_[u0[max_delay:], u1[max_delay:]]
 
 # %%
-# Build term libriary
+# Build term library
 # -------------------
 # To build a reduced polynomial NARX model, it is normally have two steps:
 #
@@ -56,7 +56,7 @@ X = np.c_[u0[max_delay:], u1[max_delay:]]
 #
 # #. Learn the coefficients of the terms.
 #
-# To search the structure of the model, the candidate term libriary should be
+# To search the structure of the model, the candidate term library should be
 # constructed by the following two steps.
 #
 # #. Time-shifted variables: the raw input-output data, i.e., :math:`u_0(k)`,
