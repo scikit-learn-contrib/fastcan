@@ -217,7 +217,7 @@ def make_narx(
         The verbosity level of refine.
 
     refine_drop : int or "all", default=None
-            The number of the selected features dropped for the consequencing
+            The number of the selected features dropped for the consequent
             reselection. If `drop` is None, no refining will be performed.
 
     refine_max_iter : int, default=None

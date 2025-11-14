@@ -51,7 +51,7 @@ def refine(selector, drop=1, max_iter=None, verbose=1):
         FastCan selector.
 
     drop : int or array-like of shape (n_drops,) or "all", default=1
-        The number of the selected features dropped for the consequencing
+        The number of the selected features dropped for the consequent
         reselection.
 
     max_iter : int, default=None
