@@ -12,7 +12,7 @@ MIMO (Multi-Input Multi-Output) data. For classification, it can be used for
 multilabel data. Actually, for multiclass classification, which has one output with
 multiple categories, multioutput feature selection can also be useful. The multiclass
 classification can be converted to multilabel classification by one-hot encoding
-target ``y``. The canonical correaltion coefficient between the features ``X`` and the
+target ``y``. The canonical correlation coefficient between the features ``X`` and the
 one-hot encoded target ``y`` has equivalent relationship with Fisher's criterion in
 LDA (Linear Discriminant Analysis) [1]_. Applying :class:`FastCan` to the converted
 multioutput data may result in better accuracy in the following classification task
@@ -23,7 +23,7 @@ Relationship on multiclass data
 Assume the feature matrix is :math:`X \in \mathbb{R}^{N\times n}`, the multiclass
 target vector is :math:`y \in \mathbb{R}^{N\times 1}`, and the one-hot encoded target
 matrix is :math:`Y \in \mathbb{R}^{N\times m}`. Then, the Fisher's criterion for
-:math:`X` and :math:`y` is denoted as :math:`J` and the canonical correaltion
+:math:`X` and :math:`y` is denoted as :math:`J` and the canonical correlation
 coefficient between :math:`X` and :math:`Y` is denoted as :math:`R`. The relationship
 between :math:`J` and :math:`R` is given by
 
@@ -36,7 +36,7 @@ or
     R^2 = \frac{J}{1+J}
 
 It should be noted that the number of the Fisher's criterion and the canonical
-correaltion coefficient is not only one. The number of the non-zero canonical
+correlation coefficient is not only one. The number of the non-zero canonical
 correlation coefficients is no more than :math:`\min (n, m)`, and each canonical correlation
 coefficient is one-to-one correspondence to each Fisher's criterion.
 
