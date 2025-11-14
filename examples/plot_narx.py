@@ -145,7 +145,7 @@ print_narx(narx_model)
 # %%
 # Automaticated NARX modelling workflow
 # -------------------------------------
-# We provide :meth:`narx.make_narx` to automaticate the workflow above.
+# We provide :meth:`narx.make_narx` to automate the workflow above.
 
 from fastcan.narx import make_narx
 
