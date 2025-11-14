@@ -17,14 +17,14 @@ relationship with Fisher's criterion in LDA (Linear Discriminant Analysis).
 # Prepare data
 # ------------
 # We use ``iris`` dataset and transform this multiclass data to multilabel data by
-# one-hot encoding. Here, drop="first" is necessary, otherwise, the transformed target
+# one-hot encoding. Here, drop="first" is necessary; otherwise, the transformed target
 # is not full column rank.
 
 from sklearn import datasets
 from sklearn.preprocessing import OneHotEncoder
 
 X, y = datasets.load_iris(return_X_y=True)
-# drop="first" is necessary, otherwise, the transformed target is not full column rank
+# drop="first" is necessary; otherwise, the transformed target is not full column rank
 y_enc = OneHotEncoder(
     drop="first",
     sparse_output=False,
