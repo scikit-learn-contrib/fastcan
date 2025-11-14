@@ -7,7 +7,7 @@ Forecasting with (Nonlinear) AR models
 
 In this examples, we will demonstrate how to use :func:`make_narx` to build (nonlinear)
 AutoRegressive (AR) models for time-series forecasting.
-The time series used isthe monthly average atmospheric CO2 concentrations
+The time series used is the monthly average atmospheric CO2 concentrations
 from 1958 and 2001.
 The objective is to forecast the CO2 concentration till nowadays with
 initial 18 months data.
