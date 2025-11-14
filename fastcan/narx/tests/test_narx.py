@@ -263,7 +263,7 @@ def test_narx(nan, multi_output):
         ).fit(X, y)
 
 
-def test_mulit_output_warn():
+def test_multi_output_warn():
     X = np.random.rand(10, 2)
     y = np.random.rand(10, 2)
     for i in range(2):
@@ -342,7 +342,7 @@ def test_fit_intercept():
         assert_array_equal(narx.intercept_, [0.0, 0.0])
 
 
-def test_mulit_output_error():
+def test_multi_output_error():
     X = np.random.rand(10, 2)
     y = np.random.rand(10, 2)
     time_shift_ids = np.array([[0, 1], [1, 1]])

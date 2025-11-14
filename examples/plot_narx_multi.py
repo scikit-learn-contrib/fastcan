@@ -1,6 +1,6 @@
 """
 =======================
-Mulit-output NARX model
+Multi-output NARX model
 =======================
 
 .. currentmodule:: fastcan
@@ -64,7 +64,7 @@ X = np.c_[u0[max_delay:], u1[max_delay:]]
 
 
 # %%
-# Identify the mulit-output NARX model
+# Identify the multi-output NARX model
 # ------------------------------------
 # We provide :meth:`narx.make_narx` to automatically find the model
 # structure. `n_terms_to_select` can be a list to indicate the number
