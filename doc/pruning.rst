@@ -16,7 +16,7 @@ by sparse linear combinations of the atoms.
 We use these atoms as the target :math:`Y` and select samples based on their correlation with :math:`Y`.
 
 One challenge to use :class:`FastCan` for data pruning is that the number to select is much larger than feature selection.
-Normally, this number is higher than the number of features, which will make the pruned data matrix singular.
+Normally, this number is greater than the number of features, which will make the pruned data matrix singular.
 In other words, :class:`FastCan` will easily think the pruned data is redundant and no additional sample
 should be selected, as any additional samples can be represented by linear combinations of the selected samples.
 Therefore, the number to select has to be set to small.
