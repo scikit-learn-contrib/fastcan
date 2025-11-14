@@ -39,7 +39,7 @@ it the following advantages over OLS and OMP:
   and/or added some constants, the selection result given by :class:`FastCan` will be
   unchanged. See :ref:`sphx_glr_auto_examples_plot_affinity.py`.
 * Multioutput: as :class:`FastCan` use canonical correlation for feature ranking, it is
-  naturally support feature seleciton on dataset with multioutput.
+  naturally support feature selection on dataset with multioutput.
 
 
 .. rubric:: References
