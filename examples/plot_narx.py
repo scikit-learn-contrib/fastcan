@@ -63,7 +63,7 @@ X = np.c_[u0[max_delay:], u1[max_delay:]]
 #    :math:`u_1(k)`, and :math:`y(k)`, are converted into :math:`u_0(k-1)`,
 #    :math:`u_1(k-2)`, etc.
 #
-# #. Nonlinear terms: the time-shifted variables are onverted to nonlinear terms
+# #. Nonlinear terms: the time-shifted variables are converted to nonlinear terms
 #    via polynomial basis functions, e.g., :math:`u_0(k-1)^2`,
 #    :math:`u_0(k-1)u_0(k-3)`, etc.
 #
