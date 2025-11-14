@@ -143,7 +143,7 @@ narx_model.fit(X, y)
 
 print_narx(narx_model)
 # %%
-# Automaticated NARX modelling workflow
+# Automated NARX modelling workflow
 # -------------------------------------
 # We provide :meth:`narx.make_narx` to automate the workflow above.
 
