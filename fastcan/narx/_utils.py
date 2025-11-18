@@ -18,11 +18,9 @@ from sklearn.utils.validation import check_is_fitted
 from .._fastcan import FastCan
 from .._refine import refine
 from ..utils import mask_missing_values
-from ._base import NARX
+from ._base import NARX, _prepare_poly_terms, _validate_session_sizes
 from ._feature import (
-    make_poly_features,
     make_poly_ids,
-    make_time_shift_features,
     make_time_shift_ids,
     tp2fd,
 )
@@ -136,6 +134,7 @@ def print_narx(
             Interval(Integral, 1, None, closed="left"),
         ],
         "fit_intercept": ["boolean"],
+        "session_sizes": [None, "array-like"],
         "max_candidates": [None, Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
         "include_zero_delay": [None, "array-like"],
@@ -161,6 +160,7 @@ def make_narx(
     poly_degree=1,
     *,
     fit_intercept=True,
+    session_sizes=None,
     max_candidates=None,
     random_state=None,
     include_zero_delay=None,
@@ -193,6 +193,13 @@ def make_narx(
 
     fit_intercept : bool, default=True
         Whether to fit the intercept. If set to False, intercept will be zeros.
+
+    session_sizes : array-like of shape (n_sessions,), default=None
+        The sizes of measurement sessions for time-series.
+        The sum of session_sizes should be equal to n_samples.
+        If None, the whole data is treated as one session.
+
+        .. versionadded:: 0.5
 
     max_candidates : int, default=None
         Maximum number of candidate polynomial terms retained before selection.
@@ -284,7 +291,7 @@ def make_narx(
         check_consistent_length(X, y)
     if y.ndim == 1:
         y = y.reshape(-1, 1)
-    n_outputs = y.shape[1]
+    n_samples, n_outputs = y.shape
     if isinstance(n_terms_to_select, Integral):
         n_terms_to_select = np.full(n_outputs, n_terms_to_select, dtype=int)
     else:
@@ -295,6 +302,7 @@ def make_narx(
                 f"the number of outputs, {n_outputs}, but got "
                 f"{len(n_terms_to_select)}."
             )
+    session_sizes_cumsum = _validate_session_sizes(session_sizes, n_samples)
 
     xy_hstack = np.c_[X, y]
     n_features = X.shape[1]
@@ -318,16 +326,20 @@ def make_narx(
         ),
         0,
     )
-    time_shift_vars = make_time_shift_features(xy_hstack, time_shift_ids_all)
-
     poly_ids_all = make_poly_ids(
         time_shift_ids_all.shape[0],
         poly_degree,
         max_poly=max_candidates,
         random_state=random_state,
     )
-    poly_terms = make_poly_features(time_shift_vars, poly_ids_all)
 
+    poly_terms = _prepare_poly_terms(
+        xy_hstack,
+        time_shift_ids_all,
+        poly_ids_all,
+        session_sizes_cumsum,
+        max_delay,
+    )
     # Remove missing values
     poly_terms_masked, y_masked = mask_missing_values(poly_terms, y)
 

@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Build WASM wheel
-        uses: pypa/cibuildwheel@v3.2.1
+        uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_PLATFORM: pyodide
       - name: Upload package

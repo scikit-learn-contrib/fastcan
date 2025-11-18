@@ -17,6 +17,8 @@ features, which maximize the sum of the squared canonical correlation (SSC) with
 the principal components (PCs) acquired from PCA of the feature matrix :math:`X` [1]_.
 See the example below.
 
+.. code-block:: python
+
     >>> from sklearn.decomposition import PCA
     >>> from sklearn import datasets
     >>> from fastcan import FastCan

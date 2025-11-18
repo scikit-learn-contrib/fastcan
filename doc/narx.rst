@@ -46,10 +46,12 @@ The discontinuity can be caused by
    lasts for one hour at 1 Hz, and another measurement is carried out at Tuesday and lasts for two hours at 1 Hz
 #. Missing values
 
-No matter how the discontinuity is caused, :class:`NARX` treats the discontinuous time series as multiple pieces of continuous time series in the same way.
+As a result, there are two ways to inform :class:`NARX` the training data from different measurement sessions.
+From version 0.5, the difference measurement sessions can be set by `session_sizes` in :meth:`NARX.fit` and :func:`make_narx`.
+Alternatively, different measurement sessions can also be notified by inserting `np.nan` to break the data.
+The following examples show how to notify :class:`NARX` the training data from different measurement sessions.
 
-.. note::
-    It is easy to notify :class:`NARX` that the time series data are from different measurement sessions by inserting np.nan to break the data. For example,
+.. code-block:: python
 
     >>> import numpy as np
     >>> x0 = np.zeros((3, 2)) # First measurement session
@@ -57,9 +59,18 @@ No matter how the discontinuity is caused, :class:`NARX` treats the discontinuou
     >>> max_delay = 2 # Assume the maximum delay for NARX model is 2
     >>> # Insert (at least max_delay number of) np.nan to break the two measurement sessions
     >>> u = np.r_[x0, [[np.nan, np.nan]]*max_delay, x1]
+    >>> # Or use session_sizes to break the two measurement sessions
+    >>> session_sizes = [3, 5]
 
-    It is important to break the different measurement sessions by np.nan, because otherwise,
-    the model will assume the time interval between the two measurement sessions is the same as the time interval within a session.
+.. note::
+    It is important to separate different measurement sessions using either method.
+    Otherwise, the model will incorrectly assume that the time interval between two measurement sessions
+    is the same as the sampling interval within a session.
+
+    Actually, the two methods will result in the exact same models when `X` is not None or multiple-step-ahead prediction is not used for training.
+    If `X` is None, i.e. Auto-Regression models, and multiple-step-ahead prediction is used for training, only `session_sizes` can
+    separate the two measurement sessions.
+    Because when using multiple-step-ahead prediction, the optimiser relies on the missing values in inputs `X` rather than output `y`, while Auto-Regression models do not have input `X`.
 
 
 One-step-ahead and multiple-step-ahead prediction

@@ -36,6 +36,7 @@ def test_simple():
         delay_ids=delay_ids,
         output_ids=output_ids,
         y_hat=y_hat,
+        session_sizes_cumsum=np.array([len(y)], dtype=np.int32),
     )
 
     assert_array_equal(y_hat, y)
@@ -53,6 +54,7 @@ def test_simple():
         delay_ids=delay_ids,
         output_ids=output_ids,
         y_hat=y_hat_1,
+        session_sizes_cumsum=np.array([len(y)], dtype=np.int32),
     )
 
     grad_truth = np.array(
@@ -79,6 +81,7 @@ def test_simple():
         output_ids,
         True,
         np.sqrt(sample_weight),
+        np.array([len(y)], dtype=np.int32),
         grad_yyd_ids,
         grad_delay_ids,
         grad_coef_ids,
@@ -95,6 +98,7 @@ def test_simple():
         output_ids,
         True,
         np.sqrt(sample_weight),
+        np.array([len(y)], dtype=np.int32),
         grad_yyd_ids,
         grad_delay_ids,
         grad_coef_ids,
@@ -109,6 +113,7 @@ def test_simple():
         output_ids,
         False,
         np.sqrt(sample_weight),
+        np.array([len(y)], dtype=np.int32),
         grad_yyd_ids,
         grad_delay_ids,
         grad_coef_ids,
@@ -209,6 +214,7 @@ def test_complex():
         output_ids,
         True,
         np.sqrt(np.ones((y.shape[0], 1))),
+        np.array([len(y)], dtype=np.int32),
         grad_yyd_ids,
         grad_delay_ids,
         grad_coef_ids,
@@ -226,6 +232,7 @@ def test_complex():
         delay_ids=delay_ids,
         output_ids=output_ids,
         y_hat=y_hat_0,
+        session_sizes_cumsum=np.array([len(y)], dtype=np.int32),
     )
     e_0 = y_hat_0 - y
 
@@ -250,6 +257,7 @@ def test_complex():
             delay_ids=delay_ids,
             output_ids=output_ids,
             y_hat=y_hat_1,
+            session_sizes_cumsum=np.array([len(y)], dtype=np.int32),
         )
 
         e_1 = y_hat_1 - y
@@ -266,6 +274,7 @@ def test_complex():
         output_ids,
         False,
         np.sqrt(np.ones((y.shape[0], 1))),
+        np.array([len(y)], dtype=np.int32),
         grad_yyd_ids,
         grad_delay_ids,
         grad_coef_ids,
@@ -281,6 +290,7 @@ def test_complex():
         delay_ids=delay_ids,
         output_ids=output_ids,
         y_hat=y_hat_0,
+        session_sizes_cumsum=np.array([len(y)], dtype=np.int32),
     )
     e_0 = y_hat_0 - y
 
@@ -298,6 +308,7 @@ def test_complex():
             delay_ids=delay_ids,
             output_ids=output_ids,
             y_hat=y_hat_1,
+            session_sizes_cumsum=np.array([len(y)], dtype=np.int32),
         )
 
         e_1 = y_hat_1 - y

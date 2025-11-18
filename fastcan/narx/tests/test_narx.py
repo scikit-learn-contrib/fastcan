@@ -727,3 +727,88 @@ def test_predict_ndim():
     model.fit(X, y.reshape(-1, 1))
     y_hat = model.predict(X, y_init=y[: model.max_delay_])
     assert y_hat.ndim == 2
+
+
+def test_session_sizes():
+    """Test that session sizes in make_narx and NARX.fit and error messages."""
+    X = np.random.rand(100, 2)
+    y = np.random.rand(100, 1)
+    with pytest.raises(ValueError, match=r"The sum of session_sizes should be.*"):
+        model = make_narx(
+            X,
+            y,
+            n_terms_to_select=5,
+            max_delay=3,
+            poly_degree=2,
+            verbose=0,
+            session_sizes=[10, 20],
+        )
+    with pytest.raises(
+        ValueError, match=r"All elements of session_sizes should be positive.*"
+    ):
+        model = make_narx(
+            X,
+            y,
+            n_terms_to_select=5,
+            max_delay=3,
+            poly_degree=2,
+            verbose=0,
+        )
+        model.fit(X, y, session_sizes=[-10, 110])
+    model = make_narx(
+        X,
+        y,
+        n_terms_to_select=5,
+        max_delay=3,
+        poly_degree=2,
+        verbose=0,
+    )
+    session_sizes = [20, 30, 50]
+    session_sizes_cumsum = np.cumsum(session_sizes)
+    model.fit(X, y, session_sizes=session_sizes)
+    coef_session = model.coef_
+    X_missing = X[: session_sizes_cumsum[0]]
+    y_missing = y[: session_sizes_cumsum[0]]
+    for i in range(len(session_sizes) - 1):
+        X_missing = np.r_[
+            X_missing,
+            [[np.nan, np.nan]] * model.max_delay_,
+            X[session_sizes_cumsum[i] : session_sizes_cumsum[i + 1]],
+        ]
+        y_missing = np.r_[
+            y_missing,
+            [[np.nan]] * model.max_delay_,
+            y[session_sizes_cumsum[i] : session_sizes_cumsum[i + 1]],
+        ]
+    coef_missing = model.fit(X_missing, y_missing).coef_
+    # Exactly same for one-step-ahead fitting
+    assert np.sum(np.abs(coef_session - coef_missing)) == 0
+    coef_session_msa = model.fit(
+        X, y, session_sizes=session_sizes, coef_init="one_step_ahead"
+    ).coef_
+    coef_missing_msa = model.fit(X_missing, y_missing, coef_init="one_step_ahead").coef_
+    # Exactly same for multi-step-ahead fitting
+    assert np.sum(np.abs(coef_session_msa - coef_missing_msa)) == 0
+
+    # Auto-regression with session sizes
+    arm = make_narx(
+        X=None,
+        y=y,
+        n_terms_to_select=5,
+        max_delay=3,
+        poly_degree=2,
+        verbose=0,
+    )
+    arm.fit(X=None, y=y, session_sizes=session_sizes)
+    ar_coef_session = arm.coef_
+    arm.fit(X=None, y=y_missing)
+    ar_coef_missing = arm.coef_
+    # Exactly same for one-step-ahead fitting
+    assert np.sum(np.abs(ar_coef_session - ar_coef_missing)) == 0
+
+    arm.fit(X=None, y=y, session_sizes=session_sizes, coef_init="one_step_ahead")
+    ar_coef_session_msa = arm.coef_
+    arm.fit(X=None, y=y_missing, coef_init="one_step_ahead")
+    ar_coef_missing_msa = arm.coef_
+    # Not same for multi-step-ahead fitting
+    assert np.sum(np.abs(ar_coef_session_msa - ar_coef_missing_msa)) != 0

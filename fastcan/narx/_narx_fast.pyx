@@ -122,14 +122,15 @@ cdef inline void _update_dcf(
 
 @final
 cpdef void _predict(
-    const double[:, ::1] X,             # IN
-    const double[:, ::1] y_ref,         # IN
-    const double[::1] coef,             # IN
-    const double[::1] intercept,        # IN
-    const int[:, ::1] feat_ids,         # IN
-    const int[:, ::1] delay_ids,        # IN
-    const int[::1] output_ids,          # IN
-    double[:, ::1] y_hat,               # OUT
+    const double[:, ::1] X,                 # IN
+    const double[:, ::1] y_ref,             # IN
+    const double[::1] coef,                 # IN
+    const double[::1] intercept,            # IN
+    const int[:, ::1] feat_ids,             # IN
+    const int[:, ::1] delay_ids,            # IN
+    const int[::1] output_ids,              # IN
+    const int[::1] session_sizes_cumsum,    # IN
+    double[:, ::1] y_hat,                   # OUT
 ) noexcept nogil:
     """
     Vectorized (Cython) variant of Python NARX._predict.
@@ -142,11 +143,15 @@ cpdef void _predict(
     cdef:
         Py_ssize_t n_samples = X.shape[0]
         Py_ssize_t n_ref = y_ref.shape[0]
-        Py_ssize_t k
+        Py_ssize_t k, s = 0
         Py_ssize_t init_k = 0
         bint at_init = True
 
     for k in range(n_samples):
+        if k == session_sizes_cumsum[s]:
+            s += 1
+            at_init = True
+            init_k = k
         with gil:
             if not np.all(np.isfinite(X[k])):
                 at_init = True
@@ -192,8 +197,9 @@ cpdef void _update_dydx(
     const int[:, ::1] grad_delay_ids,
     const int[::1] grad_coef_ids,
     const int[:, ::1] grad_feat_ids,
-    double[:, :, ::1] dydx,       # OUT
-    double[:, :, ::1] dcf,        # OUT
+    const int[::1] session_sizes_cumsum,
+    double[:, :, ::1] dydx,                 # OUT
+    double[:, :, ::1] dcf,                  # OUT
 ) noexcept nogil:
     """
     Computation of the Jacobian matrix dydx.
@@ -211,7 +217,7 @@ cpdef void _update_dydx(
     cdef:
         Py_ssize_t n_samples = y_hat.shape[0]
         Py_ssize_t n_coefs = feat_ids.shape[0]
-        Py_ssize_t k, i, d
+        Py_ssize_t k, i, d, s = 0
         Py_ssize_t M = dcf.shape[1]      # n_outputs
         Py_ssize_t N = dydx.shape[2]     # n_x
         Py_ssize_t init_k = 0
@@ -224,6 +230,11 @@ cpdef void _update_dydx(
         terms_intercepts[i] = 1.0
 
     for k in range(n_samples):
+        if k == session_sizes_cumsum[s]:
+            s += 1
+            at_init = True
+            init_k = k
+            continue
         with gil:
             is_finite = np.all(np.isfinite(X[k])) and np.all(np.isfinite(y_hat[k]))
         if not is_finite:

@@ -162,11 +162,14 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         {
             "X": [None, "array-like"],
             "coef_init": [None, StrOptions({"one_step_ahead"}), "array-like"],
-            "sample_weight": ["array-like", None],
+            "sample_weight": [None, "array-like"],
+            "session_sizes": [None, "array-like"],
         },
         prefer_skip_nested_validation=True,
     )
-    def fit(self, X, y, sample_weight=None, coef_init=None, **params):
+    def fit(
+        self, X, y, sample_weight=None, coef_init=None, session_sizes=None, **params
+    ):
         """
         Fit narx model.
 
@@ -194,6 +197,13 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 When coef_init is `one_step_ahead`, the model will be trained as a
                 Multi-Step-Ahead NARX, rather than a One-Step-Ahead NARX.
 
+        session_sizes : array-like of shape (n_sessions,), default=None
+            The sizes of measurement sessions for time-series.
+            The sum of session_sizes should be equal to n_samples.
+            If None, the whole data is treated as one session.
+
+            .. versionadded:: 0.5
+
         **params : dict
             Keyword arguments passed to
             `scipy.optimize.least_squares`.
@@ -220,9 +230,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             X = np.empty((len(y), 0), dtype=float, order="C")  # Create 0 feature input
         else:
             check_consistent_length(X, y)
-        sample_weight = _check_sample_weight(
-            sample_weight, X, dtype=X.dtype, ensure_non_negative=True
-        )
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
         self._y_ndim = y.ndim
@@ -230,6 +237,12 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y = y.reshape(-1, 1)
         self.n_outputs_ = y.shape[1]
         n_samples, n_features = X.shape
+
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+        )
+
+        session_sizes_cumsum = _validate_session_sizes(session_sizes, n_samples)
 
         if self.feat_ids is None:
             if n_features == 0:
@@ -295,8 +308,13 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             time_shift_ids, poly_ids = fd2tp(self.feat_ids_, self.delay_ids_)
             xy_hstack = np.c_[X, y]
             osa_narx = LinearRegression(fit_intercept=self.fit_intercept)
-            time_shift_vars = make_time_shift_features(xy_hstack, time_shift_ids)
-            poly_terms = make_poly_features(time_shift_vars, poly_ids)
+            poly_terms = _prepare_poly_terms(
+                xy_hstack,
+                time_shift_ids,
+                poly_ids,
+                session_sizes_cumsum,
+                self.max_delay_,
+            )
             # Remove missing values
             poly_terms_masked, y_masked, sample_weight_masked = mask_missing_values(
                 poly_terms, y, sample_weight
@@ -359,6 +377,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.output_ids_,
                 self.fit_intercept,
                 sample_weight_sqrt,
+                session_sizes_cumsum,
                 grad_yyd_ids,
                 grad_delay_ids,
                 grad_coef_ids,
@@ -422,6 +441,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         output_ids,
         fit_intercept,
         sample_weight_sqrt,
+        session_sizes_cumsum,
         *args,
     ):
         # Sum of squared errors
@@ -442,6 +462,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             feat_ids,
             delay_ids,
             output_ids,
+            session_sizes_cumsum,
             y_hat,
         )
 
@@ -461,6 +482,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         output_ids,
         fit_intercept,
         sample_weight_sqrt,
+        session_sizes_cumsum,
         grad_yyd_ids,
         grad_delay_ids,
         grad_coef_ids,
@@ -484,6 +506,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             feat_ids,
             delay_ids,
             output_ids,
+            session_sizes_cumsum,
             y_hat,
         )
 
@@ -510,6 +533,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             grad_delay_ids,
             grad_coef_ids,
             grad_feat_ids,
+            session_sizes_cumsum,
             dydx,
             dcf,
         )
@@ -587,7 +611,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     f"`y_init` should have {self.n_outputs_} outputs "
                     f"but got {y_init.shape[1]}."
                 )
-        y_hat = np.zeros((X.shape[0], self.n_outputs_), dtype=float)
+        n_samples = X.shape[0]
+        y_hat = np.zeros((n_samples, self.n_outputs_), dtype=float)
+        session_sizes_cumsum = np.array([n_samples], dtype=np.int32)
         _predict(
             X,
             y_init,
@@ -596,6 +622,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self.feat_ids_,
             self.delay_ids_,
             self.output_ids_,
+            session_sizes_cumsum,
             y_hat,
         )
         if self._y_ndim == 1:
@@ -606,3 +633,34 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         return tags
+
+
+def _validate_session_sizes(session_sizes, n_samples):
+    if session_sizes is None:
+        return np.array([n_samples], dtype=np.int32)
+    session_sizes = column_or_1d(
+        session_sizes,
+        dtype=np.int32,
+        warn=True,
+    )
+    if (session_sizes <= 0).any():
+        raise ValueError(
+            "All elements of session_sizes should be positive, "
+            f"but got {session_sizes}."
+        )
+    if session_sizes.sum() != n_samples:
+        raise ValueError(
+            "The sum of session_sizes should be equal to n_samples, "
+            f"but got {session_sizes.sum()} != {n_samples}."
+        )
+    return np.cumsum(session_sizes, dtype=np.int32)
+
+
+def _prepare_poly_terms(
+    xy_hstack, time_shift_ids, poly_ids, session_sizes_cumsum, max_delay
+):
+    time_shift_vars = make_time_shift_features(xy_hstack, time_shift_ids)
+    for start in session_sizes_cumsum[:-1]:
+        time_shift_vars[start : start + max_delay] = np.nan
+    poly_terms = make_poly_features(time_shift_vars, poly_ids)
+    return poly_terms
