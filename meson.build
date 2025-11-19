@@ -11,6 +11,10 @@ project(
 
 py = import('python').find_installation(pure: false)
 
-install_subdir('fastcan', install_dir: py.get_install_dir())
+install_subdir(
+  'fastcan',
+  install_dir: py.get_install_dir(),
+  install_tag: 'python-runtime',
+)
 
 subdir('fastcan')
