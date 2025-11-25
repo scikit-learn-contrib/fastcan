@@ -113,7 +113,7 @@ type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
 spell = "codespell fastcan"
 
 [feature.docs.tasks]
-doc = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [{ arg = "SPHINXBUILD", default = "sphinx-build" }, { arg = "CMD", default = "html" }, { arg = "SOURCEDIR", default = "." }, { arg = "BUILDDIR", default = "_build" }, { arg = "SPHINXOPTS", default = "" }] }
+doc-build = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [{ arg = "SPHINXBUILD", default = "sphinx-build" }, { arg = "CMD", default = "html" }, { arg = "SOURCEDIR", default = "." }, { arg = "BUILDDIR", default = "_build" }, { arg = "SPHINXOPTS", default = "" }] }
 doc-clean = { cmd = "rm -rf {{ BUILDDIR }} generated auto_examples jupyterlite_contents .jupyterlite.doit.db _contents _output .cache", cwd = "doc", args = [{ arg = "BUILDDIR", default = "_build" }] }
 doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
 doc-plantuml = { cmd = "plantuml -tsvg {{ SOURCE }} -o {{ OUTPUT }}", cwd = "doc", args = [{ arg = "SOURCE", default = "diagram.puml" }, { arg = "OUTPUT", default = "_build" }] }

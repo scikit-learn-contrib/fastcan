@@ -24,7 +24,7 @@ In this example, we will compare one-step-ahead NARX and multi-step-ahead NARX.
 # where :math:`y` is the output signal and :math:`u` is the input signal, which is
 # :math:`u(t) = 2.5\cos(2\pi t)`.
 #
-# The phase portraits of the Duffing equation are shown below.
+# The phase portraits and the vector field of the Duffing equation are shown below.
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -67,10 +67,35 @@ sol = np.zeros((n_init, n_samples, 2))
 for i in range(n_init):
     sol[i] = odeint(auto_duffing_equation, y0[i], t)
 
+# Phase portraits
 for i in range(n_init):
     plt.plot(sol[i, :, 0], sol[i, :, 1], c="tab:blue")
 
-plt.title("Phase portraits of Duffing equation")
+# Vector field
+y_min = np.min(sol[:, :, 0])-0.2
+y_max = np.max(sol[:, :, 0])+0.2
+dot_y_min = np.min(sol[:, :, 1])-0.2
+dot_y_max = np.max(sol[:, :, 1])+0.2
+y, dot_y = np.meshgrid(
+    np.linspace(y_min, y_max, 30), np.linspace(dot_y_min, dot_y_max, 30)
+)
+ddot_y = auto_duffing_equation([y, dot_y], 0)[1]
+plt.streamplot(
+    y,
+    dot_y,
+    dot_y,
+    ddot_y,
+    color=(0.5, 0.5, 0.5, 0.3),
+    density=1.5,
+    minlength=0.02,
+    maxlength=0.1,
+    linewidth=0.5,
+    arrowsize=0.5,
+)
+
+plt.xlim(y_min, y_max)
+plt.ylim(dot_y_min, dot_y_max)
+plt.title("Phase portraits and vector field of Duffing equation")
 plt.xlabel("y(t)")
 plt.ylabel("dy/dt(t)")
 plt.show()
