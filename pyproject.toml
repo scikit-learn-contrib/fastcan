@@ -1,6 +1,6 @@
 [project]
 name = "fastcan"
-version = "0.4.1"
+version = "0.5.0"
 description = "A fast canonical-correlation-based greedy search algorithm"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 

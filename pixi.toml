@@ -74,7 +74,7 @@ python-build = "*"
 pip = "*"
 
 [feature.nogil.dependencies]
-python = "<3.14"
+python = "*"
 python-freethreading = "*"
 cython = ">=3.1.0" # build dependencies
 meson-python = ">=0.18.0" # build dependencies
@@ -125,8 +125,8 @@ doc-jupyterlite-debug = { cmd = "jupyter-lite build --debug --output-dir {{ OUTP
 
 
 [feature.nogil.tasks]
-nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
-nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
+nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
+nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
 
 [feature.wasm.tasks]
 emsdk-clone = "bash -c '[ -d emsdk ] || git clone https://github.com/emscripten-core/emsdk.git emsdk'"
