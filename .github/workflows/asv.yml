@@ -42,7 +42,7 @@ jobs:
           pixi run asv-build ${{ matrix.os }}
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: asv-results-${{ matrix.os }}
           path: asv_benchmarks/results
@@ -82,7 +82,7 @@ jobs:
           cp -r gh-pages/results/* asv_benchmarks/results/ 2>/dev/null || true
 
       - name: Download all benchmark results
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: asv-results-*
 

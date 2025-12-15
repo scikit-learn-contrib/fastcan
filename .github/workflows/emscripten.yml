@@ -13,7 +13,7 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
       - name: Upload package
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wasm_wheel
           path: ./wheelhouse/*_wasm32.whl

@@ -1,5 +1,5 @@
-fastcan: A fast canonical-correlation-based greedy search algorithm
-===================================================================
+fastcan: A fast canonical-correlation-based search algorithm
+============================================================
 |conda| |Codecov| |CI| |Doc| |PythonVersion| |PyPi| |ruff| |pixi| |asv|
 
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/fastcan.svg
@@ -29,7 +29,7 @@ fastcan: A fast canonical-correlation-based greedy search algorithm
 .. |asv| image:: https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat
    :target: https://contrib.scikit-learn.org/fastcan/
 
-fastcan is a greedy search algorithm that supports:
+fastcan is a search algorithm that supports:
 
 #. Feature selection
 

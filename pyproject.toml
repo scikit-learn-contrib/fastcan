@@ -1,7 +1,7 @@
 [project]
 name = "fastcan"
 version = "0.5.0"
-description = "A fast canonical-correlation-based greedy search algorithm"
+description = "A fast canonical-correlation-based search algorithm"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
 ]
@@ -59,7 +59,7 @@ install = ['--tags=runtime,python-runtime']
 # ]
 
 [tool.pytest.ini_options]
-testpaths = [ 
+testpaths = [
     "./fastcan/tests",
     "./fastcan/narx/tests",
 ]

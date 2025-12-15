@@ -1,5 +1,5 @@
 """
-Fast canonical correlation analysis based greedy search algorithm.
+Fast canonical correlation analysis based search algorithm.
 """
 
 # Authors: The fastcan developers
