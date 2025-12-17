@@ -12,12 +12,14 @@ from scipy.linalg import orth
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.utils import check_array, check_consistent_length
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (  # ty: ignore[unresolved-import]
+    _openmp_effective_n_threads,
+)
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 from ._beam import _beam_search
-from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
+from ._cancorr_fast import _greedy_search
 
 
 class FastCan(SelectorMixin, BaseEstimator):
@@ -211,22 +213,21 @@ class FastCan(SelectorMixin, BaseEstimator):
         self.indices_exclude_ = self._check_indices_params(
             self.indices_exclude, n_features
         )
+        n_inclusions = self.indices_include_.size
+        n_exclusions = self.indices_exclude_.size
         if np.intersect1d(self.indices_include_, self.indices_exclude_).size != 0:
             raise ValueError(
                 "`indices_include` and `indices_exclude` should not have intersection."
             )
 
-        if n_features - self.indices_exclude_.size < self.n_features_to_select:
+        if n_features - n_exclusions < self.n_features_to_select:
             raise ValueError(
                 "n_features_to_select should <= n_features - n_exclusions."
             )
-        if self.n_features_to_select < self.indices_include_.size:
+        if self.n_features_to_select < n_inclusions:
             raise ValueError("n_features_to_select should >= n_inclusions.")
 
-        if (
-            self.beam_width
-            > n_features - self.indices_exclude_.size - self.indices_include_.size
-        ):
+        if self.beam_width > n_features - n_exclusions - n_inclusions:
             raise ValueError(
                 "beam_width should <= n_features - n_exclusions - n_inclusions."
             )
@@ -252,7 +253,7 @@ class FastCan(SelectorMixin, BaseEstimator):
             self.indices_exclude_,
         )
 
-        if self.beam_width > 1:
+        if self.beam_width > 1 and self.n_features_to_select > n_inclusions:
             indices = _beam_search(
                 X=self.X_transformed_.copy(order="F"),
                 V=self.y_transformed_,
@@ -283,7 +284,7 @@ class FastCan(SelectorMixin, BaseEstimator):
             indices=indices,
             scores=scores,
         )
-        support = np.zeros(shape=self.n_features_in_, dtype=bool)
+        support = np.zeros(shape=n_features, dtype=bool)
         support[indices] = True
         self.indices_ = indices
         self.support_ = support

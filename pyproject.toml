@@ -173,3 +173,6 @@ ignore = [
     # line break after binary operator
     'W504',
 ]
+
+[tool.ty.environment]
+python = ".pixi/envs/static"

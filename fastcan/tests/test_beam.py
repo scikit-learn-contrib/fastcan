@@ -56,3 +56,18 @@ def test_beam_error():
     X[:, range(8)] = 0  # Zero feature
     with pytest.raises(ValueError, match=r"Beam Search: Not enough valid candidates.*"):
         FastCan(n_features_to_select=10, beam_width=11).fit(X, y)
+
+
+def test_n_inclusions():
+    # Test when n_inclusions == n_features_to_select
+    n_samples = 50
+    n_features = 20
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(n_samples, n_features))
+    y = rng.normal(size=n_samples)
+    selector = FastCan(
+        n_features_to_select=5,
+        indices_include=[0, 1, 2, 3, 4],
+        beam_width=3,
+    ).fit(X, y)
+    assert selector.indices_.tolist() == [0, 1, 2, 3, 4]

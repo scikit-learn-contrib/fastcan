@@ -1,6 +1,6 @@
 fastcan: A fast canonical-correlation-based search algorithm
 ============================================================
-|conda| |Codecov| |CI| |Doc| |PythonVersion| |PyPi| |ruff| |pixi| |asv|
+|conda| |Codecov| |CI| |Doc| |PythonVersion| |PyPi| |ruff| |pixi| |asv| |ty|
 
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/fastcan.svg
    :target: https://anaconda.org/conda-forge/fastcan
@@ -28,6 +28,9 @@ fastcan: A fast canonical-correlation-based search algorithm
 
 .. |asv| image:: https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat
    :target: https://contrib.scikit-learn.org/fastcan/
+
+.. |ty| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json
+   :target: https://github.com/astral-sh/ty
 
 fastcan is a search algorithm that supports:
 

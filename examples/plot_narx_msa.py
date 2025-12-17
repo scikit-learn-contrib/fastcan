@@ -72,10 +72,10 @@ for i in range(n_init):
     plt.plot(sol[i, :, 0], sol[i, :, 1], c="tab:blue")
 
 # Vector field
-y_min = np.min(sol[:, :, 0])-0.2
-y_max = np.max(sol[:, :, 0])+0.2
-dot_y_min = np.min(sol[:, :, 1])-0.2
-dot_y_max = np.max(sol[:, :, 1])+0.2
+y_min = np.min(sol[:, :, 0]) - 0.2
+y_max = np.max(sol[:, :, 0]) + 0.2
+dot_y_min = np.min(sol[:, :, 1]) - 0.2
+dot_y_max = np.max(sol[:, :, 1]) + 0.2
 y, dot_y = np.meshgrid(
     np.linspace(y_min, y_max, 30), np.linspace(dot_y_min, dot_y_max, 30)
 )

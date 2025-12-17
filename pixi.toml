@@ -65,8 +65,10 @@ pandas = "*"
 # Static analysis tools
 ruff = "*"
 cython-lint = "*"
-mypy = "*"
+ty = "*"
 codespell = "*"
+scikit-learn = "*" # for ty
+pytest = "*" # for ty
 
 
 [feature.build.dependencies]
@@ -109,7 +111,7 @@ rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
 fmt = "ruff format"
 lint = "ruff check . --fix"
 cython-lint = { cmd = "cython-lint .", cwd = "fastcan" }
-type = { cmd = "mypy . --ignore-missing-imports", cwd = "fastcan" }
+type = { cmd = "ty check .", cwd = "fastcan" }
 spell = "codespell fastcan"
 
 [feature.docs.tasks]

@@ -28,10 +28,7 @@ from ._feature import (
     make_poly_ids,
     make_time_shift_features,
 )
-from ._narx_fast import (  # type: ignore[attr-defined]
-    _predict,
-    _update_dydx,
-)
+from ._narx_fast import _predict, _update_dydx
 
 
 class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -137,6 +134,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
     |  0  |      X[k-2,0]      |  0.701   |
     |  0  | X[k-1,0]*X[k-3,0]  |  1.496   |
     """
+
+    # Notify type checker ty
+    n_features_in_: int
 
     _parameter_constraints: dict = {
         "feat_ids": [None, "array-like"],

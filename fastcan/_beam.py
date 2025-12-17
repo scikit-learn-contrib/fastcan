@@ -43,23 +43,22 @@ def _beam_search(
 
     X, _ = _safe_normalize(X)
 
-    for i in range(n_features_to_select - n_inclusions):
-        if i == 0:
-            mask, X_selected = _prepare_candidates(X, mask_exclude, indices_include)
-            if X_selected.shape[1] == 0:
-                beams_scores = np.sum((X.T @ V) ** 2, axis=1)
-                beams_scores[mask] = 0
-            else:
-                W_selected = orth(X_selected)
-                selected_score = np.sum((W_selected.T @ V) ** 2)
-                beams_scores = _mgs_ssc(X, V, W_selected, mask, selected_score, tol)
-            beams_selected_ids = [indices_include for _ in range(beam_width)]
-            beams_selected_ids, top_k_scores = _select_top_k(
-                beams_scores[None, :],
-                beams_selected_ids,
-                beam_width,
-            )
-            continue
+    mask, X_selected = _prepare_candidates(X, mask_exclude, indices_include)
+    if X_selected.shape[1] == 0:
+        beams_scores = np.sum((X.T @ V) ** 2, axis=1)
+        beams_scores[mask] = 0
+    else:
+        W_selected = orth(X_selected)
+        selected_score = np.sum((W_selected.T @ V) ** 2)
+        beams_scores = _mgs_ssc(X, V, W_selected, mask, selected_score, tol)
+    beams_selected_ids = [indices_include for _ in range(beam_width)]
+    beams_selected_ids, top_k_scores = _select_top_k(
+        beams_scores[None, :],
+        beams_selected_ids,
+        beam_width,
+    )
+
+    for i in range(1, n_features_to_select - n_inclusions):
         beams_scores = np.zeros((beam_width, n_features))
         for beam_idx in range(beam_width):
             mask, X_selected = _prepare_candidates(

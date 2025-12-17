@@ -9,12 +9,14 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (  # ty: ignore[unresolved-import]
+    _openmp_effective_n_threads,
+)
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_X_y
 
 from ._beam import _safe_normalize
-from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
+from ._cancorr_fast import _greedy_search
 from ._fastcan import _prepare_search
 
 

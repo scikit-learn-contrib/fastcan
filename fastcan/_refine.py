@@ -8,11 +8,13 @@ Refine fastcan selection results.
 from numbers import Integral
 
 import numpy as np
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (  # ty: ignore[unresolved-import]
+    _openmp_effective_n_threads,
+)
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import check_is_fitted
 
-from ._cancorr_fast import _greedy_search  # type: ignore[attr-defined]
+from ._cancorr_fast import _greedy_search
 from ._fastcan import FastCan, _prepare_search
 
 

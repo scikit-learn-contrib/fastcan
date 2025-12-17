@@ -6,7 +6,7 @@ from scipy.integrate import odeint
 from sklearn.metrics import r2_score
 
 from fastcan.narx import NARX, make_narx
-from fastcan.narx._narx_fast import _predict  # type: ignore[attr-defined]
+from fastcan.narx._narx_fast import _predict
 
 
 def test_simple():
