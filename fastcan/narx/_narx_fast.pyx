@@ -4,7 +4,6 @@ Fast computation of prediction and gradient for narx.
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
-from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 from cython cimport final
 import numpy as np
@@ -16,7 +15,7 @@ from sklearn.utils._cython_blas cimport _gemm
 cdef inline void _update_terms(
     const double[:, ::1] X,       # IN
     const double[:, ::1] y_hat,   # IN
-    double* terms,                # OUT
+    double[::1] terms,                # OUT
     const int[:, ::1] feat_ids,     # IN
     const int[:, ::1] delay_ids,    # IN
     const int k,                    # IN
@@ -89,35 +88,81 @@ cdef inline double _evaluate_term(
 
 
 @final
-cdef inline void _update_dcf(
-    const double[:, ::1] X,           # IN
-    const double[:, ::1] y_hat,       # IN
-    double[:, :, ::1] dcf,            # OUT
-    const double[::1] coef,           # IN
-    const int[:, ::1] grad_yyd_ids,     # IN
-    const int[:, ::1] grad_delay_ids,   # IN
-    const int[::1] grad_coef_ids,       # IN
-    const int[:, ::1] grad_feat_ids,    # IN
-    const int k,                        # IN
+cdef inline void _update_jc(
+    const double[::1] coefs,            # IN
+    const int[:, ::1] yyd_ids,          # IN
+    const int[::1] coef_ids,            # IN
+    const int[::1] term_ids,            # IN
+    const double[::1] term_lib,         # IN
+    double[:, :, ::1] jc,               # OUT
 ) noexcept nogil:
     """
-    Updates DCF matrix based on the current state.
+    Updates JC matrix based on the current state.
     """
     cdef:
-        Py_ssize_t n_grad_terms = grad_yyd_ids.shape[0]
-        Py_ssize_t i, row_y_id, col_y_id, delay_id_1
+        Py_ssize_t n_terms = yyd_ids.shape[0]
+        Py_ssize_t i, out_y_id, in_y_id, delay_id_1
+        double coef, term
 
-    memset(&dcf[0, 0, 0], 0, dcf.shape[0] * dcf.shape[1] * dcf.shape[2] * sizeof(double))
+    memset(&jc[0, 0, 0], 0, jc.shape[0] * jc.shape[1] * jc.shape[2] * sizeof(double))
 
-    for i in range(n_grad_terms):
-        row_y_id = grad_yyd_ids[i, 0]
-        col_y_id = grad_yyd_ids[i, 1]
-        delay_id_1 = grad_yyd_ids[i, 2]
+    for i in range(n_terms):
+        out_y_id = yyd_ids[i, 0]
+        in_y_id = yyd_ids[i, 1]
+        delay_id_1 = yyd_ids[i, 2]
+        coef = coefs[coef_ids[i]]
+        term = term_lib[term_ids[i]]
 
-        dcf[delay_id_1, row_y_id, col_y_id] += coef[grad_coef_ids[i]] * \
-            _evaluate_term(
-                X, y_hat, grad_feat_ids[i], grad_delay_ids[i], k
-            )
+        jc[delay_id_1, out_y_id, in_y_id] += coef * term
+
+
+@final
+cdef inline void _update_hc(
+    const double[::1] coefs,            # IN
+    const int[:, ::1] yyd_ids,          # IN
+    const int[::1] coef_ids,            # IN
+    const int[::1] term_ids,            # IN
+    const double[::1] term_lib,            # IN
+    const int[:, ::1] yd_ids,           # IN
+    const double[:, :, ::1] dydx,             # IN
+    const int k,                        # IN
+    double[:, :, :, ::1] hc,               # OUT
+) noexcept nogil:
+    """
+    Updates HC matrix based on the current state.
+    HC matrix has shape in (n_x, max_delay (in), n_outputs (out), n_outputs (in)).
+    """
+    cdef:
+        Py_ssize_t n_terms = yyd_ids.shape[0]
+        Py_ssize_t n_x = hc.shape[0]
+        Py_ssize_t i, j, out_y_id, in_y_id, delay_id_1
+        double coef, dydx_k, term
+
+    memset(
+        &hc[0, 0, 0, 0],
+        0,
+        hc.shape[0] * hc.shape[1] * hc.shape[2] * hc.shape[3] * sizeof(double)
+    )
+
+    for i in range(n_terms):
+        out_y_id = yyd_ids[i, 0]
+        in_y_id = yyd_ids[i, 1]
+        delay_id_1 = yyd_ids[i, 2]
+        term = term_lib[term_ids[i]]
+
+        if coef_ids[i] == -1:
+            coef = 1.0
+        else:
+            coef = coefs[coef_ids[i]]
+
+        for j in range(n_x):
+            if yd_ids[i, 0] == -1:
+                dydx_k = 1.0
+            else:
+                # dydx has shape in (n_samples, n_outputs (out), n_x)
+                dydx_k = dydx[k - yd_ids[i, 1], yd_ids[i, 0], j]
+
+            hc[j, delay_id_1, out_y_id, in_y_id] += coef * dydx_k * term
 
 
 @final
@@ -130,16 +175,13 @@ cpdef void _predict(
     const int[:, ::1] delay_ids,            # IN
     const int[::1] output_ids,              # IN
     const int[::1] session_sizes_cumsum,    # IN
+    const int max_delay,                    # IN
     double[:, ::1] y_hat,                   # OUT
 ) noexcept nogil:
     """
     Vectorized (Cython) variant of Python NARX._predict.
     Returns y_hat array (n_samples, n_outputs).
     """
-    cdef:
-        Py_ssize_t max_delay
-    with gil:
-        max_delay = np.max(delay_ids)
     cdef:
         Py_ssize_t n_samples = X.shape[0]
         Py_ssize_t n_ref = y_ref.shape[0]
@@ -186,50 +228,62 @@ cpdef void _predict(
 
 
 @final
-cpdef void _update_dydx(
+cpdef void _update_der(
     const double[:, ::1] X,
     const double[:, ::1] y_hat,
-    const double[::1] coef,
-    const int[:, ::1] feat_ids,
-    const int[:, ::1] delay_ids,
-    const int[::1] y_ids,
-    const int[:, ::1] grad_yyd_ids,
-    const int[:, ::1] grad_delay_ids,
-    const int[::1] grad_coef_ids,
-    const int[:, ::1] grad_feat_ids,
+    const int max_delay,
     const int[::1] session_sizes_cumsum,
-    double[:, :, ::1] dydx,                 # OUT
-    double[:, :, ::1] dcf,                  # OUT
+    const int flag,
+    const int[::1] y_ids,
+    const double[::1] coefs,
+    const int[:, ::1] unique_feat_ids,      # IN
+    const int[:, ::1] unique_delay_ids,     # IN
+    const int[::1] const_term_ids,
+    const int[:, ::1] grad_yyd_ids,
+    const int[::1] grad_coef_ids,
+    const int[::1] grad_term_ids,
+    const int[:, ::1] hess_yyd_ids,
+    const int[::1] hess_coef_ids,
+    const int[::1] hess_term_ids,
+    const int[:, ::1] hess_yd_ids,
+    double[:, ::1] term_libs,               # initialized with 1.0
+    double[:, :, ::1] jc,
+    double[:, :, :, ::1] hc,
+    double[:, :, ::1] dydx,                 # OUT initialized with 0.0
+    double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
 ) noexcept nogil:
     """
-    Computation of the Jacobian matrix dydx.
+    Computation of dydx and d2ydx2 matrix.
+    flag:
+        0 - only dydx
+        1 - both dydx and d2ydx2
 
     Returns
     -------
     dydx : ndarray of shape (n_samples, n_outputs, n_x)
-        Jacobian matrix of the outputs with respect to coefficients and intercepts.
+        First derivative matrix of the outputs with respect to coefficients and intercepts.
+    d2ydx2 : ndarray of shape (n_samples, n_x, n_outputs (out), n_x)
+        Second derivative matrix of the outputs with respect to coefficients and intercepts
     """
-    cdef Py_ssize_t max_delay
-    cdef bint not_empty
-    with gil:
-        max_delay = np.max(delay_ids)
-        not_empty = max_delay > 0 and grad_yyd_ids.size > 0
     cdef:
         Py_ssize_t n_samples = y_hat.shape[0]
-        Py_ssize_t n_coefs = feat_ids.shape[0]
         Py_ssize_t k, i, d, s = 0
-        Py_ssize_t M = dcf.shape[1]      # n_outputs
+        Py_ssize_t M = jc.shape[1]      # n_outputs
         Py_ssize_t N = dydx.shape[2]     # n_x
+        Py_ssize_t n_const = const_term_ids.shape[0]
+        Py_ssize_t n_grad = grad_term_ids.shape[0]
+        Py_ssize_t n_hess = hess_term_ids.shape[0]
         Py_ssize_t init_k = 0
         bint at_init = True
         bint is_finite
-        double* terms_intercepts = <double*> malloc(sizeof(double) * N)
+        bint grad_not_empty, hess_not_empty
 
-    # Set intercepts
-    for i in range(n_coefs, N):
-        terms_intercepts[i] = 1.0
+    with gil:
+        grad_not_empty = max_delay > 0 and n_grad > 0
+        hess_not_empty = max_delay > 0 and n_hess > 0
 
     for k in range(n_samples):
+        # Check if at init
         if k == session_sizes_cumsum[s]:
             s += 1
             at_init = True
@@ -246,45 +300,83 @@ cpdef void _update_dydx(
 
         if at_init:
             continue
-        # Compute terms for time step k (no effect on intercepts)
+        # Compute terms for time step k
         _update_terms(
             X,
             y_hat,
-            terms_intercepts,
-            feat_ids,
-            delay_ids,
+            term_libs[k],
+            unique_feat_ids,
+            unique_delay_ids,
             k,
         )
+        with gil:
+            if np.max(np.abs(term_libs[k])) > 1e20:
+                break
 
         # Update constant terms of Jacobian
-        for i in range(N):
-            dydx[k, y_ids[i], i] = terms_intercepts[i]
+        for i in range(n_const):
+            dydx[k, y_ids[i], i] = term_libs[k, const_term_ids[i]]
 
-        # Update dynamic terms of Jacobian
-        if not_empty:
-            _update_dcf(
-                X,
-                y_hat,
-                dcf,
-                coef,
+        # Update intercepts if any
+        for i in range(n_const, N):
+            dydx[k, y_ids[i], i] = 1.0
+
+        # Update dynamic terms of Jacobian/Hessian
+        if grad_not_empty:
+            _update_jc(
+                coefs,
                 grad_yyd_ids,
-                grad_delay_ids,
                 grad_coef_ids,
-                grad_feat_ids,
-                k,
+                grad_term_ids,
+                term_libs[k],
+                jc,
             )
             for d in range(max_delay):
-                # dydx[k] += dcf[d] @ dydx[k-d-1]
-                # dcf[d] (M,M), dydx[k] (M,N)
+                # dydx[k] += jc[d] @ dydx[k-d-1]
+                # jc[d] (M,M), dydx[k] (M,N)
                 _gemm(
                     RowMajor, NoTrans, NoTrans,
                     M, N, M,
-                    1.0, &dcf[d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
+                    1.0, &jc[d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
                     1.0, &dydx[k, 0, 0], N,
                 )
+            if flag == 1 and hess_not_empty:
+                # Update dynamic terms of Hessian
+                _update_hc(
+                    coefs,
+                    hess_yyd_ids,
+                    hess_coef_ids,
+                    hess_term_ids,
+                    term_libs[k],
+                    hess_yd_ids,
+                    dydx,
+                    k,
+                    hc,
+                )
+                for i in range(N):
+                    for d in range(max_delay):
+                        # d2ydx2[k, i] += jc[d] @ d2ydx2[k-d-1, i]
+                        # jc[d] (M,M), d2ydx2[k-d-1, i] (M,N)
+                        _gemm(
+                            RowMajor, NoTrans, NoTrans,
+                            M, N, M,
+                            1.0, &jc[d, 0, 0], M, &d2ydx2[k-d-1, i, 0, 0], N,
+                            1.0, &d2ydx2[k, i, 0, 0], N,
+                        )
+                        # d2ydx2[k, i] += hc[i, d] @ dydx[k-d-1]
+                        # hc[i, d] (M,M), dydx[k-d-1] (M,N)
+                        _gemm(
+                            RowMajor, NoTrans, NoTrans,
+                            M, N, M,
+                            1.0, &hc[i, d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
+                            1.0, &d2ydx2[k, i, 0, 0], N,
+                        )
+                # Handle divergence
+                with gil:
+                    if np.max(np.abs(d2ydx2[k])) > 1e20:
+                        break
 
         # Handle divergence
         with gil:
             if np.max(np.abs(dydx[k])) > 1e20:
                 break
-    free(terms_intercepts)
