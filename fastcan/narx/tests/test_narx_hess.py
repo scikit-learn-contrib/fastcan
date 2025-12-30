@@ -267,4 +267,4 @@ def test_complex():
         flag=0,
     )
     hess_num = _approx_numeric_hessian(params, wrapper_func)
-    assert_allclose(hess, hess_num, rtol=0.001, atol=1)
+    assert_allclose(hess, hess_num, rtol=0.1, atol=0.01)

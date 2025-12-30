@@ -127,15 +127,17 @@ cdef inline void _update_hc(
     const double[:, :, ::1] dydx,             # IN
     const int k,                        # IN
     double[:, :, :, ::1] hc,               # OUT
+    double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
 ) noexcept nogil:
     """
     Updates HC matrix based on the current state.
     HC matrix has shape in (n_x, max_delay (in), n_outputs (out), n_outputs (in)).
+    d2ydx2 : ndarray of shape (n_samples, n_x, n_outputs (out), n_x)
     """
     cdef:
         Py_ssize_t n_terms = yyd_ids.shape[0]
         Py_ssize_t n_x = hc.shape[0]
-        Py_ssize_t i, j, out_y_id, in_y_id, delay_id_1
+        Py_ssize_t i, j, x, out_y_id, in_y_id, delay_id_1
         double coef, dydx_k, term
 
     memset(
@@ -149,20 +151,21 @@ cdef inline void _update_hc(
         in_y_id = yyd_ids[i, 1]
         delay_id_1 = yyd_ids[i, 2]
         term = term_lib[term_ids[i]]
-
-        if coef_ids[i] == -1:
-            coef = 1.0
-        else:
-            coef = coefs[coef_ids[i]]
-
+        coef = coefs[coef_ids[i]]
         for j in range(n_x):
             if yd_ids[i, 0] == -1:
-                dydx_k = 1.0
+                # Constant
+                # d term / dx = 1 * d y_in * yi * yj
+                x = coef_ids[i]
+                dydx_k = dydx[k - yyd_ids[i, 2], yyd_ids[i, 1], j]
+                d2ydx2[k, x, out_y_id, j] += dydx_k * term
+                d2ydx2[k, j, out_y_id, x] = d2ydx2[k, x, out_y_id, j]
             else:
+                # Dynamic updating by HC[i, d] @ dydx[k-d-1]
+                # d JC / dx = coef * d y_in * d yi * yj
                 # dydx has shape in (n_samples, n_outputs (out), n_x)
                 dydx_k = dydx[k - yd_ids[i, 1], yd_ids[i, 0], j]
-
-            hc[j, delay_id_1, out_y_id, in_y_id] += coef * dydx_k * term
+                hc[j, delay_id_1, out_y_id, in_y_id] += coef * dydx_k * term
 
 
 @final
@@ -352,6 +355,7 @@ cpdef void _update_der(
                     dydx,
                     k,
                     hc,
+                    d2ydx2,
                 )
                 for i in range(N):
                     for d in range(max_delay):

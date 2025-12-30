@@ -520,6 +520,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         The updating rule is given by:
         d2ydx2[k, i] += JC[d] @ d2ydx2[k-d-1, i]
         d2ydx2[k, i] += HC[i, d] @ dydx[k-d-1] for d in range(0, max_delay)
+        d2ydx2[k, i] += Constant terms
         """
         n_degree = grad_feat_ids.shape[1]
         hess_yyd_ids = np.zeros((0, 3), dtype=np.int32)
@@ -540,12 +541,14 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         for yyd_id, coef_id, feat_ids, delay_ids in zip(
             grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids
         ):
+            # In jac, x * term will generate a term with coef 1.
+            # In hess, it will be
             # d term / dx = 1 * d y_in * yi * yj
-            hess_yyd_ids = np.vstack([hess_yyd_ids, yyd_id])
-            hess_yd_ids = np.vstack([hess_yd_ids, [-1, -1]])  # empty
-            hess_coef_ids = np.append(hess_coef_ids, [-1])  # constant 1
-            hess_feat_ids = np.vstack([hess_feat_ids, feat_ids])
-            hess_delay_ids = np.vstack([hess_delay_ids, delay_ids])
+            # hess_yyd_ids = np.vstack([hess_yyd_ids, yyd_id])
+            # hess_yd_ids = np.vstack([hess_yd_ids, [-1, -1]])  # empty
+            # hess_coef_ids = np.append(hess_coef_ids, [-1])  # constant 1
+            # hess_feat_ids = np.vstack([hess_feat_ids, feat_ids])
+            # hess_delay_ids = np.vstack([hess_delay_ids, delay_ids])
             for var_id, (feat_id, delay_id) in enumerate(zip(feat_ids, delay_ids)):
                 #  d JC / dx = coef * d y_in * d yi * yj
                 # hess_yyd_ids: y_out and y_in
@@ -553,7 +556,12 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 # hess_feat_ids: yj ..
                 # hess_delay_ids: yj ..
                 hess_yyd_ids = np.vstack([hess_yyd_ids, yyd_id])
+                # feat_ids and delay_ids contain spaceholder -1 to keep poly_degree size
+                # so d term / dx = 1 * d y_in * yi * yj will automatically included in
+                # the following operations.
                 hess_yd_ids = np.vstack([hess_yd_ids, [feat_id, delay_id]])
+                # If yd_ids is empty, [-1, -1], then coef should be constant 1.
+                # This will be handled in _update_hc
                 hess_coef_ids = np.append(hess_coef_ids, coef_id)
                 hess_feat_ids = np.vstack([hess_feat_ids, feat_ids])
                 hess_delay_ids = np.vstack([hess_delay_ids, delay_ids])
