@@ -264,8 +264,9 @@ def test_narx(nan, multi_output):
 
 
 def test_multi_output_warn():
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 2)
+    rng = np.random.default_rng(12345)
+    X = rng.random((10, 2))
+    y = rng.random((10, 2))
     for i in range(2):
         if i == 0:
             # X only, grad does not have dynamic part
@@ -292,18 +293,16 @@ def test_multi_output_warn():
             with pytest.warns(UserWarning, match="output_ids got"):
                 y_pred = narx.fit(X_nan, y_nan, coef_init=coef_init).predict(X_nan)
             y_nan_masked, y_pred_masked = mask_missing_values(y_nan, y_pred)
-            assert_almost_equal(
-                np.std(
-                    y_pred_masked[y_pred_masked[:, 0] != 0, 1]
-                    - np.mean(y_nan_masked[:, 1])
-                ),
-                0.0,
+            y_pred_std = np.std(
+                y_pred_masked[y_pred_masked[:, 0] != 0, 1] - np.mean(y_nan_masked[:, 1])
             )
+            assert_almost_equal(y_pred_std, 0.0)
 
 
 def test_fit_intercept():
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 1)
+    rng = np.random.default_rng(12345)
+    X = rng.random((10, 2))
+    y = rng.random((10, 1))
     time_shift_ids = np.array([[0, 1], [1, 1]])
     poly_ids = np.array([[1, 1], [2, 2]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
@@ -343,8 +342,9 @@ def test_fit_intercept():
 
 
 def test_multi_output_error():
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 2)
+    rng = np.random.default_rng(12345)
+    X = rng.random((10, 2))
+    y = rng.random((10, 2))
     time_shift_ids = np.array([[0, 1], [1, 1]])
     poly_ids = np.array([[1, 1], [2, 2]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
@@ -519,8 +519,9 @@ def test_tp2fd():
 
 
 def test_print_narx(capsys):
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 2)
+    rng = np.random.default_rng(12345)
+    X = rng.random((10, 2))
+    y = rng.random((10, 2))
     feat_ids = np.array([[0, 1], [1, 2]])
     delay_ids = np.array([[1, 0], [2, 2]])
 
@@ -547,8 +548,9 @@ def test_print_narx(capsys):
 
 
 def test_make_narx_refine_print(capsys):
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 2)
+    rng = np.random.default_rng(12345)
+    X = rng.random((10, 2))
+    y = rng.random((10, 2))
     _ = make_narx(
         X,
         y,
@@ -614,20 +616,21 @@ def test_make_narx_max_candidates():
 
 @pytest.mark.parametrize("max_delay", [1, 3, 7, 10])
 def test_nan_split(max_delay):
+    rng = np.random.default_rng(12345)
     n_sessions = 10
     n_samples_per_session = 100
-    X = np.random.rand(n_samples_per_session, 2)
-    y = np.random.rand(n_samples_per_session, 2)
+    X = rng.random((n_samples_per_session, 2))
+    y = rng.random((n_samples_per_session, 2))
     for _ in range(n_sessions - 1):
         X = np.r_[
             X,
             [[np.nan, np.nan]] * max_delay,
-            np.random.rand(n_samples_per_session, 2),
+            rng.random((n_samples_per_session, 2)),
         ]
         y = np.r_[
             y,
             [[np.nan, np.nan]] * max_delay,
-            np.random.rand(n_samples_per_session, 2),
+            rng.random((n_samples_per_session, 2)),
         ]
     narx = make_narx(
         X,
@@ -654,8 +657,9 @@ def test_nan_split(max_delay):
 
 def test_default_narx_handles_zero_features():
     """Check that default NARX handles X with 0 features without error."""
+    rng = np.random.default_rng(12345)
     X = np.empty((10, 0))
-    y = np.random.rand(10, 1)
+    y = rng.random((10, 1))
     NARX().fit(X, y)
 
 
@@ -700,8 +704,9 @@ def test_auto_reg():
 
 
 def test_auto_reg_error():
+    rng = np.random.default_rng(12345)
     X = np.empty((10, 1))
-    y = np.random.rand(10, 1)
+    y = rng.random((10, 1))
     model = NARX().fit(X, y)
     with pytest.raises(ValueError, match=r"X should be an array-like of shape.*"):
         model.predict(len(y), y_init=y[: model.max_delay_])
@@ -709,8 +714,9 @@ def test_auto_reg_error():
 
 def test_predict_ndim():
     """Test the ndim of predict output"""
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10)
+    rng = np.random.default_rng(12345)
+    X = rng.random((10, 2))
+    y = rng.random(10)
     time_shift_ids = np.array([[0, 1], [1, 1]])
     poly_ids = np.array([[1, 1], [2, 2]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
@@ -731,8 +737,9 @@ def test_predict_ndim():
 
 def test_session_sizes():
     """Test that session sizes in make_narx and NARX.fit and error messages."""
-    X = np.random.rand(100, 2)
-    y = np.random.rand(100, 1)
+    rng = np.random.default_rng(12345)
+    X = rng.random((100, 2))
+    y = rng.random((100, 1))
     with pytest.raises(ValueError, match=r"The sum of session_sizes should be.*"):
         model = make_narx(
             X,
