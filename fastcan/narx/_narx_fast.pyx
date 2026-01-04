@@ -157,7 +157,9 @@ cdef inline void _update_hc(
                 # Constant
                 # d term / dx = 1 * d y_in * yi * yj
                 x = coef_ids[i]
-                dydx_k = dydx[k - yyd_ids[i, 2], yyd_ids[i, 1], j]
+                dydx_k = dydx[k - yyd_ids[i, 2] - 1, yyd_ids[i, 1], j]
+                if x == j:
+                    dydx_k *= 2.0
                 d2ydx2[k, x, out_y_id, j] += dydx_k * term
                 d2ydx2[k, j, out_y_id, x] = d2ydx2[k, x, out_y_id, j]
             else:

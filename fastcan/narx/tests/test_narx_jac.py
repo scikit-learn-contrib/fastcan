@@ -80,19 +80,20 @@ def _derivative_wrapper(
 def test_simple():
     """Simple model
     test model: y(k) = 0.4*y(k-1) + u(k-1) + 1
-    initial y[-1] = 0
-    u[0] = u[1] = u[2] = 1.5
+    initial dy/dx = 0
+    u(0) = 0, u(1) = 1.5, u(2) = 1.5, u(3) = 1.5
+    y(0) = 0, y(1) = 1,   y(2) = 2.9, y(3) = 3.66
     """
     # Ground truth
-    X = np.array([1.5, 1.5, 1.5]).reshape(-1, 1)
-    y = np.array([1, 2.9, 3.66]).reshape(-1, 1)
+    X = np.array([0, 1.5, 1.5, 1.5]).reshape(-1, 1)
+    y = np.array([0, 1, 2.9, 3.66]).reshape(-1, 1)
 
     feat_ids = np.array([1, 0], dtype=np.int32).reshape(-1, 1)
     delay_ids = np.array([1, 1], dtype=np.int32).reshape(-1, 1)
     output_ids = np.array([0, 0], dtype=np.int32)
     coef = np.array([0.4, 1])
     intercept = np.array([1], dtype=float)
-    sample_weight = np.array([1, 1, 1], dtype=float).reshape(-1, 1)
+    sample_weight = np.array([1, 1, 1, 1], dtype=float).reshape(-1, 1)
 
     max_delay = int(delay_ids.max())
 
@@ -130,9 +131,25 @@ def test_simple():
     )
 
     jac_truth = np.c_[
-        np.array([0, y_hat_1[0, 0], y_hat_1[1, 0] + coef_1[0]]).reshape(-1, 1),
-        np.array([0, X[0, 0], X[0, 0] * coef_1[0] + X[0, 0]]).reshape(-1, 1),
-        np.array([0, 1, coef_1[0] + 1]).reshape(-1, 1),
+        np.array(
+            [
+                0,
+                y_hat_1[0, 0],
+                coef_1[0] * y_hat_1[0, 0] + y_hat_1[1, 0],
+                coef_1[0] ** 2 * y_hat_1[0, 0]
+                + coef_1[0] * y_hat_1[1, 0]
+                + y_hat_1[2, 0],
+            ]
+        ).reshape(-1, 1),
+        np.array(
+            [
+                0,
+                X[0, 0],
+                coef_1[0] * X[0, 0] + X[1, 0],
+                coef_1[0] ** 2 * X[0, 0] + coef_1[0] * X[1, 0] + X[2, 0],
+            ]
+        ).reshape(-1, 1),
+        np.array([0, 1, coef_1[0] + 1, coef_1[0] ** 2 + coef_1[0] + 1]).reshape(-1, 1),
     ]
 
     grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_jc_ids(
@@ -154,7 +171,7 @@ def test_simple():
         grad_delay_ids,
     )
 
-    assert_almost_equal(jac, jac_truth, decimal=4)
+    assert_almost_equal(jac, jac_truth, decimal=15)
     jac_0 = _derivative_wrapper(
         np.r_[coef_1, 0],
         X,
