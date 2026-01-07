@@ -52,6 +52,7 @@ def _derivative_wrapper(
 
     _, jac, _ = NARX._func(
         coef_intercept,
+        0,
         X,
         y,
         feat_ids,
@@ -72,7 +73,6 @@ def _derivative_wrapper(
         hess_coef_ids,
         hess_term_ids,
         hess_yd_ids,
-        mode=0,
     )
     return jac
 

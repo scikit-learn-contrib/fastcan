@@ -26,11 +26,11 @@ def _update_term_libs(
     term_libs: npt.NDArray[np.float64],
 ) -> None: ...
 def _update_der(
+    mode: int,
     X: npt.NDArray[np.float64],
     y_hat: npt.NDArray[np.float64],
     max_delay: int,
     session_sizes_cumsum: npt.NDArray[np.intc],
-    mode: int,
     y_ids: npt.NDArray[np.intc],
     coefs: npt.NDArray[np.float64],
     unique_feat_ids: npt.NDArray[np.intc],

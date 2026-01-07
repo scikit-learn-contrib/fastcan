@@ -238,11 +238,11 @@ cpdef void _predict(
 
 @final
 cpdef void _update_der(
+    const int mode,
     const double[:, ::1] X,
     const double[:, ::1] y_hat,
     const int max_delay,
     const int[::1] session_sizes_cumsum,
-    const int mode,
     const int[::1] y_ids,
     const double[::1] coefs,
     const int[:, ::1] unique_feat_ids,      # IN

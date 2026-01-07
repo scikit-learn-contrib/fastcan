@@ -58,6 +58,7 @@ def _hessian_wrapper(
     if return_hess:
         res, jac, hess = NARX._func(
             coef_intercept,
+            mode,
             X,
             y,
             feat_ids,
@@ -78,7 +79,6 @@ def _hessian_wrapper(
             hess_coef_ids,
             hess_term_ids,
             hess_yd_ids,
-            mode=mode,
         )
         return res, jac, hess
     else:
@@ -115,11 +115,11 @@ def _hessian_wrapper(
         d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
 
         _update_der(
+            mode,
             X,
             y_hat,
             max_delay,
             session_sizes_cumsum,
-            mode,
             y_ids,
             coef,
             unique_feat_ids,

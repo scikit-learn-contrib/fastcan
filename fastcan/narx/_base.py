@@ -55,7 +55,7 @@ class _MemoizeOpt:
             or (self._hess is None and self.mode == 1)
         ):
             self.x = np.asarray(x).copy()
-            self._residual, self._jac, self._hess = self.func(x, *args, self.mode)
+            self._residual, self._jac, self._hess = self.func(x, self.mode, *args)
 
     def residual(self, x, *args):
         """R = sqrt(sw) * (y - y_hat)"""
@@ -637,6 +637,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
     @staticmethod
     def _func(
         coef_intercept,
+        mode,
         X,
         y,
         feat_ids,
@@ -657,7 +658,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         hess_coef_ids,
         hess_term_ids,
         hess_yd_ids,
-        mode,
     ):
         """
         Compute residual, Jacobian, and optionally Hessian.
@@ -708,11 +708,11 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
 
         _update_der(
+            mode,
             X,
             y_hat,
             max_delay,
             session_sizes_cumsum,
-            mode,
             y_ids,
             coef,
             unique_feat_ids,
