@@ -514,8 +514,8 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         JC matrix has shape in (max_delay (in), n_outputs (out), n_outputs (in)).
         dydx has shape in (n_samples, n_outputs (out), n_x).
         The updating rule is given by:
-        d2ydx2[k, i] += JC[d] @ d2ydx2[k-d-1, i]
-        d2ydx2[k, i] += HC[i, d] @ dydx[k-d-1] for d in range(0, max_delay)
+        d2ydx2[k, i] += JC[d-1] @ d2ydx2[k-d, i]
+        d2ydx2[k, i] += HC[i, d-1] @ dydx[k-d] for d in range(1, max_delay)
         d2ydx2[k, i] += Constant terms
         """
         n_degree = jac_feat_ids.shape[1]
@@ -582,7 +582,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         dydx has shape in (n_samples, n_outputs (out), n_x).
         The updating rule is given by:
         dydx[k] = terms
-        dydx[k] += JC[d] @ dydx[k-d-1] for d in range(0, max_delay)
+        dydx[k] += JC[d-1] @ dydx[k-d] for d in range(1, max_delay)
 
         Denote dyi(k)/dx as the derivative of the ith output with respect to x.
         dyi(k)/dx should be a linear combination of dyj(k-1)/dx, dyj(k-2)/dx, ...,
@@ -601,8 +601,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         axis-0 (d) delay of input y: dyj(k-1)/dx, dyj(k-2)/dx, ..., dyj(k-max_delay)/dx
         axis-1 (i) output y: dy0(k)/dx, dy1(k)/dx, ..., dyn(k)/dx
         axis-2 (j) input y: dy0(k-d)/dx, dy1(k-d)/dx, ..., dyn(k-d)/dx
-        It should be noted that delay 1 in axis-0 is at location 0, so we do
-        `delay_id - 1` in jac_yyd_ids.
         """
 
         n_degree = feat_ids.shape[1]
@@ -621,7 +619,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 if feat_id >= n_features_in and delay_id > 0:
                     in_y_id = feat_id - n_features_in  # y(k-d, id), input
                     jac_yyd_ids = np.vstack(
-                        [jac_yyd_ids, [out_y_id, in_y_id, delay_id - 1]]
+                        [jac_yyd_ids, [out_y_id, in_y_id, delay_id]]
                     )
                     jac_coef_ids = np.append(jac_coef_ids, coef_id)
                     jac_feat_ids = np.vstack([jac_feat_ids, term_feat_ids])

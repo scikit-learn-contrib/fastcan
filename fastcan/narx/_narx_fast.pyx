@@ -98,6 +98,11 @@ cdef inline void _update_jc(
 ) noexcept nogil:
     """
     Updates JC matrix based on the current state.
+    axis-0 (d) delay of input y: dyj(k-1)/dx, dyj(k-2)/dx, ..., dyj(k-max_delay)/dx
+    axis-1 (i) output y: dy0(k)/dx, dy1(k)/dx, ..., dyn(k)/dx
+    axis-2 (j) input y: dy0(k-d)/dx, dy1(k-d)/dx, ..., dyn(k-d)/dx
+    It should be noted that delay 1 in axis-0 is at location 0, so we do
+    `delay_id - 1` in jac_yyd_ids.
     """
     cdef:
         Py_ssize_t n_terms = yyd_ids.shape[0]
@@ -109,7 +114,7 @@ cdef inline void _update_jc(
     for i in range(n_terms):
         out_y_id = yyd_ids[i, 0]
         in_y_id = yyd_ids[i, 1]
-        delay_id_1 = yyd_ids[i, 2]
+        delay_id_1 = yyd_ids[i, 2] - 1
         coef = coefs[coef_ids[i]]
         term = term_lib[term_ids[i]]
 
@@ -132,12 +137,13 @@ cdef inline void _update_hc(
     """
     Updates HC matrix based on the current state.
     HC matrix has shape in (n_x, max_delay (in), n_outputs (out), n_outputs (in)).
+    The second axis corresponds to delay, where delay 1 is at position 0.
     d2ydx2 : ndarray of shape (n_samples, n_x, n_outputs (out), n_x)
     """
     cdef:
         Py_ssize_t n_terms = yyd_ids.shape[0]
         Py_ssize_t n_x = hc.shape[0]
-        Py_ssize_t i, j, x, out_y_id, in_y_id, delay_id_1
+        Py_ssize_t i, j, x, out_y_id, in_y_id, delay_id
         double coef, dydx_k, term
 
     memset(
@@ -149,7 +155,7 @@ cdef inline void _update_hc(
     for i in range(n_terms):
         out_y_id = yyd_ids[i, 0]
         in_y_id = yyd_ids[i, 1]
-        delay_id_1 = yyd_ids[i, 2]
+        delay_id = yyd_ids[i, 2]
         term = term_lib[term_ids[i]]
         coef = coefs[coef_ids[i]]
         for j in range(n_x):
@@ -157,15 +163,15 @@ cdef inline void _update_hc(
                 # Constant
                 # d term / dx = 1 * d y_in * yi * yj
                 x = coef_ids[i]
-                dydx_k = dydx[k - yyd_ids[i, 2] - 1, yyd_ids[i, 1], j]
+                dydx_k = dydx[k - delay_id, in_y_id, j]
                 d2ydx2[k, x, out_y_id, j] += dydx_k * term
                 d2ydx2[k, j, out_y_id, x] += d2ydx2[k, x, out_y_id, j]
             else:
-                # Dynamic updating by HC[i, d] @ dydx[k-d-1]
+                # Dynamic updating by HC[i, d-1] @ dydx[k-d]
                 # d JC / dx = coef * d y_in * d yi * yj
                 # dydx has shape in (n_samples, n_outputs (out), n_x)
                 dydx_k = dydx[k - yd_ids[i, 1], yd_ids[i, 0], j]
-                hc[j, delay_id_1, out_y_id, in_y_id] += coef * dydx_k * term
+                hc[j, delay_id-1, out_y_id, in_y_id] += coef * dydx_k * term
 
 
 @final

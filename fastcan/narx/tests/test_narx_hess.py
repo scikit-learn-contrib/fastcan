@@ -534,7 +534,6 @@ def test_symbolic_hess(seed):
         hess_vars = [[] for _ in range(n_outputs)]
         for yyd_id, coef_id, term_id in zip(jac_yyd_ids, jac_coef_ids, jac_term_ids):
             h_id, out, delay = yyd_id
-            delay += 1
             feat_ids = unique_feat_ids[term_id]
             delay_ids = unique_delay_ids[term_id]
 
@@ -557,7 +556,6 @@ def test_symbolic_hess(seed):
             hess_yyd_ids, hess_yd_ids, hess_coef_ids, hess_term_ids
         ):
             h_id, out_0, delay_0 = yyd_id
-            delay_0 += 1
             out_1, delay_1 = yd_id
             feat_ids = unique_feat_ids[term_id]
             delay_ids = unique_delay_ids[term_id]
