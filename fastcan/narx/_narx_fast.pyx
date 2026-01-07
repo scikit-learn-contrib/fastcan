@@ -158,10 +158,8 @@ cdef inline void _update_hc(
                 # d term / dx = 1 * d y_in * yi * yj
                 x = coef_ids[i]
                 dydx_k = dydx[k - yyd_ids[i, 2] - 1, yyd_ids[i, 1], j]
-                if x == j:
-                    dydx_k *= 2.0
                 d2ydx2[k, x, out_y_id, j] += dydx_k * term
-                d2ydx2[k, j, out_y_id, x] = d2ydx2[k, x, out_y_id, j]
+                d2ydx2[k, j, out_y_id, x] += d2ydx2[k, x, out_y_id, j]
             else:
                 # Dynamic updating by HC[i, d] @ dydx[k-d-1]
                 # d JC / dx = coef * d y_in * d yi * yj
@@ -238,15 +236,15 @@ cpdef void _update_der(
     const double[:, ::1] y_hat,
     const int max_delay,
     const int[::1] session_sizes_cumsum,
-    const int flag,
+    const int mode,
     const int[::1] y_ids,
     const double[::1] coefs,
     const int[:, ::1] unique_feat_ids,      # IN
     const int[:, ::1] unique_delay_ids,     # IN
     const int[::1] const_term_ids,
-    const int[:, ::1] grad_yyd_ids,
-    const int[::1] grad_coef_ids,
-    const int[::1] grad_term_ids,
+    const int[:, ::1] jac_yyd_ids,
+    const int[::1] jac_coef_ids,
+    const int[::1] jac_term_ids,
     const int[:, ::1] hess_yyd_ids,
     const int[::1] hess_coef_ids,
     const int[::1] hess_term_ids,
@@ -259,7 +257,7 @@ cpdef void _update_der(
 ) noexcept nogil:
     """
     Computation of dydx and d2ydx2 matrix.
-    flag:
+    mode:
         0 - only dydx
         1 - both dydx and d2ydx2
 
@@ -276,15 +274,15 @@ cpdef void _update_der(
         Py_ssize_t M = jc.shape[1]      # n_outputs
         Py_ssize_t N = dydx.shape[2]     # n_x
         Py_ssize_t n_const = const_term_ids.shape[0]
-        Py_ssize_t n_grad = grad_term_ids.shape[0]
+        Py_ssize_t n_jac = jac_term_ids.shape[0]
         Py_ssize_t n_hess = hess_term_ids.shape[0]
         Py_ssize_t init_k = 0
         bint at_init = True
         bint is_finite
-        bint grad_not_empty, hess_not_empty
+        bint jac_not_empty, hess_not_empty
 
     with gil:
-        grad_not_empty = max_delay > 0 and n_grad > 0
+        jac_not_empty = max_delay > 0 and n_jac > 0
         hess_not_empty = max_delay > 0 and n_hess > 0
 
     for k in range(n_samples):
@@ -327,12 +325,12 @@ cpdef void _update_der(
             dydx[k, y_ids[i], i] = 1.0
 
         # Update dynamic terms of Jacobian/Hessian
-        if grad_not_empty:
+        if jac_not_empty:
             _update_jc(
                 coefs,
-                grad_yyd_ids,
-                grad_coef_ids,
-                grad_term_ids,
+                jac_yyd_ids,
+                jac_coef_ids,
+                jac_term_ids,
                 term_libs[k],
                 jc,
             )
@@ -345,7 +343,7 @@ cpdef void _update_der(
                     1.0, &jc[d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
                     1.0, &dydx[k, 0, 0], N,
                 )
-            if flag == 1 and hess_not_empty:
+            if mode == 1 and hess_not_empty:
                 # Update dynamic terms of Hessian
                 _update_hc(
                     coefs,

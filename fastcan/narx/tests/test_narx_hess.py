@@ -1,8 +1,11 @@
 """Test Hessian matrix of NARX"""
 
+from collections import Counter
 from functools import partial
 
 import numpy as np
+import pytest
+import sympy as sp
 from numpy.testing import assert_allclose
 from scipy.optimize import approx_fprime
 
@@ -20,28 +23,28 @@ def _hessian_wrapper(
     fit_intercept,
     sample_weight_sqrt,
     session_sizes_cumsum,
-    grad_yyd_ids,
-    grad_coef_ids,
-    grad_feat_ids,
-    grad_delay_ids,
+    jac_yyd_ids,
+    jac_coef_ids,
+    jac_feat_ids,
+    jac_delay_ids,
     return_hess=True,
 ):
-    flag = 1
+    mode = 1
     (hess_yyd_ids, hess_yd_ids, hess_coef_ids, hess_feat_ids, hess_delay_ids) = (
         NARX._get_hc_ids(
-            grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids, need_hess=True
+            jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids, X.shape[1], mode=1
         )
     )
 
     combined_term_ids, unique_feat_ids, unique_delay_ids = NARX._get_term_ids(
-        np.vstack([feat_ids, grad_feat_ids, hess_feat_ids]),
-        np.vstack([delay_ids, grad_delay_ids, hess_delay_ids]),
+        np.vstack([feat_ids, jac_feat_ids, hess_feat_ids]),
+        np.vstack([delay_ids, jac_delay_ids, hess_delay_ids]),
     )
     n_terms = feat_ids.shape[0]
-    n_grad = grad_feat_ids.shape[0]
+    n_jac = jac_feat_ids.shape[0]
     const_term_ids = combined_term_ids[:n_terms]
-    grad_term_ids = combined_term_ids[n_terms : n_terms + n_grad]
-    hess_term_ids = combined_term_ids[n_terms + n_grad :]
+    jac_term_ids = combined_term_ids[n_terms : n_terms + n_jac]
+    hess_term_ids = combined_term_ids[n_terms + n_jac :]
 
     max_delay = int(delay_ids.max())
     n_outputs = y.shape[1]
@@ -65,17 +68,17 @@ def _hessian_wrapper(
             session_sizes_cumsum,
             max_delay,
             y_ids,
-            grad_yyd_ids,
-            grad_coef_ids,
             unique_feat_ids,
             unique_delay_ids,
             const_term_ids,
-            grad_term_ids,
+            jac_yyd_ids,
+            jac_coef_ids,
+            jac_term_ids,
             hess_yyd_ids,
             hess_coef_ids,
             hess_term_ids,
             hess_yd_ids,
-            flag=flag,
+            mode=mode,
         )
         return res, jac, hess
     else:
@@ -116,15 +119,15 @@ def _hessian_wrapper(
             y_hat,
             max_delay,
             session_sizes_cumsum,
-            flag,
-            y_ids.astype(np.int32),
+            mode,
+            y_ids,
             coef,
             unique_feat_ids,
             unique_delay_ids,
             const_term_ids,
-            grad_yyd_ids,
-            grad_coef_ids,
-            grad_term_ids,
+            jac_yyd_ids,
+            jac_coef_ids,
+            jac_term_ids,
             hess_yyd_ids,
             hess_coef_ids,
             hess_term_ids,
@@ -139,12 +142,12 @@ def _hessian_wrapper(
 
 
 def _approx_numeric_hessian(params, wrapper_func, epsilon=1e-6):
-    def grad_component(param_vec, idx):
+    def jac_component(param_vec, idx):
         res_i, jac_i, _ = wrapper_func(param_vec)
         return (jac_i.T @ res_i)[idx]
 
     rows = [
-        approx_fprime(params, grad_component, epsilon, i) for i in range(params.size)
+        approx_fprime(params, jac_component, epsilon, i) for i in range(params.size)
     ]
     return np.vstack(rows)
 
@@ -200,7 +203,7 @@ def test_simple():
     sample_weight_sqrt = np.sqrt(sample_weight)
     session_sizes = np.array([len(y)], dtype=np.int32)
 
-    grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_jc_ids(
+    jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
         feat_ids, delay_ids, output_ids, 1
     )
 
@@ -217,10 +220,10 @@ def test_simple():
         True,
         sample_weight_sqrt,
         session_sizes,
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
         return_hess=False,
     )
     d2ydx2 = d2ydx2.squeeze(axis=2)
@@ -248,7 +251,7 @@ def test_complex():
             0.5 * y0[i - 1]
             + 0.8 * y1[i - 1]
             + 0.3 * u0[i] ** 2
-            + 2 * u0[i - 1] * u0[i - 3]
+            + 2 * u0[i - 1] * y1[i - 1]
             + 1.5 * u0[i - 2] * u1[i - 3]
             + 1
         )
@@ -269,7 +272,7 @@ def test_complex():
             [-1, 2],
             [-1, 3],
             [0, 0],
-            [0, 0],
+            [0, 3],
             [0, 1],
             [-1, 3],
             [2, 3],
@@ -284,7 +287,7 @@ def test_complex():
             [-1, 1],
             [-1, 1],
             [0, 0],
-            [1, 3],
+            [1, 1],
             [2, 3],
             [-1, 1],
             [1, 2],
@@ -312,7 +315,7 @@ def test_complex():
 
     intercept = np.array([1, 0.5])
 
-    grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_jc_ids(
+    jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
         feat_ids, delay_ids, output_ids, X.shape[1]
     )
 
@@ -326,10 +329,10 @@ def test_complex():
         True,
         sample_weight_sqrt,
         session_sizes,
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
         return_hess=True,
     )
     params = np.r_[coef, intercept]
@@ -343,10 +346,309 @@ def test_complex():
         fit_intercept=True,
         sample_weight_sqrt=sample_weight_sqrt,
         session_sizes_cumsum=session_sizes,
-        grad_yyd_ids=grad_yyd_ids,
-        grad_coef_ids=grad_coef_ids,
-        grad_feat_ids=grad_feat_ids,
-        grad_delay_ids=grad_delay_ids,
+        jac_yyd_ids=jac_yyd_ids,
+        jac_coef_ids=jac_coef_ids,
+        jac_feat_ids=jac_feat_ids,
+        jac_delay_ids=jac_delay_ids,
     )
     hess_num = _approx_numeric_hessian(params, wrapper_func)
     assert_allclose(hess, hess_num, rtol=0.001, atol=0.001)
+
+
+@pytest.mark.parametrize("seed", [10, 42, 123, 999, 2024])
+def test_symbolic_hess(seed):
+    """Use sympy to verify Hessian computation"""
+
+    def parse_coef(sym):
+        """
+        x6 -> ("coef", 6)
+        u1_1 -> ("u", 1, 1)
+        """
+        name = sym.name
+        if name.startswith("x"):
+            return ("coef", int(name[1:]))
+
+        if name.startswith("u"):
+            base, delay = name.split("_")
+            return ("u", int(base[1:]), int(delay))
+
+        raise ValueError("Not a coefficient")
+
+    def parse_derivative(d):
+        """
+        Derivative(y*, ...) ->
+        (out, delay, i, j)
+        """
+        if not isinstance(d, sp.Derivative):
+            raise TypeError("Expected a Derivative")
+
+        # --- extract output id and delay ---
+        f = d.expr
+        fname = f.func.__name__  # e.g. "y1_2"
+        out, delay = map(int, fname[1:].split("_"))
+
+        # --- extract differentiation variables ---
+        vars_ = d.variables
+        n = d.derivative_count
+
+        if n == 1:
+            # Derivative(y*, x_i)
+            i = int(vars_[0].name[1:])
+            return (out, delay, i, -1)
+
+        if n == 2:
+            if len(vars_) == 1:
+                # Derivative(y*, (x_i, 2))
+                i = int(vars_[0].name[1:])
+                return (out, delay, i, i)
+            elif len(vars_) == 2:
+                # Derivative(y*, x_i, x_j)
+                i = int(vars_[0].name[1:])
+                j = int(vars_[1].name[1:])
+                return (out, delay, i, j)
+
+        raise ValueError(f"Unsupported derivative structure: {d}")
+
+    def factor_to_tuple(f):
+        if isinstance(f, sp.Symbol):
+            return parse_coef(f)
+
+        if isinstance(f, sp.Derivative):
+            return parse_derivative(f)
+
+        if isinstance(f, sp.Function):
+            fname = f.func.__name__
+            out, delay = map(int, fname[1:].split("_"))
+            return (out, delay, -1, -1)
+
+        if f.is_Number:
+            return ("const", float(f))
+
+        if isinstance(f, sp.Pow):
+            base, exp = f.as_base_exp()
+            if exp.is_Integer and exp > 0:
+                item = factor_to_tuple(base)
+                if isinstance(item, list):
+                    return item * int(exp)
+                else:
+                    return [item] * int(exp)
+
+        raise TypeError(f"Unsupported factor: {f}")
+
+    def get_sympy_hess(feat_ids, delay_ids, output_ids):
+        n_terms = feat_ids.shape[0]
+        n_outputs = len(np.unique(output_ids))
+        n_features = feat_ids.max() - n_outputs + 1
+        n_x = n_terms + n_outputs
+        max_delay = delay_ids.max()
+        n_degrees = feat_ids.shape[1]
+
+        xx = sp.symbols(f"x0:{n_x}")
+        ff = [[None] * (max_delay + 1) for _ in range(n_features + n_outputs)]
+
+        for i in range(n_features + n_outputs):
+            for j in range(max_delay + 1):
+                if i < n_features:
+                    ff[i][j] = sp.symbols(f"u{i}_{j}")
+                else:
+                    y_id = i - n_features
+                    ff[i][j] = sp.Function(f"y{y_id}_{j}")(*xx)  # ty: ignore[call-non-callable]
+
+        yy = [None] * n_outputs
+        for i in range(n_outputs):
+            yy[i] = xx[-n_outputs + i]
+        for i in range(n_terms):
+            feat_id = feat_ids[i]
+            delay_id = delay_ids[i]
+            out_id = output_ids[i]
+            term = xx[i]
+            for j in range(n_degrees):
+                f_id = feat_id[j]
+                d_id = delay_id[j]
+                if f_id == -1:
+                    continue
+                else:
+                    term *= ff[f_id][d_id]
+            yy[out_id] += term
+
+        theta = sp.Matrix(xx)
+        H_ys = [sp.hessian(y, theta) for y in yy]
+
+        c_odij = [[] for _ in range(n_outputs)]
+        for h_id, H in enumerate(H_ys):
+            for j, dx2 in enumerate(H):
+                terms = sp.Add.make_args(dx2)
+                for i, term in enumerate(terms):
+                    factors = sp.Mul.make_args(term)
+                    items = []
+                    for f in factors:
+                        item = factor_to_tuple(f)
+                        if isinstance(item, list):
+                            items.extend(item)
+                        else:
+                            items.append(item)
+
+                    const_item = next((x for x in items if x[0] == "const"), None)
+                    if const_item:
+                        val = int(const_item[1])
+                        items.remove(const_item)
+                        if val == 0:
+                            continue
+                        for _ in range(val - 1):
+                            c_odij[h_id].append(list(items))
+
+                    c_odij[h_id].append(items)
+        return c_odij
+
+    def get_narx_hess(feat_ids, delay_ids, output_ids):
+        n_terms = feat_ids.shape[0]
+        n_outputs = len(np.unique(output_ids))
+        n_features = feat_ids.max() - n_outputs + 1
+        n_x = n_terms + n_outputs
+
+        mode = 1
+
+        jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
+            feat_ids, delay_ids, output_ids, n_features
+        )
+        (hess_yyd_ids, hess_yd_ids, hess_coef_ids, hess_feat_ids, hess_delay_ids) = (
+            NARX._get_hc_ids(
+                jac_yyd_ids,
+                jac_coef_ids,
+                jac_feat_ids,
+                jac_delay_ids,
+                n_features,
+                mode,
+            )
+        )
+        combined_term_ids, unique_feat_ids, unique_delay_ids = NARX._get_term_ids(
+            np.vstack([feat_ids, jac_feat_ids, hess_feat_ids]),
+            np.vstack([delay_ids, jac_delay_ids, hess_delay_ids]),
+        )
+
+        jac_term_ids = combined_term_ids[n_terms:]
+        n_jac = jac_feat_ids.shape[0]
+        jac_term_ids = combined_term_ids[n_terms : n_terms + n_jac]
+        hess_term_ids = combined_term_ids[n_terms + n_jac :]
+
+        hess_vars = [[] for _ in range(n_outputs)]
+        for yyd_id, coef_id, term_id in zip(jac_yyd_ids, jac_coef_ids, jac_term_ids):
+            h_id, out, delay = yyd_id
+            delay += 1
+            feat_ids = unique_feat_ids[term_id]
+            delay_ids = unique_delay_ids[term_id]
+
+            term_tuple = []
+            for feat_id, delay_id in zip(feat_ids, delay_ids):
+                if feat_id == -1:
+                    continue
+                if feat_id < n_features:
+                    term_tuple += [("u", int(feat_id), int(delay_id))]
+                else:
+                    term_tuple += [(int(feat_id - n_features), int(delay_id), -1, -1)]
+            coef_tuple = ("coef", int(coef_id))
+
+            for i in range(n_x):
+                for j in range(n_x):
+                    der_tuple = (int(out), int(delay), i, j)
+                    hess_vars[h_id] += [[coef_tuple] + term_tuple + [der_tuple]]
+
+        for yyd_id, yd_id, coef_id, term_id in zip(
+            hess_yyd_ids, hess_yd_ids, hess_coef_ids, hess_term_ids
+        ):
+            h_id, out_0, delay_0 = yyd_id
+            delay_0 += 1
+            out_1, delay_1 = yd_id
+            feat_ids = unique_feat_ids[term_id]
+            delay_ids = unique_delay_ids[term_id]
+
+            term_tuple = []
+            for feat_id, delay_id in zip(feat_ids, delay_ids):
+                if feat_id == -1:
+                    continue
+                if feat_id < n_features:
+                    term_tuple += [("u", int(feat_id), int(delay_id))]
+                else:
+                    term_tuple += [(int(feat_id - n_features), int(delay_id), -1, -1)]
+
+            for i in range(n_x):
+                if out_1 == -1:
+                    # Constant term
+                    der_tuple = [(int(out_0), int(delay_0), i, -1)]
+                    hess_vars[h_id] += [term_tuple + der_tuple]
+                    hess_vars[h_id] += [term_tuple + der_tuple]
+                else:
+                    coef_tuple = ("coef", int(coef_id))
+                    for j in range(n_x):
+                        der_tuple = [
+                            (int(out_0), int(delay_0), j, -1),
+                            (int(out_1), int(delay_1), i, -1),
+                        ]
+                        hess_vars[h_id] += [[coef_tuple] + term_tuple + der_tuple]
+        return hess_vars
+
+    def normalize_tuple(t):
+        # (out, delay, i, j) -> normalize i, j order if it's a cross term
+        if len(t) == 4 and t[3] != -1:
+            i, j = t[2], t[3]
+            return (t[0], t[1], min(i, j), max(i, j))
+        return t
+
+    def normalize_term(term):
+        norm_tuples = [normalize_tuple(t) for t in term]
+        norm_tuples.sort(key=lambda x: str(x))
+        return tuple(norm_tuples)
+
+    rng = np.random.default_rng(seed)
+    n_features = rng.integers(1, 11)  # (1, 10)
+    n_outputs = rng.integers(1, 6)  # (1, 5)
+    max_delay = rng.integers(1, 11)  # (1, 10)
+    n_degress = rng.integers(1, 6)  # (1, 5)
+    n_terms = n_outputs + rng.integers(1, 11)  # (1, 10)
+
+    n_in_out_1 = n_features + n_outputs - 1
+
+    # feat_ids: values in [-1, n_in_out_1]
+    feat_ids = rng.integers(
+        -1, n_in_out_1 + 1, size=(n_terms, n_degress), dtype=np.int32
+    )
+
+    # delay_ids: values in [1, max_delay]
+    delay_ids = rng.integers(
+        1, max_delay + 1, size=(n_terms, n_degress), dtype=np.int32
+    )
+    delay_ids[feat_ids == -1] = -1
+
+    # output_ids: values in [0, n_outputs-1].
+    # Ensure at least one term per output so we don't have empty hessians
+    output_ids = np.concatenate(
+        [np.arange(n_outputs), rng.integers(0, n_outputs, size=n_terms - n_outputs)]
+    )
+    rng.shuffle(output_ids)
+    output_ids = output_ids.astype(np.int32)
+
+    sym_hess = get_sympy_hess(feat_ids, delay_ids, output_ids)
+    narx_hess = get_narx_hess(feat_ids, delay_ids, output_ids)
+
+    for out_i in range(len(sym_hess)):
+        # Transform
+        sym_norm = [normalize_term(t) for t in sym_hess[out_i]]
+        narx_norm = [normalize_term(t) for t in narx_hess[out_i]]
+
+        # Compare using sets to find unique structural differences
+        s_sym = set(sym_norm)
+        s_narx = set(narx_norm)
+
+        intersection = s_sym.intersection(s_narx)
+        diff_sym_h = s_sym - s_narx  # in sym but not narx
+        diff_h_sym = s_narx - s_sym  # in narx but not sym
+        c_sym = Counter(sym_norm)
+        c_narx = Counter(narx_norm)
+
+        assert len(sym_hess[out_i]) == len(narx_hess[out_i])
+        assert len(s_sym) == len(s_narx)
+        assert len(intersection) == len(s_sym)
+        assert len(diff_sym_h) == 0
+        assert len(diff_h_sym) == 0
+        # Use Counter to check if elements are identical including duplicates
+        assert c_sym == c_narx

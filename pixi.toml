@@ -60,6 +60,7 @@ pyarrow = "*"
 pytest = "*"
 pytest-cov = "*"
 pandas = "*"
+sympy = "*"
 
 [feature.static.dependencies]
 # Static analysis tools
@@ -69,6 +70,7 @@ ty = "*"
 codespell = "*"
 scikit-learn = "*" # for ty
 pytest = "*" # for ty
+sympy = "*" # for ty
 
 
 [feature.build.dependencies]
@@ -106,6 +108,17 @@ test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov
 build-wheel = "rm -rf dist && python -m build -wnx"
 build-sdist = "rm -rf dist && python -m build --sdist"
 rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
+
+[feature.build.target.osx-arm64.activation.env]
+# See: https://github.com/conda-forge/compilers-feedstock/issues/15 and scikit-learn LDFLAGS settings
+CPPFLAGS = "-Xpreprocessor -fopenmp"
+CFLAGS = "-I$CONDA_PREFIX/include"
+LDFLAGS = "-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lomp"
+
+[feature.build.target.osx-64.activation.env]
+CPPFLAGS = "-Xpreprocessor -fopenmp"
+CFLAGS = "-I$CONDA_PREFIX/include"
+LDFLAGS = "-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lomp"
 
 [feature.static.tasks]
 fmt = "ruff format"

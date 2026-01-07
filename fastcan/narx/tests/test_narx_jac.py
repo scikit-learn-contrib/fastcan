@@ -19,27 +19,27 @@ def _derivative_wrapper(
     fit_intercept,
     sample_weight_sqrt,
     session_sizes_cumsum,
-    grad_yyd_ids,
-    grad_coef_ids,
-    grad_feat_ids,
-    grad_delay_ids,
+    jac_yyd_ids,
+    jac_coef_ids,
+    jac_feat_ids,
+    jac_delay_ids,
 ):
     # Construct unique terms
     (hess_yyd_ids, hess_yd_ids, hess_coef_ids, hess_feat_ids, hess_delay_ids) = (
         NARX._get_hc_ids(
-            grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids, need_hess=False
+            jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids, X.shape[1], mode=0
         )
     )
 
     n_terms = feat_ids.shape[0]
     combined_term_ids, unique_feat_ids, unique_delay_ids = NARX._get_term_ids(
-        np.vstack([feat_ids, grad_feat_ids, hess_feat_ids]),
-        np.vstack([delay_ids, grad_delay_ids, hess_delay_ids]),
+        np.vstack([feat_ids, jac_feat_ids, hess_feat_ids]),
+        np.vstack([delay_ids, jac_delay_ids, hess_delay_ids]),
     )
     const_term_ids = combined_term_ids[:n_terms]
-    n_grad = grad_feat_ids.shape[0]
-    grad_term_ids = combined_term_ids[n_terms : n_terms + n_grad]
-    hess_term_ids = combined_term_ids[n_terms + n_grad :]
+    n_jac = jac_feat_ids.shape[0]
+    jac_term_ids = combined_term_ids[n_terms : n_terms + n_jac]
+    hess_term_ids = combined_term_ids[n_terms + n_jac :]
 
     max_delay = int(delay_ids.max())
     n_outputs = y.shape[1]
@@ -62,17 +62,17 @@ def _derivative_wrapper(
         session_sizes_cumsum,
         max_delay,
         y_ids,
-        grad_yyd_ids,
-        grad_coef_ids,
         unique_feat_ids,
         unique_delay_ids,
         const_term_ids,
-        grad_term_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_term_ids,
         hess_yyd_ids,
         hess_coef_ids,
         hess_term_ids,
         hess_yd_ids,
-        flag=0,
+        mode=0,
     )
     return jac
 
@@ -152,7 +152,7 @@ def test_simple():
         np.array([0, 1, coef_1[0] + 1, coef_1[0] ** 2 + coef_1[0] + 1]).reshape(-1, 1),
     ]
 
-    grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_jc_ids(
+    jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
         feat_ids, delay_ids, output_ids, 1
     )
     jac = _derivative_wrapper(
@@ -165,10 +165,10 @@ def test_simple():
         True,
         np.sqrt(sample_weight),
         np.array([len(y)], dtype=np.int32),
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
     )
 
     assert_almost_equal(jac, jac_truth, decimal=15)
@@ -182,10 +182,10 @@ def test_simple():
         True,
         np.sqrt(sample_weight),
         np.array([len(y)], dtype=np.int32),
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
     )
     jac = _derivative_wrapper(
         coef_1,
@@ -197,10 +197,10 @@ def test_simple():
         False,
         np.sqrt(sample_weight),
         np.array([len(y)], dtype=np.int32),
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
     )
     assert_almost_equal(jac, jac_0[:, :-1])
 
@@ -285,7 +285,7 @@ def test_complex():
     intercept = np.array([1, 0.5])
 
     # NARX Jacobian
-    grad_yyd_ids, grad_coef_ids, grad_feat_ids, grad_delay_ids = NARX._get_jc_ids(
+    jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
         feat_ids, delay_ids, output_ids, X.shape[1]
     )
     jac = _derivative_wrapper(
@@ -298,10 +298,10 @@ def test_complex():
         True,
         np.sqrt(np.ones((y.shape[0], 1))),
         np.array([len(y)], dtype=np.int32),
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
     )
 
     # Numerical gradient
@@ -346,9 +346,9 @@ def test_complex():
         )
 
         e_1 = y_hat_1 - y
-        grad_num = (e_1 - e_0) / delta_w
+        jac_num = (e_1 - e_0) / delta_w
 
-        assert_allclose(jac[:, i], grad_num.flatten(), rtol=0.1, atol=0.01)
+        assert_allclose(jac[:, i], jac_num.flatten(), rtol=0.1, atol=0.01)
 
     jac = _derivative_wrapper(
         coef,
@@ -360,10 +360,10 @@ def test_complex():
         False,
         np.sqrt(np.ones((y.shape[0], 1))),
         np.array([len(y)], dtype=np.int32),
-        grad_yyd_ids,
-        grad_coef_ids,
-        grad_feat_ids,
-        grad_delay_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_feat_ids,
+        jac_delay_ids,
     )
     y_hat_0 = np.zeros_like(y, dtype=float)
     _predict(
@@ -399,9 +399,9 @@ def test_complex():
         )
 
         e_1 = y_hat_1 - y
-        grad_num = (e_1 - e_0) / delta_w
+        jac_num = (e_1 - e_0) / delta_w
 
-        assert_allclose(jac[:, i], grad_num.flatten(), rtol=0.1, atol=0.01)
+        assert_allclose(jac[:, i], jac_num.flatten(), rtol=0.1, atol=0.01)
 
 
 def test_score_nan():
