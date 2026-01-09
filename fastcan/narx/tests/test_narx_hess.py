@@ -357,7 +357,7 @@ def test_complex():
         jac_delay_ids=jac_delay_ids,
     )
     hess_num = _approx_numeric_hessian(params, wrapper_func)
-    assert_allclose(hess, hess_num, rtol=0.001, atol=0.001)
+    assert_allclose(hess, hess_num, rtol=1e-5, atol=1e-5)
 
 
 @pytest.mark.parametrize("seed", [10, 42, 123, 999, 2024])
