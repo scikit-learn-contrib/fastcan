@@ -16,15 +16,6 @@ def _predict(
     max_delay: int,
     y_hat: npt.NDArray[np.float64],
 ) -> None: ...
-def _update_term_libs(
-    X: npt.NDArray[np.float64],
-    y_hat: npt.NDArray[np.float64],
-    unique_feat_ids: npt.NDArray[np.intc],
-    unique_delay_ids: npt.NDArray[np.intc],
-    session_sizes_cumsum: npt.NDArray[np.intc],
-    max_delay: int,
-    term_libs: npt.NDArray[np.float64],
-) -> None: ...
 def _update_der(
     mode: int,
     X: npt.NDArray[np.float64],
@@ -43,9 +34,11 @@ def _update_der(
     hess_coef_ids: npt.NDArray[np.intc],
     hess_term_ids: npt.NDArray[np.intc],
     hess_yd_ids: npt.NDArray[np.intc],
+    p: npt.NDArray[np.float64],
     term_libs: npt.NDArray[np.float64],
     jc: npt.NDArray[np.float64],
     hc: npt.NDArray[np.float64],
     dydx: npt.NDArray[np.float64],
     d2ydx2: npt.NDArray[np.float64],
+    d2ydx2p: npt.NDArray[np.float64],
 ) -> None: ...

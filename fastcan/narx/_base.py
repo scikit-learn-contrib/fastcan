@@ -45,17 +45,21 @@ class _MemoizeOpt:
         self._residual = None
         self._jac = None
         self._hess = None
+        self._hessp = None
         self.x = None
 
-    def _compute_if_needed(self, x, *args):
+    def _compute_if_needed(self, x, *args, p=None):
         if (
             not np.all(x == self.x)
             or self._residual is None
             or self._jac is None
             or (self._hess is None and self.mode == 1)
+            or (self._hessp is None and self.mode == 2)
         ):
             self.x = np.asarray(x).copy()
-            self._residual, self._jac, self._hess = self.func(x, self.mode, *args)
+            self._residual, self._jac, self._hess, self._hessp = self.func(
+                x, self.mode, *args, p=p
+            )
 
     def residual(self, x, *args):
         """R = sqrt(sw) * (y - y_hat)"""
@@ -73,6 +77,13 @@ class _MemoizeOpt:
         H: (n_samples * n_outputs, n_x, n_x)"""
         self._compute_if_needed(x, *args)
         return self._hess
+
+    def hessp(self, x, p, *args):
+        """Hessian-vector product of least squares loss.
+        H * p = J^T @ (J @ p) + sum(R * sqrt(sw) * (d2ydx2 @ p))
+        Hp: (n_samples * n_outputs, n_x)"""
+        self._compute_if_needed(x, *args, p=p)
+        return self._hessp
 
     def loss(self, x, *args):
         """Least squares loss: 0.5 * sum(R^2)"""
@@ -416,7 +427,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     f"({(n_coef_intercept,)}), but got {coef_init.shape}."
                 )
 
-        mode = 0
+        mode = 1
         jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
             self.feat_ids_, self.delay_ids_, self.output_ids_, n_features
         )
@@ -658,6 +669,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         hess_coef_ids,
         hess_term_ids,
         hess_yd_ids,
+        p=None,
     ):
         """
         Compute residual, Jacobian, and optionally Hessian.
@@ -704,8 +716,20 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         jc = np.zeros((max_delay, n_outputs, n_outputs), dtype=float)
 
         term_libs = np.ones((n_samples, unique_feat_ids.shape[0]), dtype=float)
-        hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
-        d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
+        if mode == 0:
+            hc = np.zeros((1, 1, 1, 1), dtype=float)  # dummy
+            d2ydx2 = np.zeros((1, 1, 1, 1), dtype=float)  # dummy
+            d2ydx2p = np.zeros((1, 1, 1), dtype=float)  # dummy
+            p = np.zeros(1, dtype=float)  # dummy
+        elif mode == 1:
+            hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
+            d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
+            d2ydx2p = np.zeros((1, 1, 1), dtype=float)  # dummy
+            p = np.zeros(1, dtype=float)  # dummy
+        elif mode == 2:
+            hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
+            d2ydx2 = np.zeros((max_delay + 1, n_x, n_outputs, n_x), dtype=float)
+            d2ydx2p = np.zeros((n_samples, n_outputs, n_x), dtype=float)
 
         _update_der(
             mode,
@@ -725,11 +749,13 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             hess_coef_ids,
             hess_term_ids,
             hess_yd_ids,
+            p,
             term_libs,
             jc,
             hc,
             dydx,
             d2ydx2,
+            d2ydx2p,
         )
 
         # Mask missing values
@@ -739,7 +765,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         sample_weight_sqrt_masked = sample_weight_sqrt[mask_valid]
         dydx_masked = dydx[mask_valid]
 
-        # Compute residuals
+        # Compute residuals (n_samples, n_outputs) to (n_samples * n_outputs,)
         residual = (sample_weight_sqrt_masked * (y_hat_masked - y_masked)).flatten()
 
         # Compute Jacobian
@@ -748,7 +774,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             dydx_masked * sample_weight_sqrt_masked[..., np.newaxis], (-1, n_x)
         )
 
-        # Compute Hessian if needed
+        # Compute Hessian (or Hessian-vector product) if needed
+        hess = None
+        hessp = None
         if mode == 1:
             # d2ydx2 has shape in (n_samples, n_x, n_outputs (out), n_x)
             d2ydx2_masked = (
@@ -761,13 +789,25 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             d2ydx2_masked = np.reshape(d2ydx2_masked, (-1, n_x, n_x))
             hess = jac.T @ jac + np.tensordot(residual, d2ydx2_masked, axes=1)
             hess = 0.5 * (hess + hess.T)  # force symmetric
-        else:
-            hess = None
+        elif mode == 2:
+            # d2ydx2p has shape in (n_samples, n_outputs (out), n_x)
+            d2ydx2p_masked = (
+                d2ydx2p[mask_valid] * sample_weight_sqrt_masked[..., np.newaxis]
+            )
+            # reshape to (n_samples * n_outputs, n_x)
+            d2ydx2p_masked = np.reshape(d2ydx2p_masked, (-1, n_x))
+
+            # H @ p = (J^T @ J) @ p + sum(residual * (d2ydx2 @ p))
+            # d2ydx2p corresponds to d2ydx2 @ p
+
+            # (J^T @ J) @ p = J^T @ (J @ p)
+            hessp = jac.T @ (jac @ p) + residual @ d2ydx2p_masked
 
         # residual: (n_samples * n_outputs,)
         # jac: (n_samples * n_outputs, n_x)
-        # hess: (n_x, n_x)
-        return residual, jac, hess
+        # hess: (n_x, n_x) if mode == 1
+        # hessp: (n_x,) if mode == 2
+        return residual, jac, hess, hessp
 
     @validate_params(
         {

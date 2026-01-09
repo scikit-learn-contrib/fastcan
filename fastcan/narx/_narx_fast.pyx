@@ -4,11 +4,11 @@ Fast computation of prediction and gradient for narx.
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
-from libc.string cimport memset
+from libc.string cimport memset, memmove
 from cython cimport final
 import numpy as np
-from sklearn.utils._cython_blas cimport RowMajor, NoTrans
-from sklearn.utils._cython_blas cimport _gemm
+from sklearn.utils._cython_blas cimport RowMajor, NoTrans, Trans
+from sklearn.utils._cython_blas cimport _gemm, _gemv
 
 
 @final
@@ -130,7 +130,8 @@ cdef inline void _update_hc(
     const double[::1] term_lib,            # IN
     const int[:, ::1] yd_ids,           # IN
     const double[:, :, ::1] dydx,             # IN
-    const int k,                        # IN
+    const Py_ssize_t k,            # IN
+    const Py_ssize_t k2,             # IN
     double[:, :, :, ::1] hc,               # OUT
     double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
 ) noexcept nogil:
@@ -144,7 +145,7 @@ cdef inline void _update_hc(
         Py_ssize_t n_terms = yyd_ids.shape[0]
         Py_ssize_t n_x = hc.shape[0]
         Py_ssize_t i, j, x, out_y_id, in_y_id, delay_id
-        double coef, dydx_k, term
+        double coef, dydx_k, term, val_xj
 
     memset(
         &hc[0, 0, 0, 0],
@@ -164,8 +165,9 @@ cdef inline void _update_hc(
                 # d term / dx = 1 * d y_in * yi * yj
                 x = coef_ids[i]
                 dydx_k = dydx[k - delay_id, in_y_id, j]
-                d2ydx2[k, x, out_y_id, j] += dydx_k * term
-                d2ydx2[k, j, out_y_id, x] += d2ydx2[k, x, out_y_id, j]
+                val_xj = dydx_k * term
+                d2ydx2[k2, x, out_y_id, j] += val_xj
+                d2ydx2[k2, j, out_y_id, x] += val_xj
             else:
                 # Dynamic updating by HC[i, d-1] @ dydx[k-d]
                 # d JC / dx = coef * d y_in * d yi * yj
@@ -237,6 +239,60 @@ cpdef void _predict(
 
 
 @final
+cdef inline void _update_d2ydx2(
+    const double[::1] coefs,            # IN
+    const int[:, ::1] hess_yyd_ids,          # IN
+    const int[::1] hess_coef_ids,            # IN
+    const int[::1] hess_term_ids,
+    const double[::1] term_lib,            # IN
+    const int[:, ::1] hess_yd_ids,           # IN
+    const double[:, :, ::1] dydx,             # IN
+    const double[:, :, ::1] jc,
+    const Py_ssize_t M,
+    const Py_ssize_t N,
+    const int max_delay,
+    const Py_ssize_t k,
+    const Py_ssize_t k2,
+    double[:, :, :, ::1] hc,
+    double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
+) noexcept nogil:
+    cdef:
+        Py_ssize_t i, d
+    # Update dynamic terms of Hessian
+    _update_hc(
+        coefs,
+        hess_yyd_ids,
+        hess_coef_ids,
+        hess_term_ids,
+        term_lib,
+        hess_yd_ids,
+        dydx,
+        k,
+        k2,
+        hc,
+        d2ydx2,
+    )
+    for i in range(N):
+        for d in range(max_delay):
+            # d2ydx2[k, i] += jc[d] @ d2ydx2[k-d-1, i]
+            # jc[d] (M,M), d2ydx2[k-d-1, i] (M,N)
+            _gemm(
+                RowMajor, NoTrans, NoTrans,
+                M, N, M,
+                1.0, &jc[d, 0, 0], M, &d2ydx2[k2-d-1, i, 0, 0], N,
+                1.0, &d2ydx2[k2, i, 0, 0], N,
+            )
+            # d2ydx2[k, i] += hc[i, d] @ dydx[k-d-1]
+            # hc[i, d] (M,M), dydx[k-d-1] (M,N)
+            _gemm(
+                RowMajor, NoTrans, NoTrans,
+                M, N, M,
+                1.0, &hc[i, d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
+                1.0, &d2ydx2[k2, i, 0, 0], N,
+            )
+
+
+@final
 cpdef void _update_der(
     const int mode,
     const double[:, ::1] X,
@@ -255,11 +311,13 @@ cpdef void _update_der(
     const int[::1] hess_coef_ids,
     const int[::1] hess_term_ids,
     const int[:, ::1] hess_yd_ids,
+    const double[::1] p,                          # IN arbitrary vector
     double[:, ::1] term_libs,               # initialized with 1.0
     double[:, :, ::1] jc,
     double[:, :, :, ::1] hc,
     double[:, :, ::1] dydx,                 # OUT initialized with 0.0
     double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
+    double[:, :, ::1] d2ydx2p,              # OUT initialized with 0.0
 ) noexcept nogil:
     """
     Computation of dydx and d2ydx2 matrix.
@@ -273,6 +331,9 @@ cpdef void _update_der(
         First derivative matrix of the outputs with respect to coefficients and intercepts.
     d2ydx2 : ndarray of shape (n_samples, n_x, n_outputs (out), n_x)
         Second derivative matrix of the outputs with respect to coefficients and intercepts
+    d2ydx2p : ndarray of shape (n_samples, n_outputs, n_x)
+        When mode == 2, d2ydx2 is of shape (max_delay + 1, n_x, n_outputs (out), n_x)
+        Second derivative matrix times an arbitrary vector p.
     """
     cdef:
         Py_ssize_t n_samples = y_hat.shape[0]
@@ -351,7 +412,7 @@ cpdef void _update_der(
                 )
             if mode == 1 and hess_not_empty:
                 # Update dynamic terms of Hessian
-                _update_hc(
+                _update_d2ydx2(
                     coefs,
                     hess_yyd_ids,
                     hess_coef_ids,
@@ -359,34 +420,80 @@ cpdef void _update_der(
                     term_libs[k],
                     hess_yd_ids,
                     dydx,
+                    jc,
+                    M,
+                    N,
+                    max_delay,
+                    k,
                     k,
                     hc,
                     d2ydx2,
                 )
-                for i in range(N):
-                    for d in range(max_delay):
-                        # d2ydx2[k, i] += jc[d] @ d2ydx2[k-d-1, i]
-                        # jc[d] (M,M), d2ydx2[k-d-1, i] (M,N)
-                        _gemm(
-                            RowMajor, NoTrans, NoTrans,
-                            M, N, M,
-                            1.0, &jc[d, 0, 0], M, &d2ydx2[k-d-1, i, 0, 0], N,
-                            1.0, &d2ydx2[k, i, 0, 0], N,
-                        )
-                        # d2ydx2[k, i] += hc[i, d] @ dydx[k-d-1]
-                        # hc[i, d] (M,M), dydx[k-d-1] (M,N)
-                        _gemm(
-                            RowMajor, NoTrans, NoTrans,
-                            M, N, M,
-                            1.0, &hc[i, d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
-                            1.0, &d2ydx2[k, i, 0, 0], N,
-                        )
+
                 # Handle divergence
                 with gil:
-                    if np.max(np.abs(d2ydx2[k])) > 1e20:
+                    if (
+                        not np.all(np.isfinite(d2ydx2[k])) or
+                        np.max(np.abs(d2ydx2[k])) > 1e20
+                    ):
+                        break
+
+            if mode == 2 and hess_not_empty:
+                # Update d2ydx2p
+                # d2ydx2 values move foreward by 1 step d2ydx2[k] -> d2ydx2[k-1]
+                memmove(
+                    &d2ydx2[0, 0, 0, 0],
+                    &d2ydx2[1, 0, 0, 0],
+                    max_delay * N * M * N * sizeof(double)
+                )
+                memset(
+                    &d2ydx2[max_delay, 0, 0, 0],
+                    0,
+                    N * M * N * sizeof(double)
+                )
+
+                # Update dynamic terms of Hessian
+                _update_d2ydx2(
+                    coefs,
+                    hess_yyd_ids,
+                    hess_coef_ids,
+                    hess_term_ids,
+                    term_libs[k],
+                    hess_yd_ids,
+                    dydx,
+                    jc,
+                    M,
+                    N,
+                    max_delay,
+                    k,
+                    max_delay,
+                    hc,
+                    d2ydx2,
+                )
+
+                # Compute d2ydx2p[k] = d2ydx2[k].T @ p
+                # d2ydx2[k] shape (N, M, N), p shape (N)
+                # target d2ydx2p[k] shape (M, N)
+                # Treat d2ydx2[k] as (N, M*N) matrix
+                _gemv(
+                    RowMajor, Trans,
+                    N, M * N,
+                    1.0, &d2ydx2[max_delay, 0, 0, 0], M * N,
+                    &p[0], 1,
+                    0.0, &d2ydx2p[k, 0, 0], 1
+                )
+
+                # Handle divergence
+                with gil:
+                    if (
+                        not np.all(np.isfinite(d2ydx2p[k])) or
+                        not np.all(np.isfinite(d2ydx2[max_delay])) or
+                        (np.max(np.abs(d2ydx2p[k])) > 1e20) or
+                        (np.max(np.abs(d2ydx2[max_delay])) > 1e20)
+                    ):
                         break
 
         # Handle divergence
         with gil:
-            if np.max(np.abs(dydx[k])) > 1e20:
+            if not np.all(np.isfinite(dydx[k])) or np.max(np.abs(dydx[k])) > 1e20:
                 break

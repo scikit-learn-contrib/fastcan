@@ -50,7 +50,7 @@ def _derivative_wrapper(
     else:
         y_ids = np.asarray(output_ids, dtype=np.int32)
 
-    _, jac, _ = NARX._func(
+    _, jac, _, _ = NARX._func(
         coef_intercept,
         0,
         X,
