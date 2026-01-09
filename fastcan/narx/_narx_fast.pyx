@@ -440,7 +440,7 @@ cpdef void _update_der(
 
             if mode == 2 and hess_not_empty:
                 # Update d2ydx2p
-                # d2ydx2 values move foreward by 1 step d2ydx2[k] -> d2ydx2[k-1]
+                # d2ydx2 values move forward by 1 step d2ydx2[k] -> d2ydx2[k-1]
                 memmove(
                     &d2ydx2[0, 0, 0, 0],
                     &d2ydx2[1, 0, 0, 0],
