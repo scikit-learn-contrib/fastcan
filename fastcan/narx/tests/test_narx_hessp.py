@@ -5,7 +5,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from fastcan.narx import NARX
-from fastcan.narx._base import _MemoizeOpt
+from fastcan.narx._base import _OptMemoize
 
 
 @pytest.mark.parametrize("seed", [10, 42, 123, 999, 2024])
@@ -66,15 +66,21 @@ def test_random(seed):
         # call arguments: (fun, x0, ..., args=args_tuple, ...)
         call_kwargs = mock_ls.call_args.kwargs
         args_tuple = call_kwargs["args"]
+        sample_weight_sqrt = args_tuple[6]
 
-    # 1. Compute Hessian matrix using mode=1
-    opt_hess = _MemoizeOpt(NARX._func, mode=1)
-    H = opt_hess.hess(coef_init, *args_tuple)
+    # 1. Compute Hessian matrix using mode=2
+    memoize = _OptMemoize(
+        NARX._opt_residual,
+        NARX._opt_jac,
+        NARX._opt_hess,
+        NARX._opt_hessp,
+        sample_weight_sqrt,
+    )
+    H = memoize.hess(coef_init, *args_tuple)
 
-    # 2. Compute Hessp product using mode=2 with random vector p
+    # 2. Compute Hessp product using mode=3 with random vector p
     p = rng.standard_normal(len(coef_init)) * 0.01
-    opt_hessp = _MemoizeOpt(NARX._func, mode=2)
-    Hp = opt_hessp.hessp(coef_init, p, *args_tuple)
+    Hp = memoize.hessp(coef_init, p, *args_tuple)
 
     # 3. Verify Hp == H @ p
     Hp_expected = H @ p
@@ -184,15 +190,21 @@ def test_complex():
         # Capture arguments passed to least_squares
         call_kwargs = mock_ls.call_args.kwargs
         args_tuple = call_kwargs["args"]
+        sample_weight_sqrt = args_tuple[6]
 
-    # 1. Compute Hessian matrix using mode=1
-    opt_hess = _MemoizeOpt(NARX._func, mode=1)
-    H = opt_hess.hess(coef_init, *args_tuple)
+    # 1. Compute Hessian matrix using mode=2
+    memoize = _OptMemoize(
+        NARX._opt_residual,
+        NARX._opt_jac,
+        NARX._opt_hess,
+        NARX._opt_hessp,
+        sample_weight_sqrt,
+    )
+    H = memoize.hess(coef_init, *args_tuple)
 
-    # 2. Compute Hessp product using mode=2 with random vector p
+    # 2. Compute Hessp product using mode=3 with random vector p
     p = rng.standard_normal(len(coef_init))
-    opt_hessp = _MemoizeOpt(NARX._func, mode=2)
-    Hp = opt_hessp.hessp(coef_init, p, *args_tuple)
+    Hp = memoize.hessp(coef_init, p, *args_tuple)
 
     # 3. Verify Hp == H @ p
     Hp_expected = H @ p

@@ -293,8 +293,172 @@ cdef inline void _update_d2ydx2(
 
 
 @final
-cpdef void _update_der(
-    const int mode,
+cdef inline void _check_at_init(
+    const double[:, ::1] X,
+    const double[:, ::1] y_hat,
+    const int max_delay,
+    const int[::1] session_sizes_cumsum,
+    const Py_ssize_t k,
+    Py_ssize_t *s,                          # IN/OUT pointer
+    Py_ssize_t *init_k,                     # IN/OUT pointer
+    bint *at_init,                          # IN/OUT pointer
+) noexcept nogil:
+    """Check if at init"""
+    cdef bint is_finite
+
+    # Check boundaries
+    if s[0] < session_sizes_cumsum.shape[0] and k == session_sizes_cumsum[s[0]]:
+        s[0] += 1
+        init_k[0] = k
+        at_init[0] = True
+
+    with gil:
+        is_finite = np.all(np.isfinite(X[k])) and np.all(np.isfinite(y_hat[k]))
+
+    if not is_finite:
+        init_k[0] = k + 1
+        at_init[0] = True
+
+    if k - init_k[0] == max_delay:
+        at_init[0] = False
+
+
+@final
+cpdef void _compute_term_lib(
+    const double[:, ::1] X,
+    const double[:, ::1] y_hat,
+    const int max_delay,
+    const int[::1] session_sizes_cumsum,
+    const int[:, ::1] unique_feat_ids,      # IN
+    const int[:, ::1] unique_delay_ids,     # IN
+    double[:, ::1] term_lib,                # OUT
+) noexcept nogil:
+    """
+    Pre-compute all terms for all time steps and store them in term_libs.
+    """
+    cdef:
+        Py_ssize_t n_samples = X.shape[0]
+        Py_ssize_t k, s = 0
+        Py_ssize_t init_k = 0
+        bint at_init = True
+
+    for k in range(n_samples):
+        # Check if at init
+        _check_at_init(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            k,
+            &s,
+            &init_k,
+            &at_init,
+        )
+        if at_init:
+            continue
+
+        # Compute terms for time step k
+        _update_terms(
+            X,
+            y_hat,
+            term_lib[k],
+            unique_feat_ids,
+            unique_delay_ids,
+            k,
+        )
+        with gil:
+            if np.max(np.abs(term_lib[k])) > 1e20:
+                break
+
+
+@final
+cpdef void _compute_dydx(
+    const double[:, ::1] X,
+    const double[:, ::1] y_hat,
+    const int max_delay,
+    const int[::1] session_sizes_cumsum,
+    const int[::1] y_ids,
+    const double[::1] coefs,
+    const int[:, ::1] unique_feat_ids,      # IN
+    const int[:, ::1] unique_delay_ids,     # IN
+    const int[::1] const_term_ids,
+    const int[:, ::1] jac_yyd_ids,
+    const int[::1] jac_coef_ids,
+    const int[::1] jac_term_ids,
+    const double[:, ::1] term_lib,               # initialized with 1.0
+    double[:, :, ::1] jc,
+    double[:, :, ::1] dydx,                 # OUT initialized with 0.0
+) noexcept nogil:
+    """
+    Computation of dydx matrix.
+    Returns
+    -------
+    dydx : ndarray of shape (n_samples, n_outputs, n_x)
+        First derivative matrix of the outputs with respect to coefficients and intercepts.
+    """
+    cdef:
+        Py_ssize_t n_samples = y_hat.shape[0]
+        Py_ssize_t k, i, d, s = 0
+        Py_ssize_t M = jc.shape[1]      # n_outputs
+        Py_ssize_t N = dydx.shape[2]     # n_x
+        Py_ssize_t n_const = const_term_ids.shape[0]
+        Py_ssize_t n_jac = jac_term_ids.shape[0]
+        Py_ssize_t init_k = 0
+        bint at_init = True
+        bint jac_not_empty
+
+    with gil:
+        jac_not_empty = max_delay > 0 and n_jac > 0
+
+    for k in range(n_samples):
+        # Check if at init
+        _check_at_init(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            k,
+            &s,
+            &init_k,
+            &at_init,
+        )
+        if at_init:
+            continue
+        for i in range(n_const):
+            dydx[k, y_ids[i], i] = term_lib[k, const_term_ids[i]]
+
+        # Update intercepts if any
+        for i in range(n_const, N):
+            dydx[k, y_ids[i], i] = 1.0
+
+        # Update dynamic terms of Jacobian/Hessian
+        if jac_not_empty:
+            _update_jc(
+                coefs,
+                jac_yyd_ids,
+                jac_coef_ids,
+                jac_term_ids,
+                term_lib[k],
+                jc,
+            )
+            for d in range(max_delay):
+                # dydx[k] += jc[d] @ dydx[k-d-1]
+                # jc[d] (M,M), dydx[k] (M,N)
+                _gemm(
+                    RowMajor, NoTrans, NoTrans,
+                    M, N, M,
+                    1.0, &jc[d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
+                    1.0, &dydx[k, 0, 0], N,
+                )
+
+        # Handle divergence
+        with gil:
+            if not np.all(np.isfinite(dydx[k])) or np.max(np.abs(dydx[k])) > 1e20:
+                break
+
+
+@final
+cpdef void _compute_d2ydx2(
     const double[:, ::1] X,
     const double[:, ::1] y_hat,
     const int max_delay,
@@ -311,42 +475,30 @@ cpdef void _update_der(
     const int[::1] hess_coef_ids,
     const int[::1] hess_term_ids,
     const int[:, ::1] hess_yd_ids,
-    const double[::1] p,                          # IN arbitrary vector
-    double[:, ::1] term_libs,               # initialized with 1.0
+    const double[:, ::1] term_lib,
+    const double[:, :, ::1] dydx,
     double[:, :, ::1] jc,
     double[:, :, :, ::1] hc,
-    double[:, :, ::1] dydx,                 # OUT initialized with 0.0
     double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
-    double[:, :, ::1] d2ydx2p,              # OUT initialized with 0.0
 ) noexcept nogil:
     """
-    Computation of dydx and d2ydx2 matrix.
-    mode:
-        0 - only dydx
-        1 - both dydx and d2ydx2
-
+    Computation of d2ydx2 matrix.
     Returns
     -------
-    dydx : ndarray of shape (n_samples, n_outputs, n_x)
-        First derivative matrix of the outputs with respect to coefficients and intercepts.
     d2ydx2 : ndarray of shape (n_samples, n_x, n_outputs (out), n_x)
         Second derivative matrix of the outputs with respect to coefficients and intercepts
-    d2ydx2p : ndarray of shape (n_samples, n_outputs, n_x)
-        When mode == 2, d2ydx2 is of shape (max_delay + 1, n_x, n_outputs (out), n_x)
-        Second derivative matrix times an arbitrary vector p.
     """
     cdef:
         Py_ssize_t n_samples = y_hat.shape[0]
-        Py_ssize_t k, i, d, s = 0
+        Py_ssize_t k, s = 0
         Py_ssize_t M = jc.shape[1]      # n_outputs
         Py_ssize_t N = dydx.shape[2]     # n_x
-        Py_ssize_t n_const = const_term_ids.shape[0]
         Py_ssize_t n_jac = jac_term_ids.shape[0]
         Py_ssize_t n_hess = hess_term_ids.shape[0]
         Py_ssize_t init_k = 0
         bint at_init = True
-        bint is_finite
-        bint jac_not_empty, hess_not_empty
+        bint jac_not_empty
+        bint hess_not_empty
 
     with gil:
         jac_not_empty = max_delay > 0 and n_jac > 0
@@ -354,146 +506,186 @@ cpdef void _update_der(
 
     for k in range(n_samples):
         # Check if at init
-        if k == session_sizes_cumsum[s]:
-            s += 1
-            at_init = True
-            init_k = k
-            continue
-        with gil:
-            is_finite = np.all(np.isfinite(X[k])) and np.all(np.isfinite(y_hat[k]))
-        if not is_finite:
-            at_init = True
-            init_k = k + 1
-            continue
-        if k - init_k == max_delay:
-            at_init = False
-
-        if at_init:
-            continue
-        # Compute terms for time step k
-        _update_terms(
+        _check_at_init(
             X,
             y_hat,
-            term_libs[k],
-            unique_feat_ids,
-            unique_delay_ids,
+            max_delay,
+            session_sizes_cumsum,
             k,
+            &s,
+            &init_k,
+            &at_init,
         )
-        with gil:
-            if np.max(np.abs(term_libs[k])) > 1e20:
-                break
+        if at_init:
+            continue
 
-        # Update constant terms of Jacobian
-        for i in range(n_const):
-            dydx[k, y_ids[i], i] = term_libs[k, const_term_ids[i]]
-
-        # Update intercepts if any
-        for i in range(n_const, N):
-            dydx[k, y_ids[i], i] = 1.0
-
-        # Update dynamic terms of Jacobian/Hessian
         if jac_not_empty:
             _update_jc(
                 coefs,
                 jac_yyd_ids,
                 jac_coef_ids,
                 jac_term_ids,
-                term_libs[k],
+                term_lib[k],
                 jc,
             )
-            for d in range(max_delay):
-                # dydx[k] += jc[d] @ dydx[k-d-1]
-                # jc[d] (M,M), dydx[k] (M,N)
-                _gemm(
-                    RowMajor, NoTrans, NoTrans,
-                    M, N, M,
-                    1.0, &jc[d, 0, 0], M, &dydx[k-d-1, 0, 0], N,
-                    1.0, &dydx[k, 0, 0], N,
-                )
-            if mode == 1 and hess_not_empty:
-                # Update dynamic terms of Hessian
-                _update_d2ydx2(
-                    coefs,
-                    hess_yyd_ids,
-                    hess_coef_ids,
-                    hess_term_ids,
-                    term_libs[k],
-                    hess_yd_ids,
-                    dydx,
-                    jc,
-                    M,
-                    N,
-                    max_delay,
-                    k,
-                    k,
-                    hc,
-                    d2ydx2,
-                )
 
-                # Handle divergence
-                with gil:
-                    if (
-                        not np.all(np.isfinite(d2ydx2[k])) or
-                        np.max(np.abs(d2ydx2[k])) > 1e20
-                    ):
-                        break
+        if hess_not_empty:
+            # Update dynamic terms of Hessian
+            _update_d2ydx2(
+                coefs,
+                hess_yyd_ids,
+                hess_coef_ids,
+                hess_term_ids,
+                term_lib[k],
+                hess_yd_ids,
+                dydx,
+                jc,
+                M,
+                N,
+                max_delay,
+                k,
+                k,
+                hc,
+                d2ydx2,
+            )
 
-            if mode == 2 and hess_not_empty:
-                # Update d2ydx2p
-                # d2ydx2 values move forward by 1 step d2ydx2[k] -> d2ydx2[k-1]
-                memmove(
-                    &d2ydx2[0, 0, 0, 0],
-                    &d2ydx2[1, 0, 0, 0],
-                    max_delay * N * M * N * sizeof(double)
-                )
-                memset(
-                    &d2ydx2[max_delay, 0, 0, 0],
-                    0,
-                    N * M * N * sizeof(double)
-                )
+            # Handle divergence
+            with gil:
+                if (
+                    not np.all(np.isfinite(d2ydx2[k])) or
+                    np.max(np.abs(d2ydx2[k])) > 1e20
+                ):
+                    break
 
-                # Update dynamic terms of Hessian
-                _update_d2ydx2(
-                    coefs,
-                    hess_yyd_ids,
-                    hess_coef_ids,
-                    hess_term_ids,
-                    term_libs[k],
-                    hess_yd_ids,
-                    dydx,
-                    jc,
-                    M,
-                    N,
-                    max_delay,
-                    k,
-                    max_delay,
-                    hc,
-                    d2ydx2,
-                )
 
-                # Compute d2ydx2p[k] = d2ydx2[k].T @ p
-                # d2ydx2[k] shape (N, M, N), p shape (N)
-                # target d2ydx2p[k] shape (M, N)
-                # Treat d2ydx2[k] as (N, M*N) matrix
-                _gemv(
-                    RowMajor, Trans,
-                    N, M * N,
-                    1.0, &d2ydx2[max_delay, 0, 0, 0], M * N,
-                    &p[0], 1,
-                    0.0, &d2ydx2p[k, 0, 0], 1
-                )
+@final
+cpdef void _compute_d2ydx2p(
+    const double[:, ::1] X,
+    const double[:, ::1] y_hat,
+    const int max_delay,
+    const int[::1] session_sizes_cumsum,
+    const int[::1] y_ids,
+    const double[::1] coefs,
+    const int[:, ::1] unique_feat_ids,      # IN
+    const int[:, ::1] unique_delay_ids,     # IN
+    const int[::1] const_term_ids,
+    const int[:, ::1] jac_yyd_ids,
+    const int[::1] jac_coef_ids,
+    const int[::1] jac_term_ids,
+    const int[:, ::1] hess_yyd_ids,
+    const int[::1] hess_coef_ids,
+    const int[::1] hess_term_ids,
+    const int[:, ::1] hess_yd_ids,
+    const double[:, ::1] term_lib,
+    const double[:, :, ::1] dydx,
+    const double[::1] p,                          # IN arbitrary vector
+    double[:, :, ::1] jc,
+    double[:, :, :, ::1] hc,
+    double[:, :, :, ::1] d2ydx2,            # OUT initialized with 0.0
+    double[:, :, ::1] d2ydx2p,              # OUT initialized with 0.0
+) noexcept nogil:
+    """
+    Computation of d2ydx2-vector product matrix.
 
-                # Handle divergence
-                with gil:
-                    if (
-                        not np.all(np.isfinite(d2ydx2p[k])) or
-                        not np.all(np.isfinite(d2ydx2[max_delay])) or
-                        (np.max(np.abs(d2ydx2p[k])) > 1e20) or
-                        (np.max(np.abs(d2ydx2[max_delay])) > 1e20)
-                    ):
-                        break
+    Returns
+    -------
+    d2ydx2 : ndarray of shape (max_delay + 1, n_x, n_outputs (out), n_x)
+        Second derivative matrix of the outputs with respect to coefficients and intercepts
+    d2ydx2p : ndarray of shape (n_samples, n_outputs, n_x)
+        Second derivative matrix times an arbitrary vector p.
+    """
+    cdef:
+        Py_ssize_t n_samples = y_hat.shape[0]
+        Py_ssize_t k, s = 0
+        Py_ssize_t M = jc.shape[1]      # n_outputs
+        Py_ssize_t N = dydx.shape[2]     # n_x
+        Py_ssize_t n_jac = jac_term_ids.shape[0]
+        Py_ssize_t n_hess = hess_term_ids.shape[0]
+        Py_ssize_t init_k = 0
+        bint at_init = True
+        bint jac_not_empty
+        bint hess_not_empty
 
-        # Handle divergence
-        with gil:
-            if not np.all(np.isfinite(dydx[k])) or np.max(np.abs(dydx[k])) > 1e20:
-                break
+    with gil:
+        jac_not_empty = max_delay > 0 and n_jac > 0
+        hess_not_empty = max_delay > 0 and n_hess > 0
+
+    for k in range(n_samples):
+        # Check if at init
+        _check_at_init(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            k,
+            &s,
+            &init_k,
+            &at_init,
+        )
+        if at_init:
+            continue
+
+        if jac_not_empty:
+            _update_jc(
+                coefs,
+                jac_yyd_ids,
+                jac_coef_ids,
+                jac_term_ids,
+                term_lib[k],
+                jc,
+            )
+
+        if hess_not_empty:
+            # Update d2ydx2p
+            # d2ydx2 values move forward by 1 step d2ydx2[k] -> d2ydx2[k-1]
+            memmove(
+                &d2ydx2[0, 0, 0, 0],
+                &d2ydx2[1, 0, 0, 0],
+                max_delay * N * M * N * sizeof(double)
+            )
+            memset(
+                &d2ydx2[max_delay, 0, 0, 0],
+                0,
+                N * M * N * sizeof(double)
+            )
+
+            # Update dynamic terms of Hessian
+            _update_d2ydx2(
+                coefs,
+                hess_yyd_ids,
+                hess_coef_ids,
+                hess_term_ids,
+                term_lib[k],
+                hess_yd_ids,
+                dydx,
+                jc,
+                M,
+                N,
+                max_delay,
+                k,
+                max_delay,
+                hc,
+                d2ydx2,
+            )
+
+            # Compute d2ydx2p[k] = d2ydx2[k].T @ p
+            # d2ydx2[k] shape (N, M, N), p shape (N)
+            # target d2ydx2p[k] shape (M, N)
+            # Treat d2ydx2[k] as (N, M*N) matrix
+            _gemv(
+                RowMajor, Trans,
+                N, M * N,
+                1.0, &d2ydx2[max_delay, 0, 0, 0], M * N,
+                &p[0], 1,
+                0.0, &d2ydx2p[k, 0, 0], 1
+            )
+
+            # Handle divergence
+            with gil:
+                if (
+                    not np.all(np.isfinite(d2ydx2p[k])) or
+                    not np.all(np.isfinite(d2ydx2[max_delay])) or
+                    (np.max(np.abs(d2ydx2p[k])) > 1e20) or
+                    (np.max(np.abs(d2ydx2[max_delay])) > 1e20)
+                ):
+                    break

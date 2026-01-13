@@ -8,7 +8,7 @@ import warnings
 from numbers import Integral
 
 import numpy as np
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 from sklearn.base import BaseEstimator, MultiOutputMixin, RegressorMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_array, check_consistent_length, column_or_1d
@@ -27,10 +27,16 @@ from ._feature import (
     make_poly_ids,
     make_time_shift_features,
 )
-from ._narx_fast import _predict, _update_der
+from ._narx_fast import (
+    _compute_d2ydx2,
+    _compute_d2ydx2p,
+    _compute_dydx,
+    _compute_term_lib,
+    _predict,
+)
 
 
-class _MemoizeOpt:
+class _OptMemoize:
     """Cache of residual, jac, and hess during optimization.
     x: parameters
     func: function to compute residual, jac, hess
@@ -39,62 +45,147 @@ class _MemoizeOpt:
         1: compute loss, grad, and hess
     """
 
-    def __init__(self, func, mode):
-        self.func = func
-        self.mode = mode
-        self._residual = None
-        self._jac = None
-        self._hess = None
-        self._hessp = None
-        self.x = None
+    def __init__(
+        self,
+        opt_residual,  # residual, y_hat, mask_valid, sample_weight_sqrt_masked
+        opt_jac,  # jac, term_lib, jc, dydx
+        opt_hess,  # hess
+        opt_hessp,  # hessp
+        sample_weight_sqrt,
+    ):
+        self.opt_residual = opt_residual
+        self.opt_jac = opt_jac
+        self.opt_hess = opt_hess
+        self.opt_hessp = opt_hessp
+        self.sample_weight_sqrt = sample_weight_sqrt
 
-    def _compute_if_needed(self, x, *args, p=None):
+        self._residual = None
+        self._y_hat = None
+        self._mask_valid = None
+        self._sample_weight_sqrt_masked = None
+
+        self._jac = None
+        self._term_lib = None
+        self._jc = None
+        self._dydx = None
+
+        self._hess = None
+
+        self._hessp = None
+
+        self.x_residual = None  # Order 1
+        self.x_jac = None  # Order 2
+        self.x_hess = None  # Order 3
+        self.x_hessp = None  # Order 3
+
+    def _if_compute_residual(self, x, *args):
         if (
-            not np.all(x == self.x)
+            not np.all(x == self.x_residual)
             or self._residual is None
-            or self._jac is None
-            or (self._hess is None and self.mode == 1)
-            or (self._hessp is None and self.mode == 2)
+            or self._y_hat is None
+            or self._mask_valid is None
+            or self._sample_weight_sqrt_masked is None
         ):
-            self.x = np.asarray(x).copy()
-            self._residual, self._jac, self._hess, self._hessp = self.func(
-                x, self.mode, *args, p=p
+            self.x_residual = np.asarray(x).copy()
+            (
+                self._residual,
+                self._y_hat,
+                self._mask_valid,
+                self._sample_weight_sqrt_masked,
+            ) = self.opt_residual(x, *args)
+
+    def _if_compute_jac(self, x, *args):
+        self._if_compute_residual(x, *args)
+        if (
+            not np.all(x == self.x_jac)
+            or self._jac is None
+            or self._term_lib is None
+            or self._jc is None
+            or self._dydx is None
+        ):
+            self.x_jac = np.asarray(x).copy()
+            (
+                self._jac,
+                self._term_lib,
+                self._jc,
+                self._dydx,
+            ) = self.opt_jac(
+                x,
+                *args,
+                y_hat=self._y_hat,
+                mask_valid=self._mask_valid,
+                sample_weight_sqrt_masked=self._sample_weight_sqrt_masked,
+            )
+
+    def _if_compute_hess(self, x, *args):
+        self._if_compute_jac(x, *args)
+        if not np.all(x == self.x_hess) or self._hess is None:
+            self.x_hess = np.asarray(x).copy()
+            self._hess = self.opt_hess(
+                x,
+                *args,
+                residual=self._residual,
+                y_hat=self._y_hat,
+                mask_valid=self._mask_valid,
+                sample_weight_sqrt_masked=self._sample_weight_sqrt_masked,
+                jac=self._jac,
+                term_lib=self._term_lib,
+                jc=self._jc,
+                dydx=self._dydx,
+            )
+
+    def _if_compute_hessp(self, x, p, *args):
+        self._if_compute_jac(x, *args)
+        if not np.all(x == self.x_hessp) or self._hessp is None:
+            self.x_hessp = np.asarray(x).copy()
+            self._hessp = self.opt_hessp(
+                x,
+                *args,
+                residual=self._residual,
+                y_hat=self._y_hat,
+                mask_valid=self._mask_valid,
+                sample_weight_sqrt_masked=self._sample_weight_sqrt_masked,
+                jac=self._jac,
+                term_lib=self._term_lib,
+                jc=self._jc,
+                dydx=self._dydx,
+                p=p,
             )
 
     def residual(self, x, *args):
         """R = sqrt(sw) * (y - y_hat)"""
-        self._compute_if_needed(x, *args)
+        self._if_compute_residual(x, *args)
         return self._residual
 
     def jac(self, x, *args):
         """J = sqrt(sw) * dydx"""
-        self._compute_if_needed(x, *args)
+        self._if_compute_jac(x, *args)
         return self._jac
 
     def hess(self, x, *args):
         """Hessian of least squares loss.
         H = J^T @ J + sum(R * sqrt(sw) * d2ydx2)
         H: (n_samples * n_outputs, n_x, n_x)"""
-        self._compute_if_needed(x, *args)
+        self._if_compute_hess(x, *args)
         return self._hess
 
     def hessp(self, x, p, *args):
         """Hessian-vector product of least squares loss.
         H * p = J^T @ (J @ p) + sum(R * sqrt(sw) * (d2ydx2 @ p))
         Hp: (n_samples * n_outputs, n_x)"""
-        self._compute_if_needed(x, *args, p=p)
+        self._if_compute_hessp(x, p, *args)
         return self._hessp
 
     def loss(self, x, *args):
         """Least squares loss: 0.5 * sum(R^2)"""
-        self._compute_if_needed(x, *args)
+        self._if_compute_residual(x, *args)
         return 0.5 * np.sum(np.square(self._residual))
 
     def grad(self, x, *args):
         """Gradient of least squares loss.
         G = sw * R * dydx =  J^T @ R"""
-        self._compute_if_needed(x, *args)
-        return np.transpose(self._jac).T @ self._residual
+        self._if_compute_jac(x, *args)
+        return np.transpose(self._jac) @ self._residual
 
 
 class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -230,11 +321,19 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             "coef_init": [None, StrOptions({"one_step_ahead"}), "array-like"],
             "sample_weight": [None, "array-like"],
             "session_sizes": [None, "array-like"],
+            "solver": [StrOptions({"least_squares", "minimize"})],
         },
         prefer_skip_nested_validation=True,
     )
     def fit(
-        self, X, y, sample_weight=None, coef_init=None, session_sizes=None, **params
+        self,
+        X,
+        y,
+        sample_weight=None,
+        coef_init=None,
+        session_sizes=None,
+        solver="least_squares",
+        **params,
     ):
         """
         Fit narx model.
@@ -270,15 +369,50 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             .. versionadded:: 0.5
 
+        solver : {'least_squares', 'minimize'}, default='least_squares'
+            The SciPy solver for optimization.
+
+            .. versionadded:: 0.5.1
+
         **params : dict
             Keyword arguments passed to
-            `scipy.optimize.least_squares`.
+            `scipy.optimize.least_squares` or `scipy.optimize.minimize`.
 
         Returns
         -------
         self : object
             Fitted Estimator.
         """
+        if solver == "least_squares":
+            mode = 0  # jac
+        else:  # solver == "minimize"
+            mode = 1  # loss and grad
+            if "method" in params:
+                method = params["method"]
+                if method in ["dogleg", "trust-exact"]:
+                    mode = 2  # hess
+                elif method in [
+                    "Newton-CG",
+                    "trust-ncg",
+                    "trust-krylov",
+                    "trust-constr",
+                ]:
+                    mode = 3  # hessp
+                elif method not in [
+                    None,
+                    "CG",
+                    "BFGS",
+                    "Newton-CG",
+                    "L-BFGS-B",
+                    "TNC",
+                    "SLSQP",
+                    "dogleg",
+                    "trust-ncg",
+                    "trust-krylov",
+                    "trust-exact",
+                    "trust-constr",
+                ]:
+                    mode = 4  # loss only
         none_inputs = False
         if X is None:  # Auto-regressive model
             X = np.empty((1, 0), dtype=float, order="C")  # Skip validation
@@ -427,7 +561,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     f"({(n_coef_intercept,)}), but got {coef_init.shape}."
                 )
 
-        mode = 1
         jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
             self.feat_ids_, self.delay_ids_, self.output_ids_, n_features
         )
@@ -455,35 +588,80 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_ids = np.r_[self.output_ids_, np.arange(self.n_outputs_, dtype=np.int32)]
         else:
             y_ids = self.output_ids_
-        memoize_opt = _MemoizeOpt(NARX._func, mode=mode)
-        res = least_squares(
-            memoize_opt.residual,
-            x0=coef_init,
-            jac=memoize_opt.jac,
-            args=(
-                X,
-                y,
-                self.feat_ids_,
-                self.delay_ids_,
-                self.output_ids_,
-                self.fit_intercept,
-                sample_weight_sqrt,
-                session_sizes_cumsum,
-                self.max_delay_,
-                y_ids,
-                unique_feat_ids,
-                unique_delay_ids,
-                const_term_ids,
-                jac_yyd_ids,
-                jac_coef_ids,
-                jac_term_ids,
-                hess_yyd_ids,
-                hess_coef_ids,
-                hess_term_ids,
-                hess_yd_ids,
-            ),
-            **params,
+        memoize_opt = _OptMemoize(
+            self._opt_residual,
+            self._opt_jac,
+            self._opt_hess,
+            self._opt_hessp,
+            sample_weight_sqrt,
         )
+        if mode == 0:
+            res = least_squares(
+                fun=memoize_opt.residual,
+                x0=coef_init,
+                jac=memoize_opt.jac,
+                args=(
+                    X,
+                    y,
+                    self.feat_ids_,
+                    self.delay_ids_,
+                    self.output_ids_,
+                    self.fit_intercept,
+                    sample_weight_sqrt,
+                    session_sizes_cumsum,
+                    self.max_delay_,
+                    y_ids,
+                    unique_feat_ids,
+                    unique_delay_ids,
+                    const_term_ids,
+                    jac_yyd_ids,
+                    jac_coef_ids,
+                    jac_term_ids,
+                    hess_yyd_ids,
+                    hess_coef_ids,
+                    hess_term_ids,
+                    hess_yd_ids,
+                ),
+                **params,
+            )
+        else:  # solver == "minimize"
+            jac_hess_kw = {}
+            if mode == 1:
+                jac_hess_kw["jac"] = memoize_opt.grad
+            elif mode == 2:
+                jac_hess_kw["jac"] = memoize_opt.grad
+                jac_hess_kw["hess"] = memoize_opt.hess
+            elif mode == 3:
+                jac_hess_kw["jac"] = memoize_opt.grad
+                jac_hess_kw["hessp"] = memoize_opt.hessp
+            res = minimize(
+                fun=memoize_opt.loss,
+                x0=coef_init,
+                args=(
+                    X,
+                    y,
+                    self.feat_ids_,
+                    self.delay_ids_,
+                    self.output_ids_,
+                    self.fit_intercept,
+                    sample_weight_sqrt,
+                    session_sizes_cumsum,
+                    self.max_delay_,
+                    y_ids,
+                    unique_feat_ids,
+                    unique_delay_ids,
+                    const_term_ids,
+                    jac_yyd_ids,
+                    jac_coef_ids,
+                    jac_term_ids,
+                    hess_yyd_ids,
+                    hess_coef_ids,
+                    hess_term_ids,
+                    hess_yd_ids,
+                ),
+                **jac_hess_kw,
+                **params,
+            )
         if self.fit_intercept:
             self.coef_ = res.x[: -self.n_outputs_]
             self.intercept_ = res.x[-self.n_outputs_ :]
@@ -536,7 +714,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         hess_feat_ids = np.zeros((0, n_degree), dtype=np.int32)
         hess_delay_ids = np.zeros((0, n_degree), dtype=np.int32)
 
-        if mode < 1:
+        if mode < 2:
             return (
                 hess_yyd_ids,
                 hess_yd_ids,
@@ -646,9 +824,24 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         )
 
     @staticmethod
-    def _func(
+    def _split_coef_intercept(coef_intercept, fit_intercept, y):
+        """
+        Split coef_intercept into coef and intercept.
+        """
+        n_samples, n_outputs = y.shape
+        n_x = coef_intercept.shape[0]
+
+        if fit_intercept:
+            coef = coef_intercept[:-n_outputs]
+            intercept = coef_intercept[-n_outputs:]
+        else:
+            coef = coef_intercept
+            intercept = np.zeros(n_outputs, dtype=float)
+        return coef, intercept, n_samples, n_outputs, n_x
+
+    @staticmethod
+    def _opt_residual(
         coef_intercept,
-        mode,
         X,
         y,
         feat_ids,
@@ -669,32 +862,17 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         hess_coef_ids,
         hess_term_ids,
         hess_yd_ids,
-        p=None,
     ):
         """
-        Compute residual, Jacobian, and optionally Hessian.
-
-        Parameters
-        ----------
-        mode : int
-            0: compute residual and Jacobian
-            1: compute residual, Jacobian, and Hessian
+        Compute residual.
 
         Returns
         -------
         residual : array of shape (n_samples,)
-        jac : array of shape (n_samples, n_x)
-        hess : None or array
-            None when mode=0, hessian array when mode=1
         """
-        n_samples, n_outputs = y.shape
-        n_x = coef_intercept.shape[0]
-        if fit_intercept:
-            coef = coef_intercept[:-n_outputs]
-            intercept = coef_intercept[-n_outputs:]
-        else:
-            coef = coef_intercept
-            intercept = np.zeros(n_outputs, dtype=float)
+        coef, intercept, n_samples, n_outputs, _ = NARX._split_coef_intercept(
+            coef_intercept, fit_intercept, y
+        )
 
         # Compute prediction
         y_hat = np.zeros((n_samples, n_outputs), dtype=float)
@@ -711,28 +889,138 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_hat,
         )
 
-        # Compute Jacobian
+        # Mask missing values
+        mask_valid = mask_missing_values(y, y_hat, sample_weight_sqrt, return_mask=True)
+        y_masked = y[mask_valid]
+        y_hat_masked = y_hat[mask_valid]
+        sample_weight_sqrt_masked = sample_weight_sqrt[mask_valid]
+        residual = (sample_weight_sqrt_masked * (y_hat_masked - y_masked)).flatten()
+        return residual, y_hat, mask_valid, sample_weight_sqrt_masked
+
+    @staticmethod
+    def _opt_jac(
+        coef_intercept,
+        X,
+        y,
+        feat_ids,
+        delay_ids,
+        output_ids,
+        fit_intercept,
+        sample_weight_sqrt,
+        session_sizes_cumsum,
+        max_delay,
+        y_ids,
+        unique_feat_ids,
+        unique_delay_ids,
+        const_term_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_term_ids,
+        hess_yyd_ids,
+        hess_coef_ids,
+        hess_term_ids,
+        hess_yd_ids,
+        y_hat,
+        mask_valid,
+        sample_weight_sqrt_masked,
+    ):
+        """
+        Compute Jacobian.
+
+        Returns
+        -------
+        jac : array of shape (n_samples, n_x)
+        dydx : array of shape (n_samples, n_outputs, n_x)
+        term_lib : array of shape (n_samples, n_unique_terms)
+        """
+        coef, _, n_samples, n_outputs, n_x = NARX._split_coef_intercept(
+            coef_intercept, fit_intercept, y
+        )
+
         dydx = np.zeros((n_samples, n_outputs, n_x), dtype=float)
         jc = np.zeros((max_delay, n_outputs, n_outputs), dtype=float)
+        term_lib = np.ones((n_samples, unique_feat_ids.shape[0]), dtype=float)
 
-        term_libs = np.ones((n_samples, unique_feat_ids.shape[0]), dtype=float)
-        if mode == 0:
-            hc = np.zeros((1, 1, 1, 1), dtype=float)  # dummy
-            d2ydx2 = np.zeros((1, 1, 1, 1), dtype=float)  # dummy
-            d2ydx2p = np.zeros((1, 1, 1), dtype=float)  # dummy
-            p = np.zeros(1, dtype=float)  # dummy
-        elif mode == 1:
-            hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
-            d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
-            d2ydx2p = np.zeros((1, 1, 1), dtype=float)  # dummy
-            p = np.zeros(1, dtype=float)  # dummy
-        elif mode == 2:
-            hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
-            d2ydx2 = np.zeros((max_delay + 1, n_x, n_outputs, n_x), dtype=float)
-            d2ydx2p = np.zeros((n_samples, n_outputs, n_x), dtype=float)
+        _compute_term_lib(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            unique_feat_ids,
+            unique_delay_ids,
+            term_lib,
+        )
 
-        _update_der(
-            mode,
+        _compute_dydx(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            y_ids,
+            coef,
+            unique_feat_ids,
+            unique_delay_ids,
+            const_term_ids,
+            jac_yyd_ids,
+            jac_coef_ids,
+            jac_term_ids,
+            term_lib,
+            jc,
+            dydx,
+        )
+        # jac (n_samples, n_outputs (out), n_x) to (n_samples * n_outputs, n_x)
+        dydx_masked = dydx[mask_valid]
+        jac = np.reshape(
+            dydx_masked * sample_weight_sqrt_masked[..., np.newaxis], (-1, n_x)
+        )
+        return jac, term_lib, jc, dydx
+
+    @staticmethod
+    def _opt_hess(
+        coef_intercept,
+        X,
+        y,
+        feat_ids,
+        delay_ids,
+        output_ids,
+        fit_intercept,
+        sample_weight_sqrt,
+        session_sizes_cumsum,
+        max_delay,
+        y_ids,
+        unique_feat_ids,
+        unique_delay_ids,
+        const_term_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_term_ids,
+        hess_yyd_ids,
+        hess_coef_ids,
+        hess_term_ids,
+        hess_yd_ids,
+        residual,
+        y_hat,
+        mask_valid,
+        sample_weight_sqrt_masked,
+        jac,
+        term_lib,
+        jc,
+        dydx,
+    ):
+        """
+        Compute Hessian matrix.
+
+        Returns
+        -------
+        hess : array of shape (n_x, n_x)
+        """
+
+        coef, _, n_samples, n_outputs, n_x = NARX._split_coef_intercept(
+            coef_intercept, fit_intercept, y
+        )
+        hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
+        d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
+        _compute_d2ydx2(
             X,
             y_hat,
             max_delay,
@@ -749,65 +1037,109 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             hess_coef_ids,
             hess_term_ids,
             hess_yd_ids,
-            p,
-            term_libs,
+            term_lib,
+            dydx,
             jc,
             hc,
+            d2ydx2,
+        )
+        # d2ydx2 has shape in (n_samples, n_x, n_outputs (out), n_x)
+        d2ydx2_masked = (
+            d2ydx2[mask_valid] * sample_weight_sqrt_masked[..., np.newaxis, np.newaxis]
+        )
+        # reshape to (n_samples, n_outputs (out), n_x, n_x)
+        d2ydx2_masked = d2ydx2_masked.swapaxes(1, 2)
+        # reshape to (n_samples * n_outputs, n_x, n_x)
+        d2ydx2_masked = np.reshape(d2ydx2_masked, (-1, n_x, n_x))
+        hess = jac.T @ jac + np.tensordot(residual, d2ydx2_masked, axes=1)
+        hess = 0.5 * (hess + hess.T)  # force symmetric
+        return hess
+
+    @staticmethod
+    def _opt_hessp(
+        coef_intercept,
+        X,
+        y,
+        feat_ids,
+        delay_ids,
+        output_ids,
+        fit_intercept,
+        sample_weight_sqrt,
+        session_sizes_cumsum,
+        max_delay,
+        y_ids,
+        unique_feat_ids,
+        unique_delay_ids,
+        const_term_ids,
+        jac_yyd_ids,
+        jac_coef_ids,
+        jac_term_ids,
+        hess_yyd_ids,
+        hess_coef_ids,
+        hess_term_ids,
+        hess_yd_ids,
+        residual,
+        y_hat,
+        mask_valid,
+        sample_weight_sqrt_masked,
+        jac,
+        term_lib,
+        jc,
+        dydx,
+        p,
+    ):
+        """
+        Compute Hessian-vector product.
+
+        Returns
+        -------
+        hessp : array of shape (n_x,)
+        """
+
+        coef, _, n_samples, n_outputs, n_x = NARX._split_coef_intercept(
+            coef_intercept, fit_intercept, y
+        )
+        hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
+        d2ydx2 = np.zeros((max_delay + 1, n_x, n_outputs, n_x), dtype=float)
+        d2ydx2p = np.zeros((n_samples, n_outputs, n_x), dtype=float)
+        _compute_d2ydx2p(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            y_ids,
+            coef,
+            unique_feat_ids,
+            unique_delay_ids,
+            const_term_ids,
+            jac_yyd_ids,
+            jac_coef_ids,
+            jac_term_ids,
+            hess_yyd_ids,
+            hess_coef_ids,
+            hess_term_ids,
+            hess_yd_ids,
+            term_lib,
             dydx,
+            p,
+            jc,
+            hc,
             d2ydx2,
             d2ydx2p,
         )
-
-        # Mask missing values
-        mask_valid = mask_missing_values(y, y_hat, sample_weight_sqrt, return_mask=True)
-        y_masked = y[mask_valid]
-        y_hat_masked = y_hat[mask_valid]
-        sample_weight_sqrt_masked = sample_weight_sqrt[mask_valid]
-        dydx_masked = dydx[mask_valid]
-
-        # Compute residuals (n_samples, n_outputs) to (n_samples * n_outputs,)
-        residual = (sample_weight_sqrt_masked * (y_hat_masked - y_masked)).flatten()
-
-        # Compute Jacobian
-        # jac (n_samples, n_outputs (out), n_x) to (n_samples * n_outputs, n_x)
-        jac = np.reshape(
-            dydx_masked * sample_weight_sqrt_masked[..., np.newaxis], (-1, n_x)
+        # d2ydx2p has shape in (n_samples, n_outputs (out), n_x)
+        d2ydx2p_masked = (
+            d2ydx2p[mask_valid] * sample_weight_sqrt_masked[..., np.newaxis]
         )
+        # reshape to (n_samples * n_outputs, n_x)
+        d2ydx2p_masked = np.reshape(d2ydx2p_masked, (-1, n_x))
 
-        # Compute Hessian (or Hessian-vector product) if needed
-        hess = None
-        hessp = None
-        if mode == 1:
-            # d2ydx2 has shape in (n_samples, n_x, n_outputs (out), n_x)
-            d2ydx2_masked = (
-                d2ydx2[mask_valid]
-                * sample_weight_sqrt_masked[..., np.newaxis, np.newaxis]
-            )
-            # reshape to (n_samples, n_outputs (out), n_x, n_x)
-            d2ydx2_masked = d2ydx2_masked.swapaxes(1, 2)
-            # reshape to (n_samples * n_outputs, n_x, n_x)
-            d2ydx2_masked = np.reshape(d2ydx2_masked, (-1, n_x, n_x))
-            hess = jac.T @ jac + np.tensordot(residual, d2ydx2_masked, axes=1)
-            hess = 0.5 * (hess + hess.T)  # force symmetric
-        elif mode == 2:
-            # d2ydx2p has shape in (n_samples, n_outputs (out), n_x)
-            d2ydx2p_masked = (
-                d2ydx2p[mask_valid] * sample_weight_sqrt_masked[..., np.newaxis]
-            )
-            # reshape to (n_samples * n_outputs, n_x)
-            d2ydx2p_masked = np.reshape(d2ydx2p_masked, (-1, n_x))
+        # H @ p = (J^T @ J) @ p + sum(residual * (d2ydx2 @ p))
+        # d2ydx2p corresponds to d2ydx2 @ p
 
-            # H @ p = (J^T @ J) @ p + sum(residual * (d2ydx2 @ p))
-            # d2ydx2p corresponds to d2ydx2 @ p
-
-            # (J^T @ J) @ p = J^T @ (J @ p)
-            hessp = jac.T @ (jac @ p) + residual @ d2ydx2p_masked
-
-        # residual: (n_samples * n_outputs,)
-        # jac: (n_samples * n_outputs, n_x)
-        # hess: (n_x, n_x) if mode == 1
-        # hessp: (n_x,) if mode == 2
-        return residual, jac, hess, hessp
+        # (J^T @ J) @ p = J^T @ (J @ p)
+        hessp = jac.T @ (jac @ p) + residual @ d2ydx2p_masked
+        return hessp
 
     @validate_params(
         {

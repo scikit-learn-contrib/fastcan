@@ -6,6 +6,7 @@ from scipy.integrate import odeint
 from sklearn.metrics import r2_score
 
 from fastcan.narx import NARX, make_narx
+from fastcan.narx._base import _OptMemoize
 from fastcan.narx._narx_fast import _predict
 
 
@@ -50,9 +51,15 @@ def _derivative_wrapper(
     else:
         y_ids = np.asarray(output_ids, dtype=np.int32)
 
-    _, jac, _, _ = NARX._func(
-        coef_intercept,
-        0,
+    memoize = _OptMemoize(
+        NARX._opt_residual,
+        NARX._opt_jac,
+        NARX._opt_hess,
+        NARX._opt_hessp,
+        sample_weight_sqrt,
+    )
+
+    args = (
         X,
         y,
         feat_ids,
@@ -74,6 +81,8 @@ def _derivative_wrapper(
         hess_term_ids,
         hess_yd_ids,
     )
+
+    jac = memoize.jac(coef_intercept, *args)
     return jac
 
 

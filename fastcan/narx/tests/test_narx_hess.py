@@ -10,7 +10,13 @@ from numpy.testing import assert_allclose
 from scipy.optimize import approx_fprime
 
 from fastcan.narx import NARX
-from fastcan.narx._narx_fast import _predict, _update_der
+from fastcan.narx._base import _OptMemoize
+from fastcan.narx._narx_fast import (
+    _compute_d2ydx2,
+    _compute_dydx,
+    _compute_term_lib,
+    _predict,
+)
 
 
 def _hessian_wrapper(
@@ -29,10 +35,15 @@ def _hessian_wrapper(
     jac_delay_ids,
     return_hess=True,
 ):
-    mode = 1
+    mode = 2
     (hess_yyd_ids, hess_yd_ids, hess_coef_ids, hess_feat_ids, hess_delay_ids) = (
         NARX._get_hc_ids(
-            jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids, X.shape[1], mode=1
+            jac_yyd_ids,
+            jac_coef_ids,
+            jac_feat_ids,
+            jac_delay_ids,
+            X.shape[1],
+            mode=mode,
         )
     )
 
@@ -56,9 +67,15 @@ def _hessian_wrapper(
         y_ids = np.asarray(output_ids, dtype=np.int32)
 
     if return_hess:
-        res, jac, hess, _ = NARX._func(
-            coef_intercept,
-            mode,
+        memoize = _OptMemoize(
+            NARX._opt_residual,
+            NARX._opt_jac,
+            NARX._opt_hess,
+            NARX._opt_hessp,
+            sample_weight_sqrt,
+        )
+
+        args = (
             X,
             y,
             feat_ids,
@@ -80,6 +97,11 @@ def _hessian_wrapper(
             hess_term_ids,
             hess_yd_ids,
         )
+
+        hess = memoize.hess(coef_intercept, *args)
+        jac = memoize.jac(coef_intercept, *args)
+        res = memoize.residual(coef_intercept, *args)
+
         return res, jac, hess
     else:
         # Compute prediction
@@ -106,19 +128,43 @@ def _hessian_wrapper(
             y_hat,
         )
 
+        term_lib = np.ones((n_samples, unique_feat_ids.shape[0]), dtype=float)
+        _compute_term_lib(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            unique_feat_ids,
+            unique_delay_ids,
+            term_lib,
+        )
+
         # Compute Jacobian
         dydx = np.zeros((n_samples, n_outputs, n_x), dtype=float)
         jc = np.zeros((max_delay, n_outputs, n_outputs), dtype=float)
 
-        term_libs = np.ones((n_samples, unique_feat_ids.shape[0]), dtype=float)
+        _compute_dydx(
+            X,
+            y_hat,
+            max_delay,
+            session_sizes_cumsum,
+            y_ids,
+            coef,
+            unique_feat_ids,
+            unique_delay_ids,
+            const_term_ids,
+            jac_yyd_ids,
+            jac_coef_ids,
+            jac_term_ids,
+            term_lib,
+            jc,
+            dydx,
+        )
+
         hc = np.zeros((n_x, max_delay, n_outputs, n_outputs), dtype=float)
         d2ydx2 = np.zeros((n_samples, n_x, n_outputs, n_x), dtype=float)
 
-        p = np.zeros(1, dtype=float)
-        d2ydx2p = np.zeros((1, 1, 1), dtype=float)
-
-        _update_der(
-            mode,
+        _compute_d2ydx2(
             X,
             y_hat,
             max_delay,
@@ -135,14 +181,13 @@ def _hessian_wrapper(
             hess_coef_ids,
             hess_term_ids,
             hess_yd_ids,
-            p,
-            term_libs,
+            term_lib,
+            dydx,
             jc,
             hc,
-            dydx,
             d2ydx2,
-            d2ydx2p,
         )
+
         return y_hat, d2ydx2
 
 
@@ -511,7 +556,7 @@ def test_symbolic_hess(seed):
         n_features = feat_ids.max() - n_outputs + 1
         n_x = n_terms + n_outputs
 
-        mode = 1
+        mode = 2
 
         jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids = NARX._get_jc_ids(
             feat_ids, delay_ids, output_ids, n_features
