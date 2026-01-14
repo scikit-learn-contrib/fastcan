@@ -199,7 +199,7 @@ def make_narx(
         The sum of session_sizes should be equal to n_samples.
         If None, the whole data is treated as one session.
 
-        .. versionadded:: 0.5
+        .. versionadded:: 0.5.0
 
     max_candidates : int, default=None
         Maximum number of candidate polynomial terms retained before selection.

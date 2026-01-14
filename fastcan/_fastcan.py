@@ -53,7 +53,7 @@ class FastCan(SelectorMixin, BaseEstimator):
         When `beam_width` = 1, use greedy search.
         When `beam_width` > 1, use beam search.
 
-        .. versionadded:: 0.5
+        .. versionadded:: 0.5.0
 
     verbose : int, default=1
         The verbosity level.

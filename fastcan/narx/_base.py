@@ -367,7 +367,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             The sum of session_sizes should be equal to n_samples.
             If None, the whole data is treated as one session.
 
-            .. versionadded:: 0.5
+            .. versionadded:: 0.5.0
 
         solver : {'least_squares', 'minimize'}, default='least_squares'
             The SciPy solver for optimization.

@@ -91,4 +91,4 @@ def test_minimize(nan, multi_output, method):
         verbose=0,
     ).fit(X, y, coef_init="one_step_ahead", **fit_kwargs)
 
-    assert r2_score(*mask_missing_values(y, narx_score.predict(X, y_init=y))) > 0.5
+    assert r2_score(*mask_missing_values(y, narx_score.predict(X, y_init=y))) > 0.97
