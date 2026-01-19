@@ -3,15 +3,15 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [dependencies]
-python = ">=3.9"
-scikit-learn = ">=1.6.0"
+python = ">=3.10"
+scikit-learn = ">=1.7.0"
 
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
 
 [feature.build.dependencies]
-cython = ">=3.0.10"
-meson-python = ">=0.16.0"
+cython = ">=3.2.4"
+meson-python = ">=0.19.0"
 
 [feature.build.target.osx-64.dependencies]
 compilers = "*" # OpenMP
@@ -84,7 +84,7 @@ python = "*"
 python-freethreading = "*"
 
 [feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.6.0"
+scikit-learn = ">=1.7.0"
 fastcan = { path = ".", editable = true }
 
 [tasks]
@@ -154,11 +154,19 @@ pyodide-build-recipe = { cmd = "rm -rf dist && bash -c 'source emsdk/emsdk_env.s
 pyodide-download = '''bash -c "[ -d pyodide ] || (LATEST_TAG=$(curl -s https://api.github.com/repos/pyodide/pyodide/releases/latest | grep \"tag_name\" | cut -d \" -f4) && curl -L https://github.com/pyodide/pyodide/releases/download/${LATEST_TAG}/pyodide-${LATEST_TAG}.tar.bz2 | tar -xjf -)"'''
 pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directory .", cwd = "pyodide", depends-on = ["pyodide-download", "pyodide-build-recipe"] }
 
-[feature.py39.dependencies]
-python = "==3.9.0"
-scikit-learn = "==1.6.0"
-meson-python = "==0.16.0"
-cython = "==3.0.10"
+[feature.low]
+solve-strategy = "lowest"
+
+[feature.low.dependencies]
+pytest = ">=9.0.2"
+numpy = ">=1.24.1"
+
+[feature.low.target.osx-64.dependencies]
+# See: https://github.com/numpy/numpy/issues/29319
+cctools = ">=1030.6.3"
+
+[feature.low.target.osx-arm64.dependencies]
+cctools = ">=1030.6.3"
 
 [environments]
 default = ["build"]
@@ -167,4 +175,4 @@ docs = ["build", "docs"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["build", "nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
-py39 = ["build", "py39", "test"]
+low = ["build", "low", "test"]

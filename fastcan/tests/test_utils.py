@@ -69,7 +69,7 @@ def test_mask_missing():
     a_masked = mask_missing_values(a)
     mask_valid = mask_missing_values(a, return_mask=True)
     assert a_masked.shape == (99, 10)
-    assert_array_equal(actual=a_masked, desired=a[mask_valid])
+    assert_array_equal(a_masked, a[mask_valid])
     b[20, 1] = np.nan
     c[30] = np.nan
     a_masked, b_masked, c_mask = mask_missing_values(a, b, c)
@@ -77,9 +77,9 @@ def test_mask_missing():
     assert a_masked.shape == (97, 10)
     assert b_masked.shape == (97, 2)
     assert c_mask.shape == (97,)
-    assert_array_equal(actual=a_masked, desired=a[mask_valid])
-    assert_array_equal(actual=b_masked, desired=b[mask_valid])
-    assert_array_equal(actual=c_mask, desired=c[mask_valid])
+    assert_array_equal(a_masked, a[mask_valid])
+    assert_array_equal(b_masked, b[mask_valid])
+    assert_array_equal(c_mask, c[mask_valid])
     assert np.isfinite(a_masked).all()
     assert np.isfinite(b_masked).all()
     assert np.isfinite(c_mask).all()

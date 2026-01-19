@@ -22,7 +22,7 @@ jobs:
             dev
             docs
             nogil
-            py39
+            low
           cache: true
 
       - name: Re-install local
@@ -30,12 +30,12 @@ jobs:
           pixi reinstall -e dev --frozen fastcan
           pixi reinstall -e docs --frozen fastcan
           pixi reinstall -e nogil --frozen fastcan
-          pixi reinstall -e py39 --frozen fastcan
+          pixi reinstall -e low --frozen fastcan
 
       - name: Test with pytest
         run: |
           pixi run -e dev test
-          pixi run -e py39 test
+          pixi run -e low test
       - name: Test with doctest
         if: matrix.os == 'ubuntu-latest'
         run: |

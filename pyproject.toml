@@ -5,11 +5,11 @@ description = "A fast canonical-correlation-based search algorithm"
 authors = [
     { name = "Matthew Sikai Zhang", email = "matthew.szhang91@gmail.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
-dependencies = ["scikit-learn>=1.6.0"]
+dependencies = ["scikit-learn>=1.7.0"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,7 +19,6 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -36,11 +35,9 @@ tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
 [build-system]
 requires = [
-    "scikit-learn>=1.6.0",
-    "meson-python>=0.18.0; python_version > '3.9'",
-    "Cython>=3.1.0; python_version > '3.9'",
-    "meson-python==0.16.0; python_version == '3.9'",
-    "Cython==3.0.10; python_version == '3.9'",
+    "scikit-learn>=1.7.0",
+    "meson-python>=0.19.0",
+    "Cython>=3.2.4",
 ]
 build-backend = "mesonpy"
 
