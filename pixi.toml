@@ -5,17 +5,19 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 [dependencies]
 python = ">=3.9"
 scikit-learn = ">=1.6.0"
-cython = ">=3.0.10" # build dependencies
-meson-python = ">=0.16.0" # build dependencies
-
-[target.osx-64.dependencies]
-compilers = "*" # build dependencies
-
-[target.osx-arm64.dependencies]
-compilers = "*" # build dependencies
 
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
+
+[feature.build.dependencies]
+cython = ">=3.0.10"
+meson-python = ">=0.16.0"
+
+[feature.build.target.osx-64.dependencies]
+compilers = "*" # OpenMP
+
+[feature.build.target.osx-arm64.dependencies]
+compilers = "*" # OpenMP
 
 [feature.docs.dependencies]
 pydata-sphinx-theme = "*"
@@ -73,15 +75,13 @@ pytest = "*" # for ty
 sympy = "*" # for ty
 
 
-[feature.build.dependencies]
+[feature.rebuild.dependencies]
 python-build = "*"
 pip = "*"
 
 [feature.nogil.dependencies]
 python = "*"
 python-freethreading = "*"
-cython = ">=3.1.0" # build dependencies
-meson-python = ">=0.18.0" # build dependencies
 
 [feature.nogil.pypi-dependencies]
 scikit-learn = ">=1.6.0"
@@ -104,7 +104,7 @@ asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-o
 test = "pytest"
 test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "FMT", default = "html" }, { arg = "PACKAGE", default = "fastcan" }] }
 
-[feature.build.tasks]
+[feature.rebuild.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx"
 build-sdist = "rm -rf dist && python -m build --sdist"
 rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
@@ -161,9 +161,10 @@ meson-python = "==0.16.0"
 cython = "==3.0.10"
 
 [environments]
-dev = ["test", "build", "jupyter", "asv"]
-docs = ["docs"]
+default = ["build"]
+dev = ["build", "test", "rebuild", "jupyter", "asv"]
+docs = ["build", "docs"]
 static = { features = ["static"], no-default-feature = true }
-nogil = { features = ["nogil"], no-default-feature = true }
+nogil = { features = ["build", "nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
-py39 = { features = ["py39", "test"] }
+py39 = ["build", "py39", "test"]

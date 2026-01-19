@@ -51,12 +51,12 @@ build-backend = "mesonpy"
 setup = ['--vsenv']
 install = ['--tags=runtime,python-runtime']
 
-# [tool.meson-python.wheel] # TODO: enable when meson-python 0.19.0 is released
-# exclude = [
-#     "**/*.pyx",
-#     "**/*.pxd",
-#     "**/__pycache__/*",
-# ]
+[tool.meson-python.wheel]
+exclude = [
+    "**/*.pyx",
+    "**/*.pxd",
+    "**/__pycache__/*",
+]
 
 [tool.pytest.ini_options]
 testpaths = [
