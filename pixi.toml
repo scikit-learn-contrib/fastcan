@@ -12,7 +12,6 @@ fastcan = { path = ".", editable = true }
 [feature.build.dependencies]
 cython = ">=3.2.4"
 meson-python = ">=0.19.0"
-meson = ">=1.10.0"
 
 [feature.build.target.osx-64.dependencies]
 compilers = "*" # OpenMP
@@ -139,6 +138,8 @@ doc-plantuml = { cmd = "plantuml -tsvg {{ SOURCE }} -o {{ OUTPUT }}", cwd = "doc
 doc-plantuml-test = "plantuml -testdot"
 doc-jupyterlite-debug = { cmd = "jupyter-lite build --debug --output-dir {{ OUTPUT }}", cwd = "doc", args = [{ arg = "OUTPUT", default = "_output" }] }
 
+[feature.docs.activation.env]
+MAMBA_NO_LOW_SPEED_LIMIT = "1"
 
 [feature.nogil.tasks]
 nogil-h = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
@@ -161,6 +162,7 @@ solve-strategy = "lowest"
 [feature.low.dependencies]
 pytest = ">=9.0.2"
 numpy = ">=1.24.1"
+meson = ">=1.10.0" # For win-64
 
 [feature.low.target.osx-64.dependencies]
 # See: https://github.com/numpy/numpy/issues/29319
