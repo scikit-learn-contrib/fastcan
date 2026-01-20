@@ -15,6 +15,7 @@ install_subdir(
   'fastcan',
   install_dir: py.get_install_dir(),
   install_tag: 'python-runtime',
+  exclude_files: ['_cancorr_fast.pyx', 'narx/_narx_fast.pyx'],
 )
 
 subdir('fastcan')
