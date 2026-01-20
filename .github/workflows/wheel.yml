@@ -36,7 +36,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_SKIP: "*_i686 *_ppc64le *_s390x *_universal2 *-musllinux_*"
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_ARCHS_LINUX: auto
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_WINDOWS: AMD64
