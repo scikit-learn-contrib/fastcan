@@ -318,6 +318,9 @@ def make_narx(
         include_zero_delay=_include_zero_delay,
     )
 
+    if static_indices is None:
+        static_indices = []
+
     time_shift_ids_all = np.delete(
         time_shift_ids_all,
         (

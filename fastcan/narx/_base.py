@@ -179,12 +179,15 @@ class _OptMemoize:
     def loss(self, x, *args):
         """Least squares loss: 0.5 * sum(R^2)"""
         self._if_compute_residual(x, *args)
+        assert self._residual is not None
         return 0.5 * np.sum(np.square(self._residual))
 
     def grad(self, x, *args):
         """Gradient of least squares loss.
         G = sw * R * dydx =  J^T @ R"""
         self._if_compute_jac(x, *args)
+        assert self._jac is not None
+        assert self._residual is not None
         return np.transpose(self._jac) @ self._residual
 
 
