@@ -3,7 +3,7 @@ project(
   'c', 'cython',
   version: '0.5.0',
   license: 'MIT',
-  meson_version: '>= 1.5.0',
+  meson_version: '>= 1.10.0',
   default_options: [
     'buildtype=release',
   ],

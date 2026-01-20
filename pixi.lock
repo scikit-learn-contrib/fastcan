@@ -3502,7 +3502,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.32.1-h7f98852_1000.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.2.11-h166bdaf_1014.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-20.1.8-h4922eb0_3.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/mkl-2024.2.2-ha770c72_17.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/mpc-1.2.1-h9f54685_0.tar.bz2
@@ -3566,7 +3566,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/libstdcxx-ng-12.1.0-hd01590b_17.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/libuuid-2.32.1-hf897c2e_1000.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/libzlib-1.2.11-h4e544f5_1014.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/mpc-1.2.1-h846f343_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/mpfr-4.1.0-h719063d_1.tar.bz2
@@ -3656,7 +3656,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/llvm-openmp-19.1.7-ha54dae1_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/llvm-tools-19-19.1.7-h879f4bc_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/llvm-tools-19.1.7-hb0207f0_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/mpc-1.3.1-h9d8efa1_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/mpfr-4.2.1-haed47dc_3.conda
@@ -3752,7 +3752,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-openmp-19.1.7-hdb05f8b_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-tools-19-19.1.7-h91fd4e7_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-tools-19.1.7-h855ad52_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/mpc-1.3.1-h8f1351a_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/mpfr-4.2.1-hb693164_3.conda
@@ -3811,7 +3811,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/libxml2-2.13.8-h741aa76_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libzlib-1.3.1-h2466b09_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/llvm-openmp-21.1.8-h4fa8253_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/mkl-2025.3.0-hac47afa_455.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mpmath-1.0.0-py_1.tar.bz2
@@ -9667,7 +9667,7 @@ packages:
 - pypi: ./
   name: fastcan
   version: 0.5.0
-  sha256: 52626a4aae913c916cc383e59fc62f26649230ee0618b98afc708f431cdce6ea
+  sha256: 24d5864f11d279dcfbea1818276b0c4a4b400bf6eb4f84127c41b225ce8f364b
   requires_dist:
   - scikit-learn>=1.7.0
   requires_python: '>=3.10'
@@ -19598,19 +19598,6 @@ packages:
   - pkg:pypi/meson?source=hash-mapping
   size: 759977
   timestamp: 1765221106896
-- conda: https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda
-  sha256: 9ca86c9ecedfcc727a9bb1f66787e26e230f57f0b49e24b673fa34e3a8376f34
-  md5: 9d971c5bf99aed063664d6650e7e7ed8
-  depends:
-  - ninja >=1.8.2
-  - python >=3.7
-  - setuptools
-  license: Apache-2.0
-  license_family: APACHE
-  purls:
-  - pkg:pypi/meson?source=hash-mapping
-  size: 648522
-  timestamp: 1720651658395
 - conda: https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda
   sha256: 5eca04aaecd3929e697759e297698245d0877805050153ed774616737a3e90a7
   md5: cb08e589220418a0b894d515a406aec8
