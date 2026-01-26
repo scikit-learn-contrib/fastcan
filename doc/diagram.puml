@@ -1,21 +1,25 @@
 @startuml fastcan
 skinparam backgroundColor transparent
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+!theme C4_blue_new from <C4/themes>
+!include <C4/C4_Component>
 !include <logos/numpy>
 !include <logos/python>
-!include <logos/c>
-
+!include https://raw.githubusercontent.com/MatthewSZhang/gilbarbara-plantuml-sprites/refs/heads/master/sprites/sklearn-icon.puml
+!include https://raw.githubusercontent.com/MatthewSZhang/gilbarbara-plantuml-sprites/refs/heads/master/sprites/cython-icon.puml
+!include https://raw.githubusercontent.com/MatthewSZhang/gilbarbara-plantuml-sprites/refs/heads/master/sprites/scipy.puml
 
 AddContainerTag("module", $legendText="module")
-AddContainerTag("db", $legendText="input/output", $sprite="numpy", $bgColor="gray", $fontColor="white", $borderColor="gray")
+AddContainerTag("data", $legendText="input/output", $sprite="numpy", $bgColor="gray", $fontColor="white", $borderColor="gray")
 AddComponentTag("python", $legendText="Python code", $sprite="python")
-AddComponentTag("cython", $legendText="Cython code", $sprite="c", $bgColor="gold", $fontColor="brown", $borderColor="gold")
+AddComponentTag("cython", $legendText="Cython code", $sprite="cython-icon", $bgColor="gold", $fontColor="brown", $borderColor="gold")
+AddComponentTag("sklearn", $legendText="sklearn Estimator", $sprite="sklearn-icon", $bgColor="orange", $fontColor="black", $borderColor="orange")
+AddComponentTag("scipy", $legendText="SciPy", $sprite="scipy", $bgColor="#2253A1", $fontColor="white", $borderColor="#2253A1")
 UpdateContainerBoundaryStyle($type="module", $legendText="module boundary")
 
 
 Container_Boundary(fastcan, "fastcan", $descr="A library for fast feature engineering and data preprocessing"){
     Component(cancorr_fast, "cancorr_fast", $tags="cython", $descr="Fast canonical correlation based forward search")
-    Component(FastCan, "FastCan", $tags="python", $descr="Feature selector")
+    Component(FastCan, "FastCan", $tags="sklearn", $descr="Feature selector")
     Component(minibatch, "minibatch", $tags="python", $descr="Prunes samples in batch-wise")
     Component(refine, "refine", $tags="python", $descr="Refines selection of FastCan")
 
@@ -29,7 +33,7 @@ Container_Boundary(fastcan, "fastcan", $descr="A library for fast feature engine
 Container_Boundary(narx, "narx", $descr="A submodule for NARX modelling"){
     Component(make_narx, "make_narx", $tags="python", $descr="Builder for NARX model instances")
     Component(narx_fast, "narx_fast", $tags="cython", $descr="Fast computation of gradient and prediction for NARX models")
-    Component(NARX, "NARX", $tags="python", $descr="NARX model")
+    Component(NARX, "NARX", $tags="sklearn", $descr="NARX model")
     Component(time_shift, "time_shift", $tags="python", $descr="Transforming time-series to time-shifted features")
     Component(poly, "poly", $tags="python", $descr="Nonlinearises features with polynomial basis functions")
     ' Component(tp2fd, "tp2fd", $tags="python", $descr="Converts time_shift ids and poly ids to feat ids and delay ids")
@@ -47,10 +51,10 @@ Container_Boundary(narx, "narx", $descr="A submodule for NARX modelling"){
 }
 
 Person(person, "User", $descr="A data scientist or developer using NumPy, SciPy, and scikit-learn")
-ContainerDb(output, "fastcan output", $tags="db", $techn="indices", $descr="Selected indices of features or samples")
-ContainerDb(input, "fastcan input", $tags="db", $techn="arrays, allow multi-output", $descr="Input data")
-ContainerDb(narx_output, "narx output", $tags="db", $techn="arrays", $descr="Prediction and gradients of NARX model")
-ContainerDb(narx_input, "narx input", $tags="db", $techn="arrays, allow nan, allow multi-output", $descr="Time-series data")
+ContainerDb(output, "fastcan output", $tags="data", $techn="indices", $descr="Selected indices of features or samples")
+ContainerDb(input, "fastcan input", $tags="data", $techn="arrays, allow multi-output", $descr="Input data")
+ContainerDb(narx_output, "narx output", $tags="data", $techn="arrays", $descr="Prediction and gradients of NARX model")
+ContainerDb(narx_input, "narx input", $tags="data", $techn="arrays, allow nan, allow multi-output", $descr="Time-series data")
 
 Rel(input, FastCan, "Sends features to", "arrays")
 Rel(input, minibatch, "Sends samples to", "arrays")
@@ -65,7 +69,7 @@ Rel(output, NARX, "Sends selected polynomial features to", "indices")
 Rel(person, input, "Processes arrays using", "NumPy, scikit-learn pipeline")
 Rel(person, narx_input, "Processes time series using", "NumPy, scikit-learn pipeline")
 
-Container(optimizer, "SciPy Optimiser", "module", $tags="module", $descr="Minimises objective functions using prediction errors and gradients")
+Container(optimizer, "SciPy Optimiser", "module", $tags="scipy", $descr="Minimises objective functions using prediction errors and gradients")
 Rel(narx_output, optimizer, "Sends prediction and gradients to", "arrays")
 Rel(optimizer, NARX, "Updates coefficients for", "arrays")
 

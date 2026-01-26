@@ -29,7 +29,7 @@ sphinxcontrib-plantuml = "*"
 jupyterlite-sphinx = "*"
 jupyterlite-xeus = "*"
 pip = "*" # Required by xeus environment creation
-graphviz = "<13"
+graphviz = "*"
 
 [feature.docs.target.win-64.dependencies]
 plantuml = "*"

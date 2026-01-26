@@ -321,6 +321,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
     @validate_params(
         {
             "X": [None, "array-like"],
+            "y": ["array-like"],
             "coef_init": [None, StrOptions({"one_step_ahead"}), "array-like"],
             "sample_weight": [None, "array-like"],
             "session_sizes": [None, "array-like"],
