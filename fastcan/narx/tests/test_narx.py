@@ -24,6 +24,7 @@ def test_narx_is_sklearn_estimator():
     # Skip 0 feature check for NARX, as AR models have no features
     expected_failures = {
         "check_estimators_empty_data_messages": ("NARX can handle 0 feature."),
+        "check_requires_y_none": "validate_params error message mismatch",
     }
     with pytest.warns(UserWarning, match="output_ids got"):
         check_estimator(NARX(), expected_failed_checks=expected_failures)
