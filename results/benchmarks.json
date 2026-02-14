@@ -155,6 +155,50 @@
         "unit": "unit",
         "version": "5eaa543f882f2a3bad01f6c36a4d0d140b49cc04a365ec44567e9847070c0f5d"
     },
+    "hess.HessBenchmark.peakmem_fit": {
+        "code": "class HessBenchmark:\n    def peakmem_fit(self, *args):\n        solver, method = self._parse_args(*args)\n        self.estimator.fit(\n            self.X, self.y, coef_init=\"one_step_ahead\", solver=solver, method=method\n        )\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass HessBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            X, _, y, _ = self.make_data(params)\n            estimator = make_narx(\n                X,\n                y,\n                n_terms_to_select=self.n_terms_to_select,\n                max_delay=self.max_delay,\n                poly_degree=self.poly_degree,\n            )\n    \n            estimator = estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "name": "hess.HessBenchmark.peakmem_fit",
+        "param_names": [
+            "opt_alg"
+        ],
+        "params": [
+            [
+                "'lsq'",
+                "'min-hess'",
+                "'min-hessp'"
+            ]
+        ],
+        "setup_cache_key": "hess:35",
+        "timeout": 500,
+        "type": "peakmemory",
+        "unit": "bytes",
+        "version": "676560aa49582c677204b164f7654e3b2cebb812b2996edc3c73dd5bca748b16"
+    },
+    "hess.HessBenchmark.time_fit": {
+        "code": "class HessBenchmark:\n    def time_fit(self, *args):\n        solver, method = self._parse_args(*args)\n        self.estimator.fit(\n            self.X, self.y, coef_init=\"one_step_ahead\", solver=solver, method=method\n        )\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass HessBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            X, _, y, _ = self.make_data(params)\n            estimator = make_narx(\n                X,\n                y,\n                n_terms_to_select=self.n_terms_to_select,\n                max_delay=self.max_delay,\n                poly_degree=self.poly_degree,\n            )\n    \n            estimator = estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "min_run_count": 2,
+        "name": "hess.HessBenchmark.time_fit",
+        "number": 0,
+        "param_names": [
+            "opt_alg"
+        ],
+        "params": [
+            [
+                "'lsq'",
+                "'min-hess'",
+                "'min-hessp'"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "setup_cache_key": "hess:35",
+        "timeout": 500,
+        "type": "time",
+        "unit": "seconds",
+        "version": "e673b8188033f6075af2f9545de2225b8c0aec5a2ab7c1a82dbd9e73b4d969ce",
+        "warmup_time": -1
+    },
     "narx.NARXBenchmark.peakmem_fit": {
         "code": "class NARXBenchmark:\n    def peakmem_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass NARXBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            X, _, y, _ = self.make_data(params)\n            estimator = make_narx(\n                X,\n                y,\n                n_terms_to_select=self.n_terms_to_select,\n                max_delay=self.max_delay,\n                poly_degree=self.poly_degree,\n            )\n    \n            estimator = estimator.fit(X, y, coef_init=\"one_step_ahead\")\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "name": "narx.NARXBenchmark.peakmem_fit",
