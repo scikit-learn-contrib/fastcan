@@ -12,7 +12,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_PLATFORM: pyodide
-          CIBW_BUILD_FRONTEND: uv
+          CIBW_BUILD_FRONTEND: "build[uv]"
       - name: Upload package
         uses: actions/upload-artifact@v7
         with:

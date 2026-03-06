@@ -42,7 +42,7 @@ jobs:
           CIBW_ARCHS_WINDOWS: AMD64
           # Include free-threaded support
           CIBW_ENABLE: cpython-freethreading
-          CIBW_BUILD_FRONTEND: uv
+          CIBW_BUILD_FRONTEND: "build[uv]"
       - name: Upload package
         uses: actions/upload-artifact@v7
         with:
