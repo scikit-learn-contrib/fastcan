@@ -15,7 +15,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm, macos-15-intel]
+        os:
+          [
+            ubuntu-latest,
+            windows-latest,
+            macos-latest,
+            ubuntu-24.04-arm,
+            macos-15-intel,
+          ]
 
     steps:
       - uses: actions/checkout@v6
@@ -42,7 +49,7 @@ jobs:
           pixi run asv-build ${{ matrix.os }}
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: asv-results-${{ matrix.os }}
           path: asv_benchmarks/results
@@ -82,7 +89,7 @@ jobs:
           cp -r gh-pages/results/* asv_benchmarks/results/ 2>/dev/null || true
 
       - name: Download all benchmark results
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: asv-results-*
 
@@ -119,7 +126,7 @@ jobs:
           commit_message: ${{ github.event.head_commit.message }}
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: asv_benchmarks/html
 

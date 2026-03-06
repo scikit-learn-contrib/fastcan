@@ -77,6 +77,7 @@ html_css_files = ["fastcan.css"]
 # intersphinx configuration
 intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
 }
 
 # -----------------------------------------------------------------------------

@@ -380,7 +380,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         **params : dict
             Keyword arguments passed to
-            `scipy.optimize.least_squares` or `scipy.optimize.minimize`.
+            :func:`scipy.optimize.least_squares` or :func:`scipy.optimize.minimize`.
 
         Returns
         -------
