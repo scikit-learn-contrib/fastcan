@@ -138,7 +138,7 @@ def test_narx(nan, multi_output):
 
     assert r2_score(*mask_missing_values(y, narx_score.predict(X, y_init=y))) > 0.5
 
-    params = {
+    params: dict = {
         "n_terms_to_select": rng.integers(low=2, high=4),
         "max_delay": rng.integers(low=0, high=10),
         "poly_degree": rng.integers(low=2, high=5),
