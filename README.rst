@@ -151,7 +151,7 @@ If you use the `h-correlation` method in your work please cite the following ref
       url = {https://www.sciencedirect.com/science/article/pii/S0031320321005951},
       author = {Sikai Zhang and Zi-Qiang Lang},
       keywords = {Feature selection, Orthogonal least squares, Canonical correlation analysis, Linear discriminant analysis, Multi-label, Multivariate time series, Feature interaction},
-      }
+   }
 
 If you use the `eta-cosine` method in your work please cite the following reference:
 
@@ -168,4 +168,21 @@ If you use the `eta-cosine` method in your work please cite the following refere
       url = {https://www.sciencedirect.com/science/article/pii/S0888327024007933},
       author = {Sikai Zhang and Tingna Wang and Keith Worden and Limin Sun and Elizabeth J. Cross},
       keywords = {Multivariate feature selection, Filter method, Canonical correlation analysis, Feature interaction, Feature redundancy, Structural health monitoring},
-      }
+   }
+
+If you just want to cite the `fastcan` software, please use the following reference:
+
+.. code:: bibtex
+
+   @article{WANG2026102598,
+      title = {fastcan: A fast canonical-correlation-based searching algorithm},
+      journal = {SoftwareX},
+      volume = {34},
+      pages = {102598},
+      year = {2026},
+      issn = {2352-7110},
+      doi = {https://doi.org/10.1016/j.softx.2026.102598},
+      url = {https://www.sciencedirect.com/science/article/pii/S2352711026000919},
+      author = {Tingna Wang and Sikai Zhang and Lin Chen and Limin Sun},
+      keywords = {Machine learning, Scikit-learn, Feature selection, Data pruning, Time series, System identification, NARX},
+   }
