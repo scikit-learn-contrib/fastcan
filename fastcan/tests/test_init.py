@@ -1,11 +1,11 @@
 """Basic unittests to test functioning of module's top-level"""
 
 try:
-    from fastcan import *  # noqa: F403
+    from fastcan import *
 
     _TOP_IMPORT_ERROR = None
 
-except Exception as e:
+except ImportError as e:
     _TOP_IMPORT_ERROR = e
 
 

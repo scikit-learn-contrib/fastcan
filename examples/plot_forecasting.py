@@ -84,7 +84,7 @@ import datetime
 
 import numpy as np
 
-today = datetime.datetime.now()
+today = datetime.datetime.now(tz=datetime.timezone.utc)
 current_month = today.year + today.month / 12
 
 x_train = (co2_data["date"].dt.year + co2_data["date"].dt.month / 12).to_numpy()

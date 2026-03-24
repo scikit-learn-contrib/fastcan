@@ -251,7 +251,7 @@ def test_cython_errors():
     n_samples = 20
     n_informative = 3
     x_sub = rng.random((n_samples, n_informative))
-    y = rng.random((n_samples))
+    y = rng.random(n_samples)
 
     selector_no_cand = FastCan(
         n_features_to_select=n_informative + 1,

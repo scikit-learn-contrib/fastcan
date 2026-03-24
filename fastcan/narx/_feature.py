@@ -537,6 +537,4 @@ def tp2fd(time_shift_ids, poly_ids):
             if variable_id != 0:
                 feat_ids[i, j] = _time_shift_ids[variable_id - 1, 0]
                 delay_ids[i, j] = _time_shift_ids[variable_id - 1, 1]
-    feat_ids = feat_ids
-    delay_ids = delay_ids
     return feat_ids, delay_ids

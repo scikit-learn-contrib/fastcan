@@ -421,12 +421,18 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:  # Auto-regressive model
             X = np.empty((1, 0), dtype=float, order="C")  # Skip validation
             none_inputs = True
-        check_X_params = dict(
-            dtype=float, order="C", ensure_all_finite="allow-nan", ensure_min_features=0
-        )
-        check_y_params = dict(
-            ensure_2d=False, dtype=float, order="C", ensure_all_finite="allow-nan"
-        )
+        check_X_params = {
+            "dtype": float,
+            "order": "C",
+            "ensure_all_finite": "allow-nan",
+            "ensure_min_features": 0,
+        }
+        check_y_params = {
+            "ensure_2d": False,
+            "dtype": float,
+            "order": "C",
+            "ensure_all_finite": "allow-nan",
+        }
         X, y = validate_data(
             self, X, y, validate_separately=(check_X_params, check_y_params)
         )

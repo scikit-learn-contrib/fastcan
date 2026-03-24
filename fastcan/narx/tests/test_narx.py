@@ -280,8 +280,8 @@ def test_multi_output_warn():
             poly_ids = np.array([[1, 1], [2, 2], [0, 3]])
         feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
+        narx = NARX(feat_ids=feat_ids, delay_ids=delay_ids)
         with pytest.warns(UserWarning, match="output_ids got"):
-            narx = NARX(feat_ids=feat_ids, delay_ids=delay_ids)
             narx.fit(X, y)
         y_pred = narx.predict(X)
         assert_almost_equal(
@@ -332,16 +332,17 @@ def test_fit_intercept():
     narx.fit(X, y, coef_init="one_step_ahead")
     assert_array_equal(narx.intercept_, [0.0, 0.0])
 
+    narx = NARX(
+        feat_ids=feat_ids,
+        delay_ids=delay_ids,
+        fit_intercept=False,
+    )
     with pytest.warns(UserWarning, match="output_ids got"):
-        narx = NARX(
-            feat_ids=feat_ids,
-            delay_ids=delay_ids,
-            fit_intercept=False,
-        )
         narx.fit(X, y)
-        assert_array_equal(narx.intercept_, [0.0, 0.0])
+    assert_array_equal(narx.intercept_, [0.0, 0.0])
+    with pytest.warns(UserWarning, match="output_ids got"):
         narx.fit(X, y, coef_init=[0, 0])
-        assert_array_equal(narx.intercept_, [0.0, 0.0])
+    assert_array_equal(narx.intercept_, [0.0, 0.0])
 
 
 def test_multi_output_error():
