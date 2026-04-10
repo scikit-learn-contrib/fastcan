@@ -53,7 +53,6 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_ARCHS_LINUX: auto
           CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_ARCHS_WINDOWS: AMD64
           # Include free-threaded support
           CIBW_ENABLE: cpython-freethreading
           CIBW_BUILD_FRONTEND: "build[uv]"
