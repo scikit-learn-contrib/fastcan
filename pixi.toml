@@ -3,8 +3,8 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [dependencies]
-python = ">=3.10"
-scikit-learn = ">=1.7.0"
+python = ">=3.11"
+scikit-learn = ">=1.8.0"
 
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
@@ -84,7 +84,7 @@ python = "*"
 python-freethreading = "*"
 
 [feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.7.0"
+scikit-learn = ">=1.8.0"
 fastcan = { path = ".", editable = true }
 
 [tasks]
@@ -163,6 +163,7 @@ solve-strategy = "lowest"
 pytest = ">=9.0.2"
 numpy = ">=1.24.1"
 meson = ">=1.10.0" # For win-64
+mpmath = ">=1.3.0"
 
 [feature.low.target.osx-64.dependencies]
 # See: https://github.com/numpy/numpy/issues/29319
