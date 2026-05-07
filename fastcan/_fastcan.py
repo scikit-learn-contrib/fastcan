@@ -176,10 +176,10 @@ class FastCan(SelectorMixin, BaseEstimator):
             raise ValueError(
                 "`eta` cannot be True, when n_samples < n_features+n_outputs."
             )
-        self.indices_include_ = self._check_indices_params(
+        self.indices_include_ = _check_indices_params(
             self.indices_include, n_features
         )
-        self.indices_exclude_ = self._check_indices_params(
+        self.indices_exclude_ = _check_indices_params(
             self.indices_exclude, n_features
         )
         n_inclusions = self.indices_include_.size
@@ -259,38 +259,6 @@ class FastCan(SelectorMixin, BaseEstimator):
         self.support_ = support
         self.scores_ = scores
         return self
-
-    def _check_indices_params(self, indices_params, n_features):
-        """Check indices_include or indices_exclude."""
-        if indices_params is None:
-            indices_params = np.zeros(0, dtype=int)
-        else:
-            indices_params = check_array(
-                indices_params,
-                ensure_2d=False,
-                dtype=int,
-                ensure_min_samples=0,
-            )
-
-        if indices_params.ndim != 1:
-            raise ValueError(
-                f"Found indices_params with dim {indices_params.ndim}, "
-                "but expected == 1."
-            )
-
-        if indices_params.size >= n_features:
-            raise ValueError(
-                f"The number of indices in indices_params {indices_params.size} must "
-                f"be < n_features {n_features}."
-            )
-
-        if np.any((indices_params < 0) | (indices_params >= n_features)):
-            raise ValueError(
-                "Out of bounds. "
-                f"All items in indices_params should be in [0, {n_features}). "
-                f"But got indices_params = {indices_params}."
-            )
-        return indices_params
 
     def _get_support_mask(self):
         check_is_fitted(self)

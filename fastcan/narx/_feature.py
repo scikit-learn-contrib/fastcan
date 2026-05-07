@@ -14,6 +14,59 @@ import numpy as np
 from sklearn.utils import check_array
 from sklearn.utils._param_validation import Interval, validate_params
 
+from .._fastcan import _check_indices_params
+
+
+@validate_params(
+    {
+        "X": ["array-like"],
+        "ids": ["array-like"],
+        "skip_indices": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
+    """ Generator to time shift features.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The data to transform, column by column.
+
+    ids : array-like of shape (n_outputs, 2)
+        The unique id numbers of output features, which are
+        (feature_idx, delay).
+
+    skip_indices : array-like, default=None
+        Indices of features that have already been selected and can be skipped.
+
+    **kwargs : dict
+        Additional keyword arguments to be passed to :func:`numpy.pad`.
+
+    Yields
+    ------
+    index : int
+        The index of the yielded feature.
+
+    feature : ndarray of shape (n_samples,)
+        A time shift feature.
+    """
+    X = check_array(X, ensure_2d=True, dtype=float)
+    ids = check_array(ids, ensure_2d=True, dtype=int)
+    n_features = ids.shape[0]
+    skip_indices = _check_indices_params(skip_indices, n_features)
+    for index, id_temp in enumerate(ids):
+        if index in skip_indices:
+            continue
+        yield index, _make_a_time_shift_feature(X, id_temp, **kwargs)
+
+def _make_a_time_shift_feature(X, idx, **kwargs):
+    """Make a time shift feature."""
+    return np.pad(
+        X[: -idx[1] or None, idx[0]],
+        (idx[1], 0),
+        **kwargs,
+    )
 
 @validate_params(
     {"X": ["array-like"], "ids": ["array-like"]},
@@ -24,7 +77,7 @@ def make_time_shift_features(X, ids):
 
     Parameters
     ----------
-    X : array-likeof shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data to transform, column by column.
 
     ids : array-like of shape (n_outputs, 2)
@@ -54,10 +107,7 @@ def make_time_shift_features(X, ids):
     n_outputs = ids.shape[0]
     out = np.zeros([n_samples, n_outputs])
     for i, id_temp in enumerate(ids):
-        out[:, i] = np.r_[
-            np.full(id_temp[1], np.nan),
-            X[: -id_temp[1] or None, id_temp[0]],
-        ]
+        out[:, i] = _make_a_time_shift_feature(X, id_temp, constant_values=np.nan)
 
     return out
 
@@ -139,6 +189,49 @@ def make_time_shift_ids(
     mask = np.isin(ids[:, 0], exclude_zero_delay_idx) & (ids[:, 1] == 0)
     return ids[~mask]
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "ids": ["array-like"],
+        "skip_indices": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def gen_poly_features(X, ids, skip_indices=None):
+    """ Generator to polynomial features.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The data to transform, column by column.
+
+    ids : array-like of shape (n_outputs, degree)
+        The unique id numbers of output features, which are formed
+        of non-negative int values.
+
+    skip_indices : array-like, default=None
+        Indices of features that have already been selected and can be skipped.
+
+    Yields
+    ------
+    index : int
+        The index of the yielded feature.
+    feature : ndarray of shape (n_samples,)
+        A polynomial feature.
+    """
+    X = check_array(X, ensure_2d=True, dtype=float)
+    ids = check_array(ids, ensure_2d=True, dtype=int)
+    n_samples = X.shape[0]
+    n_features = ids.shape[0]
+    skip_indices = _check_indices_params(skip_indices, n_features)
+    for index, id_row in enumerate(ids):
+        if index in skip_indices:
+            continue
+        feature = np.ones(n_samples)
+        for j in id_row:
+            if j != 0:
+                feature *= X[:, j - 1]
+        yield index, feature
 
 @validate_params(
     {"X": ["array-like"], "ids": ["array-like"]},
