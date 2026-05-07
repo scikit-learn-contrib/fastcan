@@ -9,9 +9,11 @@ from . import narx, utils
 from ._fastcan import FastCan
 from ._minibatch import minibatch
 from ._refine import refine
+from ._lazyfastcan import LazyFastCan
 
 __all__ = [
     "FastCan",
+    "LazyFastCan",
     "minibatch",
     "narx",
     "refine",
