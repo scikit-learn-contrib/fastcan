@@ -168,7 +168,7 @@ class FastCan(SelectorMixin, BaseEstimator):
         self._validate_params()
         # X y
         X, y = _check_X_y(self, X, y, self.n_features_to_select, order="F")
-        
+
         n_samples, n_features = X.shape
         n_outputs = y.shape[1]
 
@@ -176,12 +176,8 @@ class FastCan(SelectorMixin, BaseEstimator):
             raise ValueError(
                 "`eta` cannot be True, when n_samples < n_features+n_outputs."
             )
-        self.indices_include_ = _check_indices_params(
-            self.indices_include, n_features
-        )
-        self.indices_exclude_ = _check_indices_params(
-            self.indices_exclude, n_features
-        )
+        self.indices_include_ = _check_indices_params(self.indices_include, n_features)
+        self.indices_exclude_ = _check_indices_params(self.indices_exclude, n_features)
         n_inclusions = self.indices_include_.size
         n_exclusions = self.indices_exclude_.size
         if np.intersect1d(self.indices_include_, self.indices_exclude_).size != 0:
@@ -313,7 +309,6 @@ def _check_X_y(estimator, X, y, n_features_to_select, order):
     return X, y
 
 
-
 def _check_indices_params(indices_params, n_features):
     """Check indices_include or indices_exclude."""
     if indices_params is None:
@@ -328,8 +323,7 @@ def _check_indices_params(indices_params, n_features):
 
     if indices_params.ndim != 1:
         raise ValueError(
-            f"Found indices_params with dim {indices_params.ndim}, "
-            "but expected == 1."
+            f"Found indices_params with dim {indices_params.ndim}, but expected == 1."
         )
 
     if indices_params.size >= n_features:

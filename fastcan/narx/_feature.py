@@ -26,7 +26,7 @@ from .._fastcan import _check_indices_params
     prefer_skip_nested_validation=True,
 )
 def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
-    """ Generator to time shift features.
+    """Generator to time shift features.
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
         Indices of features that have already been selected and can be skipped.
 
     **kwargs : dict
-        Additional keyword arguments to be passed to :func:`numpy.pad`.
+        Additional keyword arguments passed to :func:`numpy.pad`.
 
     Yields
     ------
@@ -60,6 +60,7 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
             continue
         yield index, _make_a_time_shift_feature(X, id_temp, **kwargs)
 
+
 def _make_a_time_shift_feature(X, idx, **kwargs):
     """Make a time shift feature."""
     return np.pad(
@@ -67,6 +68,7 @@ def _make_a_time_shift_feature(X, idx, **kwargs):
         (idx[1], 0),
         **kwargs,
     )
+
 
 @validate_params(
     {"X": ["array-like"], "ids": ["array-like"]},
@@ -189,6 +191,7 @@ def make_time_shift_ids(
     mask = np.isin(ids[:, 0], exclude_zero_delay_idx) & (ids[:, 1] == 0)
     return ids[~mask]
 
+
 @validate_params(
     {
         "X": ["array-like"],
@@ -198,7 +201,7 @@ def make_time_shift_ids(
     prefer_skip_nested_validation=True,
 )
 def gen_poly_features(X, ids, skip_indices=None):
-    """ Generator to polynomial features.
+    """Generator to polynomial features.
 
     Parameters
     ----------
@@ -232,6 +235,7 @@ def gen_poly_features(X, ids, skip_indices=None):
             if j != 0:
                 feature *= X[:, j - 1]
         yield index, feature
+
 
 @validate_params(
     {"X": ["array-like"], "ids": ["array-like"]},

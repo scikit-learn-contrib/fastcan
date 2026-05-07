@@ -11,10 +11,11 @@ import numpy as np
 from scipy.linalg import orth
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection import SelectorMixin
-from sklearn.utils.validation import check_is_fitted
 from sklearn.utils._param_validation import Interval
+from sklearn.utils.validation import check_is_fitted
 
 from ._fastcan import _check_X_y
+
 
 def _classical_gram_schmidt(x, W):
     """Classical Gram-Schmidt orthogonalization.
@@ -34,6 +35,7 @@ def _classical_gram_schmidt(x, W):
         norm = 1.0
     return q / norm
 
+
 def _default_feature_generator(X, skip_indices):
     """Default feature generator that yields each column of X as a feature."""
     n_features = X.shape[1]
@@ -42,10 +44,11 @@ def _default_feature_generator(X, skip_indices):
             continue
         yield j, X[:, j]
 
+
 def _check_generated_features(idx, feature, n_samples):
     """Check the validity of generated features."""
     if not isinstance(idx, Integral):
-        raise ValueError(f"Generated feature index {idx} is not an integer.")
+        raise TypeError(f"Generated feature index {idx} is not an integer.")
     if idx < 0:
         raise ValueError(f"Generated feature index {idx} is negative.")
     if feature.ndim != 1:
@@ -56,7 +59,10 @@ def _check_generated_features(idx, feature, n_samples):
             f"but expected length is {n_samples}."
         )
     if not np.isfinite(feature).all():
-        raise ValueError(f"Generated feature with index {idx} contains non-finite values.")
+        raise ValueError(
+            f"Generated feature with index {idx} contains non-finite values."
+        )
+
 
 class LazyFastCan(SelectorMixin, BaseEstimator):
     """Lazy version of FastCan selector.
@@ -73,13 +79,12 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
         The `skip_indices` indicates which features should be skipped.
         If the generator requires additional parameters,
         you can use `functools.partial` to wrap the generator with those parameters.
-    
+
     Examples
     --------
     >>> from functools import partial
     >>> from fastcan import LazyFastCan
     >>> from fastcan.narx import gen_time_shift_features, make_time_shift_ids
-
     >>> fg = partial(gen_time_shift_features, ids=make_time_shift_ids(2, 2))
     >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
     >>> y = [[0, 0], [0, 1], [1, 1], [0, 2]]
@@ -113,7 +118,7 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
         W = np.zeros((n_samples, self.n_features_to_select))
         indices = np.zeros(self.n_features_to_select, dtype=int)
         scores = np.zeros(self.n_features_to_select, dtype=float)
-        
+
         max_feat_idx = -1
 
         for i in range(self.n_features_to_select):
@@ -122,8 +127,7 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
             best_feat = None
             for j, feat in feature_generator(X, skip_indices=indices[:i]):
                 _check_generated_features(j, feat, n_samples)
-                if j > max_feat_idx:
-                    max_feat_idx = j
+                max_feat_idx = max(max_feat_idx, j)
                 feat_centered = feat - feat.mean()
                 feat_orth = _classical_gram_schmidt(feat_centered, W[:, :i])
                 r = feat_orth.T @ y_transformed
@@ -139,10 +143,9 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
         self.scores_ = scores
         self.n_features_ = max_feat_idx + 1
         return self
-    
+
     def _get_support_mask(self):
         check_is_fitted(self)
         support = np.zeros(self.n_features_, dtype=bool)
         support[self.indices_] = True
         return support
-

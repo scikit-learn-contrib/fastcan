@@ -7,9 +7,9 @@ Nonlinear autoregressive exogenous (NARX) model for system identification.
 
 from ._base import NARX
 from ._feature import (
+    fd2tp,
     gen_poly_features,
     gen_time_shift_features,
-    fd2tp,
     make_poly_features,
     make_poly_ids,
     make_time_shift_features,
@@ -23,9 +23,9 @@ from ._utils import (
 
 __all__ = [
     "NARX",
+    "fd2tp",
     "gen_poly_features",
     "gen_time_shift_features",
-    "fd2tp",
     "make_narx",
     "make_poly_features",
     "make_poly_ids",
