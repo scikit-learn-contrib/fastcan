@@ -111,7 +111,7 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
 
     def fit(self, X, y):
         self._validate_params()
-        X, y = _check_X_y(self, X, y, self.n_features_to_select, order="C")
+        X, y = _check_X_y(self, X, y, order="C")
         feature_generator = self.feature_generator or _default_feature_generator
 
         n_samples = X.shape[0]

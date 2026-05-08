@@ -167,10 +167,16 @@ class FastCan(SelectorMixin, BaseEstimator):
         """
         self._validate_params()
         # X y
-        X, y = _check_X_y(self, X, y, self.n_features_to_select, order="F")
+        X, y = _check_X_y(self, X, y, order="F")
 
         n_samples, n_features = X.shape
         n_outputs = y.shape[1]
+
+        if self.n_features_to_select > n_features:
+            raise ValueError(
+                f"n_features_to_select {self.n_features_to_select} "
+                f"must be <= n_features {n_features}."
+            )
 
         if (n_samples < n_features + n_outputs) and self.eta:
             raise ValueError(
@@ -272,7 +278,7 @@ def _prepare_search(n_features, n_features_to_select, indices_include, indices_e
     return indices, scores, mask
 
 
-def _check_X_y(estimator, X, y, n_features_to_select, order):
+def _check_X_y(estimator, X, y, order):
     """Check X and y for feature selection."""
     check_X_params = {
         "ensure_min_samples": 2,
@@ -301,11 +307,6 @@ def _check_X_y(estimator, X, y, n_features_to_select, order):
         # [:, np.newaxis] that does not.
         y = y.reshape(-1, 1)
 
-    if n_features_to_select > X.shape[1]:
-        raise ValueError(
-            f"n_features_to_select {n_features_to_select} "
-            f"must be <= n_features {X.shape[1]}."
-        )
     return X, y
 
 
