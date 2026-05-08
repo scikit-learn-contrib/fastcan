@@ -41,7 +41,7 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
         Indices of features that have already been selected and can be skipped.
 
     **kwargs : dict
-        Additional keyword arguments passed to :func:`numpy.pad`.
+        Additional keyword arguments to be passed to :func:`numpy.pad`.
 
     Yields
     ------
@@ -50,6 +50,17 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
 
     feature : ndarray of shape (n_samples,)
         A time shift feature.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from fastcan.narx import gen_time_shift_features, make_time_shift_ids
+    >>> ids = make_time_shift_ids(2, 1)
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> for i, feat in gen_time_shift_features(X, ids, mode="edge"):
+    ...     print(i, feat)
+    0 [1. 1. 3. 5.]
+    1 [2. 2. 4. 6.]
     """
     X = check_array(X, ensure_2d=True, dtype=float)
     ids = check_array(ids, ensure_2d=True, dtype=int)
@@ -219,8 +230,23 @@ def gen_poly_features(X, ids, skip_indices=None):
     ------
     index : int
         The index of the yielded feature.
+
     feature : ndarray of shape (n_samples,)
         A polynomial feature.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from fastcan.narx import gen_poly_features, make_poly_ids
+    >>> ids = make_poly_ids(2, 2)
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> for i, feat in gen_poly_features(X, ids):
+    ...     print(i, feat)
+    0 [1. 3. 5. 7.]
+    1 [2. 4. 6. 8.]
+    2 [ 1.  9. 25. 49.]
+    3 [ 2. 12. 30. 56.]
+    4 [ 4. 16. 36. 64.]
     """
     X = check_array(X, ensure_2d=True, dtype=float)
     ids = check_array(ids, ensure_2d=True, dtype=int)
