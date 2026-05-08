@@ -67,6 +67,8 @@ def _check_generated_features(idx, feature, n_samples):
 class LazyFastCan(SelectorMixin, BaseEstimator):
     """Lazy version of FastCan selector.
 
+    .. versionadded:: 0.5.1
+
     Parameters
     ----------
     n_features_to_select : int, default=1

@@ -26,7 +26,9 @@ from .._fastcan import _check_indices_params
     prefer_skip_nested_validation=True,
 )
 def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
-    """Generator to time shift features.
+    """Generator to make time shift features.
+
+    .. versionadded:: 0.5.1
 
     Parameters
     ----------
@@ -212,7 +214,9 @@ def make_time_shift_ids(
     prefer_skip_nested_validation=True,
 )
 def gen_poly_features(X, ids, skip_indices=None):
-    """Generator to polynomial features.
+    """Generator to make polynomial features.
+
+    .. versionadded:: 0.5.1
 
     Parameters
     ----------
