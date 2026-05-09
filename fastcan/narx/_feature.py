@@ -262,8 +262,8 @@ def gen_poly_features(X, ids, skip_indices=None):
             continue
         feature = np.ones(n_samples)
         for j in id_row:
-            if j != 0:
-                feature *= X[:, j - 1]
+            if j != -1:
+                feature *= X[:, j]
         yield index, feature
 
 
@@ -293,7 +293,7 @@ def make_poly_features(X, ids):
     --------
     >>> from fastcan.narx import make_poly_features
     >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
-    >>> ids = [[0, 0], [0, 1], [1, 1], [0, 2]]
+    >>> ids = [[-1, -1], [-1, 0], [0, 0], [-1, 1]]
     >>> make_poly_features(X, ids)
     array([[ 1.,  1.,  1.,  2.],
            [ 1.,  3.,  9.,  4.],
@@ -308,11 +308,11 @@ def make_poly_features(X, ids):
     # Generate polynomial features
     out = np.ones([n_outputs, n_samples])
     unique_features = np.unique(ids)
-    unique_features = unique_features[unique_features != 0]
+    unique_features = unique_features[unique_features != -1]
     for i in range(degree):
         for j in unique_features:
             mask = ids[:, i] == j
-            out[mask, :] *= X[:, j - 1]
+            out[mask, :] *= X[:, j]
 
     return out.T
 
@@ -339,7 +339,7 @@ def make_poly_ids(
 ):
     """Generate ids for polynomial features.
     (variable_index, variable_index, ...)
-    variable_index starts from 1, and 0 represents constant.
+    variable_index starts from 0, and -1 represents constant.
 
     Parameters
     ----------
@@ -367,15 +367,15 @@ def make_poly_ids(
     --------
     >>> from fastcan.narx import make_poly_ids
     >>> make_poly_ids(2, degree=3)
-    array([[0, 0, 1],
-           [0, 0, 2],
-           [0, 1, 1],
-           [0, 1, 2],
-           [0, 2, 2],
-           [1, 1, 1],
-           [1, 1, 2],
-           [1, 2, 2],
-           [2, 2, 2]])
+    array([[-1, -1,  0],
+           [-1, -1,  1],
+           [-1,  0,  0],
+           [-1,  0,  1],
+           [-1,  1,  1],
+           [ 0,  0,  0],
+           [ 0,  0,  1],
+           [ 0,  1,  1],
+           [ 1,  1,  1]])
     """
     n_total = math.comb(n_features + degree, degree) - 1
     if n_total > np.iinfo(np.intp).max:
@@ -397,7 +397,7 @@ def make_poly_ids(
         rng = np.random.default_rng(random_state)
         reservoir = []
         for i, comb in enumerate(
-            combinations_with_replacement(range(n_features + 1), degree)
+            combinations_with_replacement(range(-1, n_features), degree)
         ):
             if i < max_poly:
                 reservoir.append(comb)
@@ -408,10 +408,10 @@ def make_poly_ids(
         ids = np.array(reservoir)
     else:
         ids = np.array(
-            list(combinations_with_replacement(range(n_features + 1), degree))
+            list(combinations_with_replacement(range(-1, n_features), degree))
         )
 
-    const_id = np.where((ids == 0).all(axis=1))
+    const_id = np.where((ids == -1).all(axis=1))
     return np.delete(ids, const_id, 0)  # remove the constant feature
 
 
@@ -454,10 +454,10 @@ def _validate_time_shift_poly_ids(
         ensure_2d=True,
         dtype=int,
     )
-    if (poly_ids_.min() < 0) or (poly_ids_.max() > time_shift_ids_.shape[0]):
+    if (poly_ids_.min() < -1) or (poly_ids_.max() >= time_shift_ids_.shape[0]):
         raise ValueError(
             "The element x of poly_ids should "
-            f"satisfy 0 <= x <= {time_shift_ids_.shape[0]}."
+            f"satisfy -1 <= x < {time_shift_ids_.shape[0]}."
         )
     return time_shift_ids_, poly_ids_
 
@@ -560,8 +560,8 @@ def fd2tp(feat_ids, delay_ids):
 
     poly_ids : array-like of shape (n_polys, degree), default=None
         The unique id numbers of polynomial terms, excluding the intercept.
-        The id 0 stands for the constant 1.
-        The id 1 to n are the index+1 of time_shift_ids.
+        The id -1 stands for the constant 1.
+        The id 0 to n-1 are the index of time_shift_ids.
 
     Examples
     --------
@@ -575,8 +575,8 @@ def fd2tp(feat_ids, delay_ids):
      [0 2]
      [1 3]]
     >>> print(poly_ids)
-    [[0 1]
-     [2 3]]
+    [[-1  0]
+     [ 1  2]]
     """
     _feat_ids, _delay_ids = _validate_feat_delay_ids(feat_ids, delay_ids)
     featd = np.c_[_feat_ids.flatten(), _delay_ids.flatten()]
@@ -586,7 +586,7 @@ def fd2tp(feat_ids, delay_ids):
         [np.where((time_shift_ids == row).all(axis=1))[0][0] for row in featd]
     ).reshape(_feat_ids.shape)
     time_shift_ids = time_shift_ids[time_shift_ids[:, 0] != -1]
-    return time_shift_ids, poly_ids
+    return time_shift_ids, poly_ids - 1
 
 
 @validate_params(
@@ -623,8 +623,8 @@ def tp2fd(time_shift_ids, poly_ids):
 
     poly_ids : array-like of shape (n_polys, degree)
         The unique id numbers of polynomial terms, excluding the intercept.
-        The id 0 stands for the constant 1.
-        The id 1 to n are the index+1 of time_shift_ids.
+        The id -1 stands for the constant 1.
+        The id 0 to n-1 are the index of time_shift_ids.
 
     Returns
     -------
@@ -644,7 +644,7 @@ def tp2fd(time_shift_ids, poly_ids):
     >>> from fastcan.narx import tp2fd
     >>> # Encode x0(k-1), x0(k-2)x1(k-3)
     >>> time_shift_ids = [[0, 1], [0, 2], [1, 3]]
-    >>> poly_ids = [[0, 1], [2, 3]]
+    >>> poly_ids = [[-1, 0], [1, 2]]
     >>> feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
     >>> print(feat_ids)
     [[-1  0]
@@ -661,7 +661,7 @@ def tp2fd(time_shift_ids, poly_ids):
     delay_ids = np.full_like(_poly_ids, -1, dtype=int)
     for i, poly_id in enumerate(_poly_ids):
         for j, variable_id in enumerate(poly_id):
-            if variable_id != 0:
-                feat_ids[i, j] = _time_shift_ids[variable_id - 1, 0]
-                delay_ids[i, j] = _time_shift_ids[variable_id - 1, 1]
+            if variable_id != -1:
+                feat_ids[i, j] = _time_shift_ids[variable_id, 0]
+                delay_ids[i, j] = _time_shift_ids[variable_id, 1]
     return feat_ids, delay_ids

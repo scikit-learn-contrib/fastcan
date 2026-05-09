@@ -456,9 +456,9 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         if self.feat_ids is None:
             if n_features == 0:
-                feat_ids_ = make_poly_ids(self.n_outputs_, 1) - 1
+                feat_ids_ = make_poly_ids(self.n_outputs_, 1)
             else:
-                feat_ids_ = make_poly_ids(n_features, 1) - 1
+                feat_ids_ = make_poly_ids(n_features, 1)
         else:
             feat_ids_ = self.feat_ids
 

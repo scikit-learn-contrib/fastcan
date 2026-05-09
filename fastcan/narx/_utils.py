@@ -365,14 +365,14 @@ def make_narx(
     selected_poly_ids = np.vstack(selected_poly_ids)
 
     time_shift_ids = time_shift_ids_all[
-        np.unique(selected_poly_ids[selected_poly_ids.nonzero()]) - 1, :
+        np.unique(selected_poly_ids[selected_poly_ids != -1]), :
     ]
     poly_ids = (
         rankdata(
-            np.r_[[[0] * poly_degree], selected_poly_ids],
+            np.r_[[[-1] * poly_degree], selected_poly_ids],
             method="dense",
         ).reshape(-1, poly_degree)[1:]
-        - 1
+        - 2
     )
 
     output_ids = [i for i in range(n_outputs) for _ in range(n_terms_to_select[i])]

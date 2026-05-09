@@ -274,10 +274,10 @@ def test_multi_output_warn():
         if i == 0:
             # X only, grad does not have dynamic part
             time_shift_ids = np.array([[0, 1], [1, 1]])
-            poly_ids = np.array([[1, 1], [2, 2]])
+            poly_ids = np.array([[0, 0], [1, 1]])
         else:
             time_shift_ids = np.array([[0, 0], [1, 1], [2, 1]])
-            poly_ids = np.array([[1, 1], [2, 2], [0, 3]])
+            poly_ids = np.array([[0, 0], [1, 1], [-1, 2]])
         feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
         narx = NARX(feat_ids=feat_ids, delay_ids=delay_ids)
@@ -307,7 +307,7 @@ def test_fit_intercept():
     X = rng.random((10, 2))
     y = rng.random((10, 1))
     time_shift_ids = np.array([[0, 1], [1, 1]])
-    poly_ids = np.array([[1, 1], [2, 2]])
+    poly_ids = np.array([[0, 0], [1, 1]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
     narx = NARX(
@@ -323,7 +323,7 @@ def test_fit_intercept():
     X = np.random.rand(10, 2)
     y = np.random.rand(10, 2)
     time_shift_ids = np.array([[0, 1], [1, 1]])
-    poly_ids = np.array([[1, 1], [2, 2]])
+    poly_ids = np.array([[0, 0], [1, 1]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
     narx = make_narx(X, y, 1, 2, 2, fit_intercept=False)
@@ -350,7 +350,7 @@ def test_multi_output_error():
     X = rng.random((10, 2))
     y = rng.random((10, 2))
     time_shift_ids = np.array([[0, 1], [1, 1]])
-    poly_ids = np.array([[1, 1], [2, 2]])
+    poly_ids = np.array([[0, 0], [1, 1]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
     with pytest.raises(ValueError, match="The length of output_ids should"):
@@ -722,7 +722,7 @@ def test_predict_ndim():
     X = rng.random((10, 2))
     y = rng.random(10)
     time_shift_ids = np.array([[0, 1], [1, 1]])
-    poly_ids = np.array([[1, 1], [2, 2]])
+    poly_ids = np.array([[0, 0], [1, 1]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
     model = NARX(
