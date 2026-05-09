@@ -87,7 +87,7 @@ def _make_a_time_shift_feature(X, idx, **kwargs):
     {"X": ["array-like"], "ids": ["array-like"]},
     prefer_skip_nested_validation=True,
 )
-def make_time_shift_features(X, ids):
+def make_time_shift_features(X, ids, **kwargs):
     """Make time shift features.
 
     Parameters
@@ -98,6 +98,10 @@ def make_time_shift_features(X, ids):
     ids : array-like of shape (n_outputs, 2)
         The unique id numbers of output features, which are
         (feature_idx, delay).
+    
+    **kwargs : dict
+        Additional keyword arguments to be passed to :func:`numpy.pad`.
+        If not specified, the default is to pad with np.nan.
 
     Returns
     -------
@@ -118,11 +122,14 @@ def make_time_shift_features(X, ids):
     """
     X = check_array(X, ensure_2d=True, dtype=float, ensure_all_finite="allow-nan")
     ids = check_array(ids, ensure_2d=True, dtype=int)
+    if not kwargs:
+        kwargs["constant_values"] = np.nan
+
     n_samples = X.shape[0]
     n_outputs = ids.shape[0]
     out = np.zeros([n_samples, n_outputs])
     for i, id_temp in enumerate(ids):
-        out[:, i] = _make_a_time_shift_feature(X, id_temp, constant_values=np.nan)
+        out[:, i] = _make_a_time_shift_feature(X, id_temp, **kwargs)
 
     return out
 
