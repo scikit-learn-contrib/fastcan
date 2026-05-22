@@ -98,7 +98,7 @@ def make_time_shift_features(X, ids, **kwargs):
     ids : array-like of shape (n_outputs, 2)
         The unique id numbers of output features, which are
         (feature_idx, delay).
-    
+
     **kwargs : dict
         Additional keyword arguments to be passed to :func:`numpy.pad`.
         If not specified, the default is to pad with np.nan.
