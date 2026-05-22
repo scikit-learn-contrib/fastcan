@@ -111,14 +111,12 @@ build-sdist = "rm -rf dist && python -m build --sdist"
 rebuild = "rm -rf build && pip install --no-deps --force-reinstall -e ."
 
 [feature.build.target.osx-arm64.activation.env]
-MACOSX_DEPLOYMENT_TARGET = "12.0"
 # See: https://github.com/conda-forge/compilers-feedstock/issues/15 and scikit-learn LDFLAGS settings
 CPPFLAGS = "-Xpreprocessor -fopenmp"
 CFLAGS = "-I$CONDA_PREFIX/include"
 LDFLAGS = "-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lomp"
 
 [feature.build.target.osx-64.activation.env]
-MACOSX_DEPLOYMENT_TARGET = "10.15"
 CPPFLAGS = "-Xpreprocessor -fopenmp"
 CFLAGS = "-I$CONDA_PREFIX/include"
 LDFLAGS = "-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lomp"
