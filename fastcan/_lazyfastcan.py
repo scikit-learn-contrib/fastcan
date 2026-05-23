@@ -172,9 +172,13 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
                     best_index = j
                     best_feat = feat_orth
             if best_index == -1:
-                raise ValueError(
-                    "No more features can be selected. "
-                    "Please check the feature generator and the input data."
+                raise RuntimeError(
+                    "No more features can be selected when adding "
+                    f"the {i + 1}th feature."
+                )
+            if best_score == 0:
+                raise RuntimeError(
+                    f"No improvement can be achieved when adding the {i + 1}th feature."
                 )
             indices[i] = best_index
             scores[i] = best_score
