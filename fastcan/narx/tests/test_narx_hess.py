@@ -530,7 +530,7 @@ def test_symbolic_hess(seed):
                 terms = sp.Add.make_args(dx2)
                 for i, term in enumerate(terms):
                     factors = sp.Mul.make_args(term)
-                    items = []
+                    items: list[tuple] = []
                     for f in factors:
                         item = factor_to_tuple(f)
                         if isinstance(item, list):
