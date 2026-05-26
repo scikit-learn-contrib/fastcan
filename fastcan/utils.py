@@ -107,21 +107,18 @@ def ols(X, y, t=1):
     scores = np.zeros(t, dtype=float)
 
     for i in range(t):
-        for j in range(n_features):
-            if not mask[j]:
-                r = w[:, j] @ v
-                r2[j] = r**2
+        r2[:] = (w.T @ v) ** 2
+        r2[mask] = 0
         d = np.argmax(r2)
         indices[i] = d
         scores[i] = r2[d]
         if i == t - 1:
             return indices, scores
         mask[d] = True
-        r2[d] = 0
-        for j in range(n_features):
-            if not mask[j]:
-                w[:, j] = w[:, j] - w[:, d] * (w[:, d] @ w[:, j])
-                w[:, j] /= np.linalg.norm(w[:, j], axis=0)
+        projections = w.T @ w[:, d]
+        for j in np.where(~mask)[0]:
+            w[:, j] -= w[:, d] * projections[j]
+            w[:, j] /= np.linalg.norm(w[:, j])
 
 
 @validate_params(
