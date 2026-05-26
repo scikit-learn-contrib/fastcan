@@ -199,6 +199,48 @@
         "version": "e673b8188033f6075af2f9545de2225b8c0aec5a2ab7c1a82dbd9e73b4d969ce",
         "warmup_time": -1
     },
+    "lazyfastcan.LazyFastCanBenchmark.peakmem_fit": {
+        "code": "class LazyFastCanBenchmark:\n    def peakmem_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass LazyFastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            (est,) = params\n            X, _, y, _ = self.make_data(params)\n    \n            if est == \"normal\":\n                estimator = FastCan(\n                    n_features_to_select=self.n_features_to_select, verbose=0\n                )\n            else:\n                ids = make_poly_ids(self.n_features, degree=self.poly_degree)\n                gen = partial(gen_poly_features, ids=ids)\n                estimator = LazyFastCan(\n                    n_features_to_select=self.n_features_to_select,\n                    feature_generator=gen,\n                )\n    \n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "name": "lazyfastcan.LazyFastCanBenchmark.peakmem_fit",
+        "param_names": [
+            "estimator"
+        ],
+        "params": [
+            [
+                "'lazy'",
+                "'normal'"
+            ]
+        ],
+        "setup_cache_key": "lazyfastcan:25",
+        "timeout": 500,
+        "type": "peakmemory",
+        "unit": "bytes",
+        "version": "59bf25014006439dfcdb50c68d6516220b4b666b68caacaaa8ea29ccde7bc51a"
+    },
+    "lazyfastcan.LazyFastCanBenchmark.time_fit": {
+        "code": "class LazyFastCanBenchmark:\n    def time_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass LazyFastCanBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            (est,) = params\n            X, _, y, _ = self.make_data(params)\n    \n            if est == \"normal\":\n                estimator = FastCan(\n                    n_features_to_select=self.n_features_to_select, verbose=0\n                )\n            else:\n                ids = make_poly_ids(self.n_features, degree=self.poly_degree)\n                gen = partial(gen_poly_features, ids=ids)\n                estimator = LazyFastCan(\n                    n_features_to_select=self.n_features_to_select,\n                    feature_generator=gen,\n                )\n    \n            estimator.fit(X, y)\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
+        "min_run_count": 2,
+        "name": "lazyfastcan.LazyFastCanBenchmark.time_fit",
+        "number": 0,
+        "param_names": [
+            "estimator"
+        ],
+        "params": [
+            [
+                "'lazy'",
+                "'normal'"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "setup_cache_key": "lazyfastcan:25",
+        "timeout": 500,
+        "type": "time",
+        "unit": "seconds",
+        "version": "692a51dbd8b48466747d515c999c681545cbc3b09dcea196ea561c4f9960d693",
+        "warmup_time": -1
+    },
     "narx.NARXBenchmark.peakmem_fit": {
         "code": "class NARXBenchmark:\n    def peakmem_fit(self, *args):\n        self.estimator.fit(self.X, self.y)\n\nclass Benchmark:\n    def setup(self, *params):\n        \"\"\"Generate dataset and load the fitted estimator\"\"\"\n        # This is run once per combination of parameters and per repeat so we\n        # need to avoid doing expensive operations there.\n    \n        self.X, self.X_val, self.y, self.y_val = self.make_data(params)\n    \n        est_path = get_estimator_path(self, params)\n        with est_path.open(mode=\"rb\") as f:\n            self.estimator = pickle.load(f)\n\nclass NARXBenchmark:\n    def setup_cache(self):\n        \"\"\"Pickle a fitted estimator for all combinations of parameters\"\"\"\n        # This is run once per benchmark class.\n    \n        param_grid = list(itertools.product(*self.params))\n    \n        for params in param_grid:\n            X, _, y, _ = self.make_data(params)\n            estimator = make_narx(\n                X,\n                y,\n                n_terms_to_select=self.n_terms_to_select,\n                max_delay=self.max_delay,\n                poly_degree=self.poly_degree,\n            )\n    \n            estimator = estimator.fit(X, y, coef_init=\"one_step_ahead\")\n    \n            est_path = get_estimator_path(self, params)\n            with est_path.open(mode=\"wb\") as f:\n                pickle.dump(estimator, f)",
         "name": "narx.NARXBenchmark.peakmem_fit",
