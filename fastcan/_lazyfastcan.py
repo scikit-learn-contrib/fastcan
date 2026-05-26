@@ -10,9 +10,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.linalg import orth
 from sklearn.base import BaseEstimator
-from sklearn.feature_selection import SelectorMixin
 from sklearn.utils._param_validation import Interval
-from sklearn.utils.validation import check_is_fitted
 
 from ._fastcan import _check_X_y
 
@@ -64,7 +62,7 @@ def _check_generated_features(idx, feature, n_samples):
         )
 
 
-class LazyFastCan(SelectorMixin, BaseEstimator):
+class LazyFastCan(BaseEstimator):
     """Lazy version of FastCan selector.
 
     .. versionadded:: 0.5.1
@@ -187,9 +185,3 @@ class LazyFastCan(SelectorMixin, BaseEstimator):
         self.scores_ = scores
         self.n_features_ = max_feat_idx + 1
         return self
-
-    def _get_support_mask(self):
-        check_is_fitted(self)
-        support = np.zeros(self.n_features_, dtype=bool)
-        support[self.indices_] = True
-        return support

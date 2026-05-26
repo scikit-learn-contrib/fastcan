@@ -145,7 +145,8 @@ def test_lazy_const_feats():
         n_features_to_select=n_informative,
     )
     const_filter.fit(X, y)
-    selected_ids = const_filter.get_support(indices=True)
+    selected_ids = const_filter.indices_
+    selected_ids.sort()
     assert selected_ids.tolist() == list(range(n_informative))
 
 
@@ -168,7 +169,8 @@ def test_lazy_redundant_feats():
         n_features_to_select=n_informative,
     )
     redundant_filter.fit(X, y)
-    selected_ids = redundant_filter.get_support(indices=True)
+    selected_ids = redundant_filter.indices_
+    selected_ids.sort()
     assert selected_ids.tolist() == list(range(n_informative))
 
 

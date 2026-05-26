@@ -2,8 +2,6 @@ import itertools
 import pickle
 from functools import partial
 
-from sklearn.linear_model import LinearRegression
-
 from fastcan import FastCan, LazyFastCan
 from fastcan.narx import gen_poly_features, make_poly_features, make_poly_ids
 
@@ -70,15 +68,3 @@ class LazyFastCanBenchmark(Benchmark):
 
     def peakmem_fit(self, *args):
         self.estimator.fit(self.X, self.y)
-
-    def track_train_score(self, *args):
-        X_t = self.estimator.transform(self.X)
-        reg = LinearRegression()
-        reg.fit(X_t, self.y)
-        return float(reg.score(X_t, self.y))
-
-    def track_test_score(self, *args):
-        X_t = self.estimator.transform(self.X_val)
-        reg = LinearRegression()
-        reg.fit(X_t, self.y_val)
-        return float(reg.score(X_t, self.y_val))
