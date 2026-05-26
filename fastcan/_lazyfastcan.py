@@ -110,8 +110,8 @@ class LazyFastCan(BaseEstimator):
     >>> fg = partial(gen_time_shift_features, ids=make_time_shift_ids(2, 2))
     >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
     >>> y = [[0, 0], [0, 1], [1, 1], [0, 2]]
-    >>> LazyFastCan(2, feature_generator=fg).fit(X, y).get_support()
-    array([False,  True,  True, False])
+    >>> LazyFastCan(2, feature_generator=fg).fit(X, y).indices_
+    array([2, 1])
     """
 
     _parameter_constraints: dict = {
