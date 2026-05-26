@@ -718,21 +718,20 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         d2ydx2[k, i] += Constant terms
         """
         n_degree = jac_feat_ids.shape[1]
+        hess_yyd_ids = np.zeros((0, 3), dtype=np.int32)
+        hess_yd_ids = np.zeros((0, 2), dtype=np.int32)
+        hess_coef_ids = np.zeros(0, dtype=np.int32)
+        hess_feat_ids = np.zeros((0, n_degree), dtype=np.int32)
+        hess_delay_ids = np.zeros((0, n_degree), dtype=np.int32)
 
         if mode < 2:
             return (
-                np.zeros((0, 3), dtype=np.int32),
-                np.zeros((0, 2), dtype=np.int32),
-                np.zeros(0, dtype=np.int32),
-                np.zeros((0, n_degree), dtype=np.int32),
-                np.zeros((0, n_degree), dtype=np.int32),
+                hess_yyd_ids,
+                hess_yd_ids,
+                hess_coef_ids,
+                hess_feat_ids,
+                hess_delay_ids,
             )
-
-        hess_yyd_list = []
-        hess_yd_list = []
-        hess_coef_list = []
-        hess_feat_list = []
-        hess_delay_list = []
 
         for yyd_id, coef_id, feat_ids, delay_ids in zip(
             jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids
@@ -740,12 +739,12 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # In jac, x * term will generate a term with coef 1.
             # In hess, it will be
             # d term / dx = 1 * d y_in * yi * yj
-            hess_yyd_list.append(yyd_id)
-            hess_yd_list.append([-1, -1])  # empty
+            hess_yyd_ids = np.vstack([hess_yyd_ids, yyd_id])
+            hess_yd_ids = np.vstack([hess_yd_ids, [-1, -1]])  # empty
             # constant 1 handled in _update_hc
-            hess_coef_list.append(coef_id)
-            hess_feat_list.append(feat_ids.copy())
-            hess_delay_list.append(delay_ids.copy())
+            hess_coef_ids = np.append(hess_coef_ids, coef_id)
+            hess_feat_ids = np.vstack([hess_feat_ids, feat_ids])
+            hess_delay_ids = np.vstack([hess_delay_ids, delay_ids])
             for var_id, (feat_id, delay_id) in enumerate(zip(feat_ids, delay_ids)):
                 #  d JC / dx = coef * d y_in * d yi * yj
                 # hess_yyd_ids: y_out and y_in
@@ -756,35 +755,22 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 # Skip input x and spaceholder -1
                 if feat_id >= n_features_in and delay_id > 0:
                     # when feat_id is output y, drop it from hess_feat_ids
-                    hess_yd_list.append([feat_id - n_features_in, delay_id])
-                    hess_yyd_list.append(yyd_id)
-                    hess_coef_list.append(coef_id)
-                    modified_feat = feat_ids.copy()
-                    modified_feat[var_id] = -1
-                    hess_feat_list.append(modified_feat)
-                    modified_delay = delay_ids.copy()
-                    modified_delay[var_id] = -1
-                    hess_delay_list.append(modified_delay)
-
-        if hess_yyd_list:
-            hess_yyd_ids = np.array(hess_yyd_list, dtype=np.int32)
-            hess_yd_ids = np.array(hess_yd_list, dtype=np.int32)
-            hess_coef_ids = np.array(hess_coef_list, dtype=np.int32)
-            hess_feat_ids = np.array(hess_feat_list, dtype=np.int32)
-            hess_delay_ids = np.array(hess_delay_list, dtype=np.int32)
-        else:
-            hess_yyd_ids = np.zeros((0, 3), dtype=np.int32)
-            hess_yd_ids = np.zeros((0, 2), dtype=np.int32)
-            hess_coef_ids = np.zeros(0, dtype=np.int32)
-            hess_feat_ids = np.zeros((0, n_degree), dtype=np.int32)
-            hess_delay_ids = np.zeros((0, n_degree), dtype=np.int32)
+                    hess_yd_ids = np.vstack(
+                        [hess_yd_ids, [feat_id - n_features_in, delay_id]]
+                    )
+                    hess_yyd_ids = np.vstack([hess_yyd_ids, yyd_id])
+                    hess_coef_ids = np.append(hess_coef_ids, coef_id)
+                    hess_feat_ids = np.vstack([hess_feat_ids, feat_ids])
+                    hess_delay_ids = np.vstack([hess_delay_ids, delay_ids])
+                    hess_feat_ids[-1][var_id] = -1
+                    hess_delay_ids[-1][var_id] = -1
 
         return (
-            hess_yyd_ids,
-            hess_yd_ids,
-            hess_coef_ids,
-            hess_feat_ids,
-            hess_delay_ids,
+            hess_yyd_ids.astype(np.int32),
+            hess_yd_ids.astype(np.int32),
+            hess_coef_ids.astype(np.int32),
+            hess_feat_ids.astype(np.int32),
+            hess_delay_ids.astype(np.int32),
         )
 
     @staticmethod
@@ -817,10 +803,10 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         """
 
         n_degree = feat_ids.shape[1]
-        jac_yyd_list = []
-        jac_coef_list = []
-        jac_feat_list = []
-        jac_delay_list = []
+        jac_yyd_ids = np.zeros((0, 3), dtype=np.int32)
+        jac_coef_ids = np.zeros(0, dtype=int)
+        jac_feat_ids = np.zeros((0, n_degree), dtype=np.int32)
+        jac_delay_ids = np.zeros((0, n_degree), dtype=np.int32)
 
         for coef_id, (term_feat_ids, term_delay_ids) in enumerate(
             zip(feat_ids, delay_ids)
@@ -831,31 +817,20 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             ):
                 if feat_id >= n_features_in and delay_id > 0:
                     in_y_id = feat_id - n_features_in  # y(k-d, id), input
-                    jac_yyd_list.append([out_y_id, in_y_id, delay_id])
-                    jac_coef_list.append(coef_id)
-                    modified_feat = term_feat_ids.copy()
-                    modified_feat[var_id] = -1
-                    jac_feat_list.append(modified_feat)
-                    modified_delay = term_delay_ids.copy()
-                    modified_delay[var_id] = -1
-                    jac_delay_list.append(modified_delay)
-
-        if jac_yyd_list:
-            jac_yyd_ids = np.array(jac_yyd_list, dtype=np.int32)
-            jac_coef_ids = np.array(jac_coef_list, dtype=np.int32)
-            jac_feat_ids = np.array(jac_feat_list, dtype=np.int32)
-            jac_delay_ids = np.array(jac_delay_list, dtype=np.int32)
-        else:
-            jac_yyd_ids = np.zeros((0, 3), dtype=np.int32)
-            jac_coef_ids = np.zeros(0, dtype=np.int32)
-            jac_feat_ids = np.zeros((0, n_degree), dtype=np.int32)
-            jac_delay_ids = np.zeros((0, n_degree), dtype=np.int32)
+                    jac_yyd_ids = np.vstack(
+                        [jac_yyd_ids, [out_y_id, in_y_id, delay_id]]
+                    )
+                    jac_coef_ids = np.append(jac_coef_ids, coef_id)
+                    jac_feat_ids = np.vstack([jac_feat_ids, term_feat_ids])
+                    jac_delay_ids = np.vstack([jac_delay_ids, term_delay_ids])
+                    jac_feat_ids[-1][var_id] = -1
+                    jac_delay_ids[-1][var_id] = -1
 
         return (
-            jac_yyd_ids,
-            jac_coef_ids,
-            jac_feat_ids,
-            jac_delay_ids,
+            jac_yyd_ids.astype(np.int32),
+            jac_coef_ids.astype(np.int32),
+            jac_feat_ids.astype(np.int32),
+            jac_delay_ids.astype(np.int32),
         )
 
     @staticmethod
