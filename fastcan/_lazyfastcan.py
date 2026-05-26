@@ -37,8 +37,9 @@ def _classical_gram_schmidt(x, W):
 def _default_feature_generator(X, skip_indices):
     """Default feature generator that yields each column of X as a feature."""
     n_features = X.shape[1]
+    skip_set = set(skip_indices.tolist()) if hasattr(skip_indices, 'tolist') else set(skip_indices)
     for j in range(n_features):
-        if j in skip_indices:
+        if j in skip_set:
             continue
         yield j, X[:, j]
 

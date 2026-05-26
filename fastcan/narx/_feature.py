@@ -68,8 +68,9 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_features = ids.shape[0]
     skip_indices = _check_indices_params(skip_indices, n_features)
+    skip_set = set(skip_indices.tolist())
     for index, id_temp in enumerate(ids):
-        if index in skip_indices:
+        if index in skip_set:
             continue
         yield index, _make_a_time_shift_feature(X, id_temp, **kwargs)
 
@@ -264,8 +265,9 @@ def gen_poly_features(X, ids, skip_indices=None):
     n_samples = X.shape[0]
     n_features = ids.shape[0]
     skip_indices = _check_indices_params(skip_indices, n_features)
+    skip_set = set(skip_indices.tolist())
     for index, id_row in enumerate(ids):
-        if index in skip_indices:
+        if index in skip_set:
             continue
         feature = np.ones(n_samples)
         for j in id_row:
