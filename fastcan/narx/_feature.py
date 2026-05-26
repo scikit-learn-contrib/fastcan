@@ -666,9 +666,7 @@ def tp2fd(time_shift_ids, poly_ids):
     )
     feat_ids = np.full_like(_poly_ids, -1, dtype=int)
     delay_ids = np.full_like(_poly_ids, -1, dtype=int)
-    for i, poly_id in enumerate(_poly_ids):
-        for j, variable_id in enumerate(poly_id):
-            if variable_id != -1:
-                feat_ids[i, j] = _time_shift_ids[variable_id, 0]
-                delay_ids[i, j] = _time_shift_ids[variable_id, 1]
+    mask = _poly_ids != -1
+    feat_ids[mask] = _time_shift_ids[_poly_ids[mask], 0]
+    delay_ids[mask] = _time_shift_ids[_poly_ids[mask], 1]
     return feat_ids, delay_ids
