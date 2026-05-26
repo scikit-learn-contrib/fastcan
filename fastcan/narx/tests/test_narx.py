@@ -20,12 +20,70 @@ from fastcan.narx import (
 from fastcan.utils import mask_missing_values
 
 
+def _make_data(multi_output, nan, rng):
+    if multi_output:
+        n_samples = 1000
+        max_delay = 3
+        e0 = rng.normal(0, 0.1, n_samples)
+        e1 = rng.normal(0, 0.02, n_samples)
+        u0 = rng.uniform(0, 1, n_samples + max_delay)
+        u1 = rng.normal(0, 0.1, n_samples + max_delay)
+        y0 = np.zeros(n_samples + max_delay)
+        y1 = np.zeros(n_samples + max_delay)
+        for i in range(max_delay, n_samples + max_delay):
+            y0[i] = (
+                0.5 * y0[i - 1]
+                + 0.8 * y1[i - 1]
+                + 0.3 * u0[i] ** 2
+                + 2 * u0[i - 1] * u0[i - 3]
+                + 1.5 * u0[i - 2] * u1[i - 3]
+                + 1
+            )
+            y1[i] = (
+                0.6 * y1[i - 1]
+                - 0.2 * y0[i - 1] * y1[i - 2]
+                + 0.3 * u1[i] ** 2
+                + 1.5 * u1[i - 2] * u0[i - 3]
+                + 0.5
+            )
+        y = np.c_[y0[max_delay:] + e0, y1[max_delay:] + e1]
+        X = np.c_[u0[max_delay:], u1[max_delay:]]
+        n_outputs = 2
+    else:
+        rng = np.random.default_rng(12345)
+        n_samples = 1000
+        max_delay = 3
+        e = rng.normal(0, 0.1, n_samples)
+        u0 = rng.uniform(0, 1, n_samples + max_delay)
+        u1 = rng.normal(0, 0.1, n_samples)
+        y = np.zeros(n_samples + max_delay)
+        for i in range(max_delay, n_samples + max_delay):
+            y[i] = (
+                0.5 * y[i - 1]
+                + 0.3 * u0[i] ** 2
+                + 2 * u0[i - 1] * u0[i - 3]
+                + 1.5 * u0[i - 2] * u1[i - max_delay]
+                + 1
+            )
+        y = y[max_delay:] + e
+        X = np.c_[u0[max_delay:], u1]
+        n_outputs = 1
+
+    if nan:
+        X_nan_ids = rng.choice(n_samples, 20, replace=False)
+        y_nan_ids = rng.choice(n_samples, 10, replace=False)
+        X[X_nan_ids] = np.nan
+        y[y_nan_ids] = np.nan
+
+    X = np.asfortranarray(X)
+    y = np.asfortranarray(y)
+    return X, y, n_outputs
+
+
 def test_narx_is_sklearn_estimator():
     # Skip 0 feature check for NARX, as AR models have no features
     expected_failures = {
         "check_estimators_empty_data_messages": ("NARX can handle 0 feature."),
-        # TODO: Fix this issue in scikit-learn
-        # See https://github.com/scikit-learn/scikit-learn/issues/33135
         "check_requires_y_none": "validate_params error message mismatch",
     }
     with pytest.warns(UserWarning, match="output_ids got"):
@@ -55,67 +113,8 @@ def test_time_ids():
 def test_narx(nan, multi_output):
     """Test NARX"""
 
-    def make_data(multi_output, nan, rng):
-        if multi_output:
-            n_samples = 1000
-            max_delay = 3
-            e0 = rng.normal(0, 0.1, n_samples)
-            e1 = rng.normal(0, 0.02, n_samples)
-            u0 = rng.uniform(0, 1, n_samples + max_delay)
-            u1 = rng.normal(0, 0.1, n_samples + max_delay)
-            y0 = np.zeros(n_samples + max_delay)
-            y1 = np.zeros(n_samples + max_delay)
-            for i in range(max_delay, n_samples + max_delay):
-                y0[i] = (
-                    0.5 * y0[i - 1]
-                    + 0.8 * y1[i - 1]
-                    + 0.3 * u0[i] ** 2
-                    + 2 * u0[i - 1] * u0[i - 3]
-                    + 1.5 * u0[i - 2] * u1[i - 3]
-                    + 1
-                )
-                y1[i] = (
-                    0.6 * y1[i - 1]
-                    - 0.2 * y0[i - 1] * y1[i - 2]
-                    + 0.3 * u1[i] ** 2
-                    + 1.5 * u1[i - 2] * u0[i - 3]
-                    + 0.5
-                )
-            y = np.c_[y0[max_delay:] + e0, y1[max_delay:] + e1]
-            X = np.c_[u0[max_delay:], u1[max_delay:]]
-            n_outputs = 2
-        else:
-            rng = np.random.default_rng(12345)
-            n_samples = 1000
-            max_delay = 3
-            e = rng.normal(0, 0.1, n_samples)
-            u0 = rng.uniform(0, 1, n_samples + max_delay)
-            u1 = rng.normal(0, 0.1, n_samples)
-            y = np.zeros(n_samples + max_delay)
-            for i in range(max_delay, n_samples + max_delay):
-                y[i] = (
-                    0.5 * y[i - 1]
-                    + 0.3 * u0[i] ** 2
-                    + 2 * u0[i - 1] * u0[i - 3]
-                    + 1.5 * u0[i - 2] * u1[i - max_delay]
-                    + 1
-                )
-            y = y[max_delay:] + e
-            X = np.c_[u0[max_delay:], u1]
-            n_outputs = 1
-
-        if nan:
-            X_nan_ids = rng.choice(n_samples, 20, replace=False)
-            y_nan_ids = rng.choice(n_samples, 10, replace=False)
-            X[X_nan_ids] = np.nan
-            y[y_nan_ids] = np.nan
-
-        X = np.asfortranarray(X)
-        y = np.asfortranarray(y)
-        return X, y, n_outputs
-
     rng = np.random.default_rng(12345)
-    X, y, n_outputs = make_data(multi_output, nan, rng)
+    X, y, n_outputs = _make_data(multi_output, nan, rng)
 
     if multi_output:
         narx_score = make_narx(
@@ -565,6 +564,35 @@ def test_make_narx_refine_print(capsys):
     )
     captured = capsys.readouterr()
     assert "No. of iterations: " in captured.out
+
+
+def test_make_narx_lazy():
+    """Test lazy selection in make_narx."""
+    rng = np.random.default_rng(12345)
+    X, y, _ = _make_data(False, False, rng)
+    max_delay = 3
+    poly_degree = 3
+    session_sizes = [200, 300, 500]
+    narx_normal = make_narx(
+        X,
+        y,
+        n_terms_to_select=3,
+        max_delay=max_delay,
+        poly_degree=poly_degree,
+        session_sizes=session_sizes,
+        lazy=False,
+    ).fit(X, y)
+    narx_lazy = make_narx(
+        X,
+        y,
+        n_terms_to_select=3,
+        max_delay=max_delay,
+        poly_degree=poly_degree,
+        session_sizes=session_sizes,
+        lazy=True,
+    ).fit(X, y)
+    assert_array_equal(narx_normal.feat_ids, narx_lazy.feat_ids)
+    assert_array_equal(narx_normal.delay_ids, narx_lazy.delay_ids)
 
 
 def test_make_narx_max_candidates():

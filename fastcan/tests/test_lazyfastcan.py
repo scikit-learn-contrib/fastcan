@@ -81,11 +81,13 @@ def test_lazy_time_shift_selection():
     gtruth_ssc = reg.score(X_shifted[max_delay:], y[max_delay:])
 
     feat_gen = partial(gen_time_shift_features, ids=time_shift_ids)
+    sample_mask = np.ones(n_samples + max_delay, dtype=bool)
+    sample_mask[:max_delay] = False
 
     time_shift_filter = LazyFastCan(
         n_features_to_select=n_time_shifts,
         feature_generator=feat_gen,
-        n_init=max_delay,
+        sample_mask=sample_mask,
     )
     time_shift_filter.fit(X, y)
     ssc = time_shift_filter.scores_.sum()
@@ -262,3 +264,7 @@ def test_lazy_errors():
     filter_noscore = LazyFastCan(n_features_to_select=n_informative + 1)
     with pytest.raises(RuntimeError, match="No improvement can be achieved"):
         filter_noscore.fit(X, y)
+
+    filter_mask = LazyFastCan(sample_mask=np.ones(n_samples - 1, dtype=bool))
+    with pytest.raises(ValueError, match="The length of sample_mask"):
+        filter_mask.fit(X, y)

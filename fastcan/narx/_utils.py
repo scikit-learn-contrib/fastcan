@@ -3,6 +3,7 @@
 # Authors: The fastcan developers
 # SPDX-License-Identifier: MIT
 
+from functools import partial
 from numbers import Integral
 
 import numpy as np
@@ -16,10 +17,13 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.validation import check_is_fitted
 
 from .._fastcan import FastCan
+from .._lazyfastcan import LazyFastCan
 from .._refine import refine
 from ..utils import mask_missing_values
 from ._base import NARX, _prepare_poly_terms, _validate_session_sizes
 from ._feature import (
+    _check_indices_params,
+    _make_a_time_shift_feature,
     make_poly_ids,
     make_time_shift_ids,
     tp2fd,
@@ -139,6 +143,7 @@ def print_narx(
         "random_state": ["random_state"],
         "include_zero_delay": [None, "array-like"],
         "static_indices": [None, "array-like"],
+        "lazy": ["boolean"],
         "refine_verbose": ["verbose"],
         "refine_drop": [
             None,
@@ -165,6 +170,7 @@ def make_narx(
     random_state=None,
     include_zero_delay=None,
     static_indices=None,
+    lazy=False,
     refine_verbose=1,
     refine_drop=None,
     refine_max_iter=None,
@@ -220,19 +226,27 @@ def make_narx(
             If the corresponding include_zero_delay of the static features is False, the
             static feature will be excluded from candidate features.
 
+    lazy : bool, default=False
+        Whether to use LazyFastCan for selection. If False, FastCan will be used.
+
+        .. versionadded:: 0.5.1
+
     refine_verbose : int, default=1
-        The verbosity level of refine.
+        The verbosity level of refine. Only available when `lazy` is False.
 
     refine_drop : int or "all", default=None
             The number of the selected features dropped for the consequent
             reselection. If `drop` is None, no refining will be performed.
+            Only available when `lazy` is False.
 
     refine_max_iter : int, default=None
         The maximum number of valid iterations in the refining process.
+        Only available when `lazy` is False.
 
     **params : dict
             Keyword arguments passed to
             `fastcan.FastCan`.
+            Only available when `lazy` is False.
 
     Returns
     -------
@@ -336,31 +350,55 @@ def make_narx(
         random_state=random_state,
     )
 
-    poly_terms = _prepare_poly_terms(
-        xy_hstack,
-        time_shift_ids_all,
-        poly_ids_all,
-        session_sizes_cumsum,
-        max_delay,
-    )
-    # Remove missing values
-    poly_terms_masked, y_masked = mask_missing_values(poly_terms, y)
+    if lazy:
+        sample_mask = np.ones(n_samples, dtype=bool)
+        for start in session_sizes_cumsum[:-1]:
+            sample_mask[start : start + max_delay] = False
+        gen_terms = partial(
+            _gen_poly_time_shift_terms,
+            time_shift_ids=time_shift_ids_all,
+            poly_ids=poly_ids_all,
+            mode="edge",
+        )
+        selected_poly_ids = []
+        for i in range(n_outputs):
+            csf = LazyFastCan(
+                n_features_to_select=n_terms_to_select[i],
+                feature_generator=gen_terms,
+                sample_mask=sample_mask,
+            ).fit(np.c_[X, y], y[:, i])
+            selected_ids = csf.indices_
+            selected_ids.sort()
+            selected_poly_ids.append(poly_ids_all[selected_ids])
+    else:
+        poly_terms = _prepare_poly_terms(
+            xy_hstack,
+            time_shift_ids_all,
+            poly_ids_all,
+            session_sizes_cumsum,
+            max_delay,
+        )
+        # Remove missing values
+        poly_terms_masked, y_masked = mask_missing_values(poly_terms, y)
 
-    selected_poly_ids = []
-    for i in range(n_outputs):
-        csf = FastCan(
-            n_terms_to_select[i],
-            **params,
-        ).fit(poly_terms_masked, y_masked[:, i])
-        if refine_drop is not None:
-            indices, _ = refine(
-                csf, drop=refine_drop, max_iter=refine_max_iter, verbose=refine_verbose
-            )
-            support = np.zeros(shape=poly_ids_all.shape[0], dtype=bool)
-            support[indices] = True
-        else:
-            support = csf.get_support()
-        selected_poly_ids.append(poly_ids_all[support])
+        selected_poly_ids = []
+        for i in range(n_outputs):
+            csf = FastCan(
+                n_terms_to_select[i],
+                **params,
+            ).fit(poly_terms_masked, y_masked[:, i])
+            if refine_drop is not None:
+                indices, _ = refine(
+                    csf,
+                    drop=refine_drop,
+                    max_iter=refine_max_iter,
+                    verbose=refine_verbose,
+                )
+                support = np.zeros(shape=poly_ids_all.shape[0], dtype=bool)
+                support[indices] = True
+            else:
+                support = csf.get_support()
+            selected_poly_ids.append(poly_ids_all[support])
 
     selected_poly_ids = np.vstack(selected_poly_ids)
 
@@ -384,3 +422,23 @@ def make_narx(
         output_ids=output_ids,
         fit_intercept=fit_intercept,
     )
+
+
+def _gen_poly_time_shift_terms(
+    X, time_shift_ids, poly_ids, skip_indices=None, **kwargs
+):
+    """Generate polynomial time shift terms."""
+    n_samples = X.shape[0]
+    n_features = poly_ids.shape[0]
+    skip_indices = _check_indices_params(skip_indices, n_features)
+    for index, id_row in enumerate(poly_ids):
+        if index in skip_indices:
+            continue
+        feature = np.ones(n_samples)
+        for j in id_row:
+            if j != -1:
+                time_shift_vars = _make_a_time_shift_feature(
+                    X, time_shift_ids[j], **kwargs
+                )
+                feature *= time_shift_vars
+        yield index, feature
