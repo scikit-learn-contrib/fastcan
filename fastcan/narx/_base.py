@@ -761,11 +761,11 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         hess_delay_ids[row_indices, var_ids] = -1
 
         return (
-            np.astype(hess_yyd_ids, np.int32),
-            np.astype(hess_yd_ids, np.int32),
-            np.astype(hess_coef_ids, np.int32),
-            np.astype(hess_feat_ids, np.int32),
-            np.astype(hess_delay_ids, np.int32),
+            hess_yyd_ids.astype(np.int32),
+            hess_yd_ids.astype(np.int32),
+            hess_coef_ids.astype(np.int32),
+            hess_feat_ids.astype(np.int32),
+            hess_delay_ids.astype(np.int32),
         )
 
     @staticmethod
@@ -816,10 +816,10 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         jac_delay_ids[row_indices, var_ids] = -1
 
         return (
-            np.astype(jac_yyd_ids, np.int32),
-            np.astype(jac_coef_ids, np.int32),
-            np.astype(jac_feat_ids, np.int32),
-            np.astype(jac_delay_ids, np.int32),
+            jac_yyd_ids.astype(np.int32),
+            jac_coef_ids.astype(np.int32),
+            jac_feat_ids.astype(np.int32),
+            jac_delay_ids.astype(np.int32),
         )
 
     @staticmethod
