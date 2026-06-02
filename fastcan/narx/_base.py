@@ -742,7 +742,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         # Skip input x and spaceholder -1
         n_d_coefs = len(jac_yyd_ids)
         mask = (jac_feat_ids >= n_features_in) & (jac_delay_ids > 0)
-        d_terms_ids, var_ids = np.where(mask)
+        d_terms_ids, var_ids = np.nonzero(mask)
 
         hess_yyd_ids = np.vstack([jac_yyd_ids, jac_yyd_ids[d_terms_ids]])
         yd_d_coefs = np.full((n_d_coefs, 2), -1, dtype=np.int32)
@@ -755,7 +755,6 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         hess_feat_ids = np.vstack([jac_feat_ids, jac_feat_ids[d_terms_ids]])
         hess_delay_ids = np.vstack([jac_delay_ids, jac_delay_ids[d_terms_ids]])
 
-        del mask  # free the boolean mask before the result copies
         row_indices = np.arange(n_d_coefs, len(hess_yyd_ids))
         # when feat_id is output y, drop it from hess_feat_ids
         hess_feat_ids[row_indices, var_ids] = -1
@@ -800,21 +799,25 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         mask = (feat_ids >= n_features_in) & (delay_ids > 0)
         jac_coef_ids, var_ids = np.nonzero(mask)
-        jac_coef_ids = jac_coef_ids.astype(np.int32, copy=False)
         n_rows = jac_coef_ids.shape[0]
 
         jac_yyd_ids = np.empty((n_rows, 3), dtype=np.int32)
         jac_yyd_ids[:, 0] = output_ids[jac_coef_ids]  # y(k, id), output
         jac_yyd_ids[:, 1] = feat_ids[mask] - n_features_in  # y(k-d, id), input
         jac_yyd_ids[:, 2] = delay_ids[mask]
-        del mask  # free the (n_terms, n_degree) boolean before the result copies
 
-        jac_feat_ids = feat_ids[jac_coef_ids].astype(np.int32, copy=False)
-        jac_delay_ids = delay_ids[jac_coef_ids].astype(np.int32, copy=False)
-        jac_feat_ids[np.arange(n_rows), var_ids] = -1
-        jac_delay_ids[np.arange(n_rows), var_ids] = -1
+        jac_feat_ids = feat_ids[jac_coef_ids]
+        jac_delay_ids = delay_ids[jac_coef_ids]
+        row_indices = np.arange(n_rows)
+        jac_feat_ids[row_indices, var_ids] = -1
+        jac_delay_ids[row_indices, var_ids] = -1
 
-        return (jac_yyd_ids, jac_coef_ids, jac_feat_ids, jac_delay_ids)
+        return (
+            jac_yyd_ids.astype(np.int32, copy=False),
+            jac_coef_ids.astype(np.int32, copy=False),
+            jac_feat_ids.astype(np.int32, copy=False),
+            jac_delay_ids.astype(np.int32, copy=False)
+        )
 
     @staticmethod
     def _split_coef_intercept(coef_intercept, fit_intercept, y):
