@@ -4,7 +4,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [dependencies]
 python = ">=3.11"
-scikit-learn = ">=1.8.0"
+scikit-learn = ">=1.8.0,<1.9.0"
 
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
@@ -85,7 +85,7 @@ python = "*"
 python-freethreading = "*"
 
 [feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.8.0"
+scikit-learn = ">=1.8.0,<1.9.0"
 fastcan = { path = ".", editable = true }
 
 [tasks]
