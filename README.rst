@@ -108,12 +108,6 @@ fastcan can be used for system identification.
 In particular, we provide a submodule `fastcan.narx` to build Nonlinear AutoRegressive eXogenous (NARX) models.
 For more information, check this `NARX model example <https://fastcan.readthedocs.io/en/latest/auto_examples/plot_narx.html>`_.
 
-
-Support Free-Threaded Wheels
-----------------------------
-fastcan has support for free-threaded (also known as nogil) CPython 3.13.
-For more information about free-threaded CPython, check `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_.
-
 Support WASM Wheels
 -------------------
 fastcan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.com/pyodide/pyodide>`_.
