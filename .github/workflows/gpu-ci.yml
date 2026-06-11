@@ -5,7 +5,7 @@ permissions:
 # Only run this workflow when a Pull Request is labeled with the
 # 'Array API' label.
 on:
-  pull_request:
+  pull_request_target:
     types:
       - labeled
 

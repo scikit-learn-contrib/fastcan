@@ -17,7 +17,7 @@ def main():
     home = os.path.expanduser("~")
     pixi_bin = os.path.join(home, ".pixi", "bin")
     os.environ["PATH"] = f"{pixi_bin}:{os.environ.get('PATH', '')}"
-    run_cmd("pixi run test-gpu")
+    run_cmd("pixi run -e dev test-gpu")
 
 
 if __name__ == "__main__":
