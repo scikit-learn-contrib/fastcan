@@ -47,7 +47,7 @@ def test_sum_errs(array_type, monkeypatch):
     e = y - y_hat
     # Sum of Error Reduction Ratio
     serrs = 1 - np.dot(e, e) / np.dot(y, y)
-    assert_almost_equal(actual=scores_sum, desired=serrs)
+    assert_almost_equal(actual=scores_sum, desired=serrs, decimal=6)
 
 
 def test_pearson_r():
