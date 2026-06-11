@@ -2,19 +2,42 @@
 
 import numpy as np
 import pytest
+import torch
 from numpy.testing import assert_almost_equal, assert_array_equal
+from sklearn import config_context
 from sklearn.linear_model import LinearRegression
 
 from fastcan.utils import mask_missing_values, ols, ssc
 
 
-def test_sum_errs():
+@pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
+def test_sum_errs(array_type, monkeypatch):
     """Test multiple correlation."""
     rng = np.random.default_rng(12345)
     X = rng.random((100, 10))
     y = rng.random(100)
 
-    indices, scores = ols(X, y, 5)
+    if array_type == "pytorch":
+        monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+        device = (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
+        torch.set_default_device(device)
+        X_torch = torch.tensor(X, dtype=torch.float32)
+        y_torch = torch.tensor(y, dtype=torch.float32)
+
+        with config_context(array_api_dispatch=True):
+            indices, scores = ols(X_torch, y_torch, 5)
+
+        indices = indices.cpu().numpy()
+        scores_sum = float(scores.sum().cpu())
+    else:
+        indices, scores = ols(X, y, 5)
+        scores_sum = scores.sum()
 
     y_hat = (
         LinearRegression(fit_intercept=False)
@@ -24,7 +47,7 @@ def test_sum_errs():
     e = y - y_hat
     # Sum of Error Reduction Ratio
     serrs = 1 - np.dot(e, e) / np.dot(y, y)
-    assert_almost_equal(actual=scores.sum(), desired=serrs)
+    assert_almost_equal(actual=scores_sum, desired=serrs)
 
 
 def test_pearson_r():

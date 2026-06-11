@@ -64,6 +64,7 @@ pytest = "*"
 pytest-cov = "*"
 pandas = "*"
 sympy = "*"
+pytorch = "*"
 
 [feature.static.dependencies]
 # Static analysis tools
@@ -74,6 +75,7 @@ codespell = "*"
 scikit-learn = "*" # for ty
 pytest = "*" # for ty
 sympy = "*" # for ty
+pytorch = "*" # for ty
 
 
 [feature.rebuild.dependencies]
@@ -87,6 +89,9 @@ python-freethreading = "*"
 [feature.nogil.pypi-dependencies]
 scikit-learn = ">=1.8.0"
 fastcan = { path = ".", editable = true }
+
+[feature.array-api.dependencies]
+array-api-strict = "*"
 
 [tasks]
 time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
@@ -106,6 +111,10 @@ asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-o
 [feature.test.tasks]
 test = "pytest"
 test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "FMT", default = "html" }, { arg = "PACKAGE", default = "fastcan" }] }
+test-gpu = { cmd = [
+    "pytest",
+    "fastcan/tests/test_utils.py::test_sum_errs[pytorch]",
+] }
 
 [feature.rebuild.tasks]
 build-wheel = "rm -rf dist && python -m build -wnx"
@@ -179,7 +188,7 @@ cctools = ">=1030.6.3"
 
 [environments]
 default = ["build"]
-dev = ["build", "test", "rebuild", "jupyter", "asv"]
+dev = ["build", "test", "rebuild", "jupyter", "asv", "array-api"]
 docs = ["build", "docs"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["build", "nogil"], no-default-feature = true }

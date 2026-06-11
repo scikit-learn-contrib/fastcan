@@ -1,0 +1,30 @@
+name: CUDA GPU
+permissions:
+  contents: read
+
+# Only run this workflow when a Pull Request is labeled with the
+# 'Array API' label.
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  kaggle-ci:
+    if: contains(github.event.pull_request.labels.*.name, 'Array API')
+    name: kaggle CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Prepare gpu_runner.py
+        run: |
+          sed -i "s|{REPO_URL}|https://github.com/${{ github.event.pull_request.head.repo.full_name }}|g" .github/scripts/gpu_runner.py
+          sed -i "s|{BRANCH}|${{ github.event.pull_request.head.ref }}|g" .github/scripts/gpu_runner.py
+      - name: Run kaggle
+        uses: Frederisk/kaggle-action@v2
+        with:
+          api_token: ${{ secrets.KAGGLE_API_TOKEN }}
+          title: KaggleTestCI
+          code_file: .github/scripts/gpu_runner.py
+          machine_shape: 'NvidiaTeslaP100'

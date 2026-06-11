@@ -8,6 +8,7 @@ from numbers import Integral
 import numpy as np
 from sklearn.cross_decomposition import CCA
 from sklearn.utils import _safe_indexing, check_consistent_length, check_X_y
+from sklearn.utils._array_api import get_namespace_and_device, supported_float_dtypes
 from sklearn.utils._param_validation import Interval, validate_params
 
 __all__ = ["mask_missing_values", "ols", "ssc"]
@@ -97,28 +98,30 @@ def ols(X, y, t=1):
     >>> scores
     array([0.5, 0.5])
     """
-    X, y = check_X_y(X, y, dtype=float, ensure_2d=True)
+    xp, _, device_ = get_namespace_and_device(X, y)
+    X, y = check_X_y(X, y, dtype=supported_float_dtypes(xp, device_), ensure_2d=True)
+
     n_features = X.shape[1]
-    w = X / np.linalg.norm(X, axis=0)
-    v = y / np.linalg.norm(y)
-    mask = np.zeros(n_features, dtype=bool)
-    r2 = np.zeros(n_features, dtype=float)
-    indices = np.zeros(t, dtype=int)
-    scores = np.zeros(t, dtype=float)
+    w = X / xp.linalg.vector_norm(X, axis=0)
+    v = y / xp.linalg.vector_norm(y)
+    mask = xp.zeros(n_features, dtype=xp.bool, device=device_)
+    r2 = xp.zeros(n_features, dtype=X.dtype, device=device_)
+    indices = xp.zeros(t, dtype=xp.int64, device=device_)
+    scores = xp.zeros(t, dtype=X.dtype, device=device_)
 
     for i in range(t):
         r2[:] = (w.T @ v) ** 2
-        r2[mask] = 0
-        d = np.argmax(r2)
+        r2[mask] = 0.0
+        d = xp.argmax(r2)
         indices[i] = d
         scores[i] = r2[d]
         if i == t - 1:
             return indices, scores
         mask[d] = True
         projections = w.T @ w[:, d]
-        for j in np.where(~mask)[0]:
+        for j in xp.nonzero(~mask)[0]:
             w[:, j] -= w[:, d] * projections[j]
-            w[:, j] /= np.linalg.norm(w[:, j])
+            w[:, j] /= xp.linalg.vector_norm(w[:, j])
 
 
 @validate_params(

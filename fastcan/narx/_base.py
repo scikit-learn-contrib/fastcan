@@ -816,7 +816,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
             jac_yyd_ids.astype(np.int32, copy=False),
             jac_coef_ids.astype(np.int32, copy=False),
             jac_feat_ids.astype(np.int32, copy=False),
-            jac_delay_ids.astype(np.int32, copy=False)
+            jac_delay_ids.astype(np.int32, copy=False),
         )
 
     @staticmethod
