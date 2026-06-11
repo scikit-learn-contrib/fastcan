@@ -178,6 +178,8 @@ pytest = ">=9.0.2"
 numpy = ">=1.24.1"
 meson = ">=1.11.1" # For win-64
 mpmath = ">=1.3.0"
+pytorch = ">=2.2.0"
+scipy = ">=1.14.0"
 
 [feature.low.target.osx-64.dependencies]
 # See: https://github.com/numpy/numpy/issues/29319
