@@ -36,7 +36,6 @@ jobs:
 
       - uses: prefix-dev/setup-pixi@v0.9.6
         with:
-          pixi-version: v0.70.0
           environments: dev
           cache: true
 
@@ -103,7 +102,6 @@ jobs:
 
       - uses: prefix-dev/setup-pixi@v0.9.6
         with:
-          pixi-version: v0.70.0
           environments: dev
           cache: true
 
