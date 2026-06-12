@@ -21,7 +21,8 @@ from fastcan.narx import (
 )
 
 
-def test_lazyfastcan_is_sklearn_estimator():
+def test_lazyfastcan_is_sklearn_estimator(monkeypatch):
+    monkeypatch.setenv("SCIPY_ARRAY_API", "1")
     check_estimator(LazyFastCan())
 
 

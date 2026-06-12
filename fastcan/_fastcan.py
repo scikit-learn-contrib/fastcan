@@ -278,19 +278,19 @@ def _prepare_search(n_features, n_features_to_select, indices_include, indices_e
     return indices, scores, mask
 
 
-def _check_X_y(estimator, X, y, order):
+def _check_X_y(estimator, X, y, order=None, dtype=float, xp=np):
     """Check X and y for feature selection."""
     check_X_params = {
         "ensure_min_samples": 2,
         "order": order,
-        "dtype": float,
+        "dtype": dtype,
         "force_writeable": True,
     }
     check_y_params = {
         "ensure_min_samples": 2,
         "ensure_2d": False,
         "order": order,
-        "dtype": float,
+        "dtype": dtype,
         "force_writeable": True,
     }
     X, y = validate_data(
@@ -300,12 +300,11 @@ def _check_X_y(estimator, X, y, order):
         multi_output=True,
         validate_separately=(check_X_params, check_y_params),
     )
+    y = xp.astype(y, X.dtype)
     check_consistent_length(X, y)
 
     if y.ndim == 1:
-        # reshape is necessary to preserve the data contiguity against vs
-        # [:, np.newaxis] that does not.
-        y = y.reshape(-1, 1)
+        y = xp.reshape(y, (-1, 1))
 
     return X, y
 

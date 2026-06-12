@@ -118,9 +118,9 @@ def ols(X, y, t=1):
         if i == t - 1:
             return indices, scores
         mask[d] = True
-        projections = w.T @ w[:, d]
+        proj = w.T @ w[:, d]
         for j in xp.nonzero(~mask)[0]:
-            w[:, j] -= w[:, d] * projections[j]
+            w[:, j] -= w[:, d] * proj[j]
             w[:, j] /= xp.linalg.vector_norm(w[:, j])
 
 

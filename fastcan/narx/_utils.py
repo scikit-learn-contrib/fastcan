@@ -229,7 +229,7 @@ def make_narx(
     lazy : bool, default=False
         Whether to use LazyFastCan for selection. If False, FastCan will be used.
 
-        .. versionadded:: 0.5.1
+        .. versionadded:: 0.6.0
 
     refine_verbose : int, default=1
         The verbosity level of refine. Only available when `lazy` is False.

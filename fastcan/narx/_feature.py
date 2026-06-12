@@ -28,7 +28,7 @@ from .._fastcan import _check_indices_params
 def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
     """Generator to make time shift features.
 
-    .. versionadded:: 0.5.1
+    .. versionadded:: 0.6.0
 
     Parameters
     ----------
@@ -224,7 +224,7 @@ def make_time_shift_ids(
 def gen_poly_features(X, ids, skip_indices=None):
     """Generator to make polynomial features.
 
-    .. versionadded:: 0.5.1
+    .. versionadded:: 0.6.0
 
     Parameters
     ----------

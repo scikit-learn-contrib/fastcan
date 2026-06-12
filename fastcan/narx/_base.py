@@ -376,7 +376,7 @@ class NARX(MultiOutputMixin, RegressorMixin, BaseEstimator):
         solver : {'least_squares', 'minimize'}, default='least_squares'
             The SciPy solver for optimization.
 
-            .. versionadded:: 0.5.1
+            .. versionadded:: 0.6.0
 
         **params : dict
             Keyword arguments passed to

@@ -8,15 +8,19 @@ Lazy FastCan selector.
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import orth
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    get_namespace_and_device,
+    move_to,
+    supported_float_dtypes,
+)
 from sklearn.utils._param_validation import Interval
 
 from ._fastcan import _check_indices_params, _check_X_y
 
 
-def _classical_gram_schmidt(x, W):
+def _classical_gram_schmidt(x, W, xp):
     """Classical Gram-Schmidt orthogonalization.
     Parameters
     ----------
@@ -29,9 +33,9 @@ def _classical_gram_schmidt(x, W):
     q: (n_samples,) Orthonormal features.
     """
     q = x - W @ (W.T @ x)
-    norm = np.linalg.norm(q)
+    norm = xp.linalg.vector_norm(q)
     if norm == 0:
-        norm = 1.0
+        return q
     return q / norm
 
 
@@ -46,7 +50,7 @@ def _default_feature_generator(X, skip_indices):
         yield j, X[:, j]
 
 
-def _check_generated_features(idx, feature, n_samples):
+def _check_generated_features(idx, feature, n_samples, xp):
     """Check the validity of generated features."""
     if not isinstance(idx, Integral):
         raise TypeError(f"Generated feature index {idx} is not an integer.")
@@ -59,7 +63,7 @@ def _check_generated_features(idx, feature, n_samples):
             f"Generated feature with index {idx} has length {feature.shape[0]}, "
             f"but expected length is {n_samples}."
         )
-    if not np.isfinite(feature).all():
+    if not xp.all(xp.isfinite(feature)):
         raise ValueError(
             f"Generated feature with index {idx} contains non-finite values."
         )
@@ -68,7 +72,7 @@ def _check_generated_features(idx, feature, n_samples):
 class LazyFastCan(BaseEstimator):
     """Lazy version of FastCan selector.
 
-    .. versionadded:: 0.5.1
+    .. versionadded:: 0.6.0
 
     Parameters
     ----------
@@ -127,7 +131,7 @@ class LazyFastCan(BaseEstimator):
         n_features_to_select=1,
         feature_generator=None,
         sample_mask=None,
-        tol=1e-10,
+        tol=1e-6,
     ):
         self.n_features_to_select = n_features_to_select
         self.feature_generator = feature_generator
@@ -136,40 +140,50 @@ class LazyFastCan(BaseEstimator):
 
     def fit(self, X, y):
         self._validate_params()
-        X, y = _check_X_y(self, X, y, order="C")
+        xp, is_array_api, device_ = get_namespace_and_device(X)
+        if is_array_api:
+            y = move_to(y, xp=xp, device=device_)
+        X, y = _check_X_y(self, X, y, dtype=supported_float_dtypes(xp, device_), xp=xp)
         feature_generator = self.feature_generator or _default_feature_generator
         n_samples = X.shape[0]
         if self.sample_mask is None:
-            sample_mask = np.ones(n_samples, dtype=bool)
+            sample_mask = xp.ones(n_samples, dtype=xp.bool, device=device_)
         else:
-            sample_mask = check_array(self.sample_mask, dtype=bool, ensure_2d=False)
+            sample_mask = check_array(self.sample_mask, dtype=xp.bool, ensure_2d=False)
             if sample_mask.shape[0] != n_samples:
                 raise ValueError(
                     f"The length of sample_mask {sample_mask.shape[0]} does not match "
                     f"the number of samples {n_samples}."
                 )
-        y_transformed = orth(y[sample_mask] - y[sample_mask].mean(0))
-        W = np.zeros((np.sum(sample_mask), self.n_features_to_select))
-        indices = np.zeros(self.n_features_to_select, dtype=int)
-        scores = np.zeros(self.n_features_to_select, dtype=float)
+        y_masked = y[sample_mask]
+        y_transformed, _ = xp.linalg.qr(
+            y_masked - xp.mean(y_masked, axis=0), mode="reduced"
+        )
+        W = xp.zeros(
+            (y_masked.shape[0], self.n_features_to_select),
+            dtype=X.dtype,
+            device=device_,
+        )
+        indices = np.zeros(self.n_features_to_select, dtype=np.int64)
+        scores = xp.zeros(self.n_features_to_select, dtype=xp.float64, device=device_)
 
         max_feat_idx = -1
 
         for i in range(self.n_features_to_select):
-            best_score = -np.inf
+            best_score = -xp.inf
             best_index = -1
             best_feat = None
             for j, feat in feature_generator(X, skip_indices=indices[:i]):
-                _check_generated_features(j, feat, n_samples)
+                _check_generated_features(j, feat, n_samples, xp)
                 feat = feat[sample_mask]
-                max_feat_idx = max(max_feat_idx, j)
-                feat_centered = feat - feat.mean()
-                feat_orth = _classical_gram_schmidt(feat_centered, W[:, :i])
+                max_feat_idx = np.maximum(max_feat_idx, j)
+                feat_centered = feat - xp.mean(feat)
+                feat_orth = _classical_gram_schmidt(feat_centered, W[:, :i], xp)
                 # Linear dependence check
-                g = feat_orth.T @ W[:, :i]
-                if np.any(np.abs(g) > self.tol):
+                g = feat_orth @ W[:, :i]
+                if xp.any(xp.abs(g) > self.tol):
                     continue
-                r = feat_orth.T @ y_transformed
+                r = feat_orth @ y_transformed
                 score = r @ r
                 if score > best_score:
                     best_score = score
@@ -187,7 +201,12 @@ class LazyFastCan(BaseEstimator):
             indices[i] = best_index
             scores[i] = best_score
             W[:, i] = best_feat
-        self.indices_ = indices
+        self.indices_ = move_to(indices, xp=xp, device=device_)
         self.scores_ = scores
         self.n_features_ = max_feat_idx + 1
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
