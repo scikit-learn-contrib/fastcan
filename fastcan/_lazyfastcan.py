@@ -165,7 +165,7 @@ class LazyFastCan(BaseEstimator):
             device=device_,
         )
         indices = np.zeros(self.n_features_to_select, dtype=np.int64)
-        scores = xp.zeros(self.n_features_to_select, dtype=xp.float64, device=device_)
+        scores = xp.zeros(self.n_features_to_select, dtype=X.dtype, device=device_)
 
         max_feat_idx = -1
 

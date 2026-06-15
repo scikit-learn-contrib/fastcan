@@ -4,6 +4,7 @@ from functools import partial
 
 import numpy as np
 import pytest
+import torch
 from numpy.testing import assert_almost_equal
 from sklearn.cross_decomposition import CCA
 from sklearn.datasets import make_regression
@@ -23,6 +24,8 @@ from fastcan.narx import (
 
 def test_lazyfastcan_is_sklearn_estimator(monkeypatch):
     monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+    if torch.mps.is_available() and torch.__version__ >= "2.12.0":
+        monkeypatch.setenv("PYTORCH_ENABLE_MPS_FALLBACK", "1")
     check_estimator(LazyFastCan())
 
 

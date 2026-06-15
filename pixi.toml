@@ -64,7 +64,16 @@ pytest = "*"
 pytest-cov = "*"
 pandas = "*"
 sympy = "*"
-pytorch = "*"
+pytorch = ">=2.12.0"
+
+[feature.test.target.win-64.dependencies]
+cupy ="*"
+
+[feature.test.target.linux-64.dependencies]
+cupy = "*"
+
+[feature.test.target.linux-aarch64.dependencies]
+cupy = "*"
 
 [feature.static.dependencies]
 # Static analysis tools

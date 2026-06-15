@@ -23,7 +23,7 @@ def test_sum_errs(array_type, monkeypatch):
             "cuda"
             if torch.cuda.is_available()
             else "mps"
-            if torch.backends.mps.is_available()
+            if torch.mps.is_available()
             else "cpu"
         )
         torch.set_default_device(device)
