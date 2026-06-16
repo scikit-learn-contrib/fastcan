@@ -216,4 +216,4 @@ static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["build", "nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
 low = ["build", "low", "test"]
-gpu = ["build", "gpu", "test"]
+gpu = ["build", "gpu", "test", "array-api"]
