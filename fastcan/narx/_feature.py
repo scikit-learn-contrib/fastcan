@@ -11,7 +11,12 @@ from itertools import combinations_with_replacement
 from numbers import Integral
 
 import numpy as np
+import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    get_namespace_and_device,
+    supported_float_dtypes,
+)
 from sklearn.utils._param_validation import Interval, validate_params
 
 from .._fastcan import _check_indices_params
@@ -64,7 +69,8 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
     0 [1. 1. 3. 5.]
     1 [2. 2. 4. 6.]
     """
-    X = check_array(X, ensure_2d=True, dtype=float)
+    xp, _, device_ = get_namespace_and_device(X)
+    X = check_array(X, ensure_2d=True, dtype=supported_float_dtypes(xp, device_))
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_features = ids.shape[0]
     skip_indices = _check_indices_params(skip_indices, n_features)
@@ -77,7 +83,7 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
 
 def _make_a_time_shift_feature(X, idx, **kwargs):
     """Make a time shift feature."""
-    return np.pad(
+    return xpx.pad(
         X[: -idx[1] or None, idx[0]],
         (idx[1], 0),
         **kwargs,
@@ -260,7 +266,8 @@ def gen_poly_features(X, ids, skip_indices=None):
     3 [ 2. 12. 30. 56.]
     4 [ 4. 16. 36. 64.]
     """
-    X = check_array(X, ensure_2d=True, dtype=float)
+    xp, _, device_ = get_namespace_and_device(X)
+    X = check_array(X, ensure_2d=True, dtype=supported_float_dtypes(xp, device_))
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_samples = X.shape[0]
     n_features = ids.shape[0]
@@ -269,7 +276,7 @@ def gen_poly_features(X, ids, skip_indices=None):
     for index, id_row in enumerate(ids):
         if index in skip_set:
             continue
-        feature = np.ones(n_samples)
+        feature = xp.ones(n_samples, dtype=X.dtype, device=device_)
         for j in id_row:
             if j != -1:
                 feature *= X[:, j]

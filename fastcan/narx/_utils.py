@@ -358,7 +358,8 @@ def make_narx(
             _gen_poly_time_shift_terms,
             time_shift_ids=time_shift_ids_all,
             poly_ids=poly_ids_all,
-            mode="edge",
+            mode="constant",
+            constant_values=0.0,
         )
         selected_poly_ids = []
         for i in range(n_outputs):

@@ -123,6 +123,9 @@ test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov
 test-gpu = { cmd = [
     "pytest",
     "fastcan/tests/test_utils.py::test_sum_errs[pytorch]",
+    "fastcan/tests/test_lazyfastcan.py::test_lazyfastcan_is_sklearn_estimator",
+    "fastcan/tests/test_lazyfastcan.py::test_lazy_poly_selection[pytorch]",
+    "fastcan/tests/test_lazyfastcan.py::test_lazy_time_shift_selection[pytorch]",
 ] }
 
 [feature.rebuild.tasks]
@@ -184,7 +187,7 @@ solve-strategy = "lowest"
 
 [feature.low.dependencies]
 pytest = ">=9.0.2"
-numpy = ">=1.24.1"
+numpy = ">=2.0.1"
 meson = ">=1.11.1" # For win-64
 mpmath = ">=1.3.0"
 pytorch = ">=2.2.0"
