@@ -66,14 +66,20 @@ pandas = "*"
 sympy = "*"
 pytorch = ">=2.12.0"
 
+[feature.gpu.system-requirements]
+cuda = "12.1"
+
 [feature.gpu.target.win-64.dependencies]
 cupy ="*"
+pytorch-gpu = "*"
 
 [feature.gpu.target.linux-64.dependencies]
 cupy = "*"
+pytorch-gpu = "*"
 
 [feature.gpu.target.linux-aarch64.dependencies]
 cupy = "*"
+pytorch-gpu = "*"
 
 [feature.static.dependencies]
 # Static analysis tools
