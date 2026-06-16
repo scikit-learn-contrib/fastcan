@@ -4,12 +4,13 @@ from functools import partial
 
 import numpy as np
 import pytest
+import torch
 from numpy.testing import assert_almost_equal
 from sklearn.cross_decomposition import CCA
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator, config_context
 
 from fastcan import LazyFastCan
 from fastcan.narx import (
@@ -21,11 +22,15 @@ from fastcan.narx import (
 )
 
 
-def test_lazyfastcan_is_sklearn_estimator():
+def test_lazyfastcan_is_sklearn_estimator(monkeypatch):
+    monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+    if torch.mps.is_available() and torch.__version__ >= "2.12.0":
+        monkeypatch.setenv("PYTORCH_ENABLE_MPS_FALLBACK", "1")
     check_estimator(LazyFastCan())
 
 
-def test_lazy_poly_selection():
+@pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
+def test_lazy_poly_selection(array_type, monkeypatch):
     """
     Test if LazyFastCan correctly selects informative polynomial features,
     and if the ssc score is aligned with the ground truth.
@@ -52,12 +57,30 @@ def test_lazy_poly_selection():
         n_features_to_select=n_polys,
         feature_generator=feat_gen,
     )
-    poly_filter.fit(X, y)
-    ssc = poly_filter.scores_.sum()
+    if array_type == "pytorch":
+        monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+        device = (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.mps.is_available()
+            else "cpu"
+        )
+        torch.set_default_device(device)
+        X_torch = torch.tensor(X, dtype=torch.float32)
+        y_torch = torch.tensor(y, dtype=torch.float32)
+
+        with config_context(array_api_dispatch=True):
+            poly_filter.fit(X_torch, y_torch)
+            ssc = float(poly_filter.scores_.sum().cpu())
+    else:
+        poly_filter.fit(X, y)
+        ssc = poly_filter.scores_.sum()
     assert abs(ssc - gtruth_ssc) < 1e-5
 
 
-def test_lazy_time_shift_selection():
+@pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
+def test_lazy_time_shift_selection(array_type, monkeypatch):
     """
     Test if LazyFastCan correctly selects informative time-shifted features,
     and if the ssc score is aligned with the ground truth.
@@ -70,7 +93,7 @@ def test_lazy_time_shift_selection():
     X = rng.normal(size=(n_samples + max_delay, n_features))
     time_shift_ids = make_time_shift_ids(n_informative, max_delay=max_delay)
     X_shifted = make_time_shift_features(
-        X[:, :n_informative], ids=time_shift_ids, mode="edge"
+        X[:, :n_informative], ids=time_shift_ids, mode="constant", constant_values=0.0
     )
     n_time_shifts = X_shifted.shape[1]
     w = rng.normal(size=n_time_shifts)
@@ -81,16 +104,42 @@ def test_lazy_time_shift_selection():
     gtruth_ssc = reg.score(X_shifted[max_delay:], y[max_delay:])
 
     feat_gen = partial(gen_time_shift_features, ids=time_shift_ids)
-    sample_mask = np.ones(n_samples + max_delay, dtype=bool)
-    sample_mask[:max_delay] = False
 
-    time_shift_filter = LazyFastCan(
-        n_features_to_select=n_time_shifts,
-        feature_generator=feat_gen,
-        sample_mask=sample_mask,
-    )
-    time_shift_filter.fit(X, y)
-    ssc = time_shift_filter.scores_.sum()
+    if array_type == "pytorch":
+        monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+        device = (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.mps.is_available()
+            else "cpu"
+        )
+        torch.set_default_device(device)
+        sample_mask = torch.ones(n_samples + max_delay, dtype=torch.bool)
+        sample_mask[:max_delay] = False
+
+        time_shift_filter = LazyFastCan(
+            n_features_to_select=n_time_shifts,
+            feature_generator=feat_gen,
+            sample_mask=sample_mask,
+        )
+        X_torch = torch.tensor(X, dtype=torch.float32)
+        y_torch = torch.tensor(y, dtype=torch.float32)
+
+        with config_context(array_api_dispatch=True):
+            time_shift_filter.fit(X_torch, y_torch)
+            ssc = float(time_shift_filter.scores_.sum().cpu())
+    else:
+        sample_mask = np.ones(n_samples + max_delay, dtype=bool)
+        sample_mask[:max_delay] = False
+
+        time_shift_filter = LazyFastCan(
+            n_features_to_select=n_time_shifts,
+            feature_generator=feat_gen,
+            sample_mask=sample_mask,
+        )
+        time_shift_filter.fit(X, y)
+        ssc = time_shift_filter.scores_.sum()
     assert abs(ssc - gtruth_ssc) < 1e-5
 
 

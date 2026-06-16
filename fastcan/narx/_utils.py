@@ -229,7 +229,7 @@ def make_narx(
     lazy : bool, default=False
         Whether to use LazyFastCan for selection. If False, FastCan will be used.
 
-        .. versionadded:: 0.5.1
+        .. versionadded:: 0.6.0
 
     refine_verbose : int, default=1
         The verbosity level of refine. Only available when `lazy` is False.
@@ -358,7 +358,8 @@ def make_narx(
             _gen_poly_time_shift_terms,
             time_shift_ids=time_shift_ids_all,
             poly_ids=poly_ids_all,
-            mode="edge",
+            mode="constant",
+            constant_values=0.0,
         )
         selected_poly_ids = []
         for i in range(n_outputs):
