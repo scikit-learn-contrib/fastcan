@@ -64,10 +64,10 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
     >>> from fastcan.narx import gen_time_shift_features, make_time_shift_ids
     >>> ids = make_time_shift_ids(2, 1)
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> for i, feat in gen_time_shift_features(X, ids, mode="edge"):
+    >>> for i, feat in gen_time_shift_features(X, ids):
     ...     print(i, feat)
-    0 [1. 1. 3. 5.]
-    1 [2. 2. 4. 6.]
+    0 [0. 1. 3. 5.]
+    1 [0. 2. 4. 6.]
     """
     xp, _, device_ = get_namespace_and_device(X)
     X = check_array(X, ensure_2d=True, dtype=supported_float_dtypes(xp, device_))
