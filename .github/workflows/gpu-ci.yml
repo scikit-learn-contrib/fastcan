@@ -13,7 +13,7 @@ on:
 
 jobs:
   kaggle-ci:
-    if: contains(github.event.pull_request.labels.*.name, 'Array API')
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'Array API')
     name: kaggle CI
     runs-on: ubuntu-latest
     steps:
