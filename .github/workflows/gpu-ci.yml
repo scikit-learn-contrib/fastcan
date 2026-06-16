@@ -29,4 +29,4 @@ jobs:
           api_token: ${{ secrets.KAGGLE_API_TOKEN }}
           title: KaggleTestCI
           code_file: .github/scripts/gpu_runner.py
-          machine_shape: 'NvidiaTeslaP100'
+          machine_shape: 'NvidiaTeslaT4'
