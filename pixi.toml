@@ -66,13 +66,13 @@ pandas = "*"
 sympy = "*"
 pytorch = ">=2.12.0"
 
-[feature.test.target.win-64.dependencies]
+[feature.gpu.target.win-64.dependencies]
 cupy ="*"
 
-[feature.test.target.linux-64.dependencies]
+[feature.gpu.target.linux-64.dependencies]
 cupy = "*"
 
-[feature.test.target.linux-aarch64.dependencies]
+[feature.gpu.target.linux-aarch64.dependencies]
 cupy = "*"
 
 [feature.static.dependencies]
@@ -120,6 +120,8 @@ asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-o
 [feature.test.tasks]
 test = "pytest"
 test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "FMT", default = "html" }, { arg = "PACKAGE", default = "fastcan" }] }
+
+[feature.gpu.tasks]
 test-gpu = { cmd = [
     "pytest",
     "fastcan/tests/test_utils.py::test_sum_errs[pytorch]",
@@ -208,3 +210,4 @@ static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["build", "nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
 low = ["build", "low", "test"]
+gpu = ["build", "gpu", "test"]
