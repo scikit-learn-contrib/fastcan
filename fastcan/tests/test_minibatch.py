@@ -118,3 +118,12 @@ def test_minibatch_ssc_aligned(capsys):
         f"Progress: {n_to_select}/{n_to_select}, "
         f"Batch SSC: {gtruth_ssc:.5f}" in captured.out
     )
+
+
+def test_minibatch_runtime_error():
+    # Test RuntimeError branch when not enough features can form a non-singular matrix
+    X = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0]])
+    y = np.array([1.0, 2.0, 3.0, 4.0])
+
+    indices = minibatch(X, y, n_features_to_select=2, batch_size=2, verbose=0)
+    assert len(np.unique(indices)) == 2
