@@ -23,10 +23,10 @@ fastcan: A fast canonical-correlation-based search algorithm
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
    :target: https://github.com/astral-sh/ruff
 
-.. |pixi| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json&style=flat-square
+.. |pixi| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json
    :target: https://pixi.sh
 
-.. |asv| image:: https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat
+.. |asv| image:: https://img.shields.io/badge/benchmarked%20by-asv-blue.svg
    :target: https://contrib.scikit-learn.org/fastcan/
 
 .. |ty| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json
