@@ -200,6 +200,7 @@ meson = ">=1.11.1" # For win-64
 mpmath = ">=1.3.0"
 pytorch = ">=2.2.0"
 scipy = ">=1.14.0"
+array-api-strict = ">=2.3"
 
 [feature.low.target.osx-64.dependencies]
 # See: https://github.com/numpy/numpy/issues/29319
@@ -215,5 +216,5 @@ docs = ["build", "docs"]
 static = { features = ["static"], no-default-feature = true }
 nogil = { features = ["build", "nogil"], no-default-feature = true }
 wasm = { features = ["wasm"], no-default-feature = true }
-low = ["build", "low", "test"]
+low = ["build", "low", "test", "array-api"]
 gpu = ["build", "gpu", "test", "array-api"]

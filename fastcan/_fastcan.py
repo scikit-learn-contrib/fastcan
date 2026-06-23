@@ -210,12 +210,13 @@ class FastCan(SelectorMixin, BaseEstimator):
                 xy_centered, full_matrices=False
             )[1:]
             qxy_transformed = singular_values.reshape(-1, 1) * unitary_arrays
-            qxy_transformed = np.asfortranarray(qxy_transformed)
-            self.X_transformed_ = qxy_transformed[:, :n_features]
-            self.y_transformed_ = orth(qxy_transformed[:, n_features:])
+            self.X_transformed_ = np.asfortranarray(qxy_transformed[:, :n_features])
+            self.y_transformed_ = np.asfortranarray(
+                orth(qxy_transformed[:, n_features:])
+            )
         else:
             self.X_transformed_ = X - X.mean(0)
-            self.y_transformed_ = orth(y - y.mean(0))
+            self.y_transformed_ = np.asfortranarray(orth(y - y.mean(0)))
 
         indices, scores, mask = _prepare_search(
             n_features,

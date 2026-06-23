@@ -42,7 +42,7 @@ def test_random(seed):
     output_ids = output_ids.astype(np.int32)
 
     # Synthetic data
-    n_samples = 10 + max_delay
+    n_samples = int(10 + max_delay)
     X = rng.standard_normal((n_samples, n_features))
     y = rng.standard_normal((n_samples, n_outputs))
 
