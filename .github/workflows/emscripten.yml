@@ -12,7 +12,6 @@ jobs:
         uses: pypa/cibuildwheel@v4.1.0
         env:
           CIBW_PLATFORM: pyodide
-          CIBW_BUILD_FRONTEND: "build[uv]"
       - name: Upload package
         uses: actions/upload-artifact@v7
         with:
