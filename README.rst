@@ -111,16 +111,12 @@ For more information, check this `NARX model example <https://fastcan.readthedoc
 Support WASM Wheels
 -------------------
 fastcan is compiled to WebAssembly (WASM) wheels using `pyodide <https://github.com/pyodide/pyodide>`_.
-You can try it in a `REPL <https://pyodide.org/en/stable/console.html>`_ directly in a browser, without installation.
-However, the version of fastcan may be delayed in pyodide. If the latest fastcan WASM wheels are required, you can find them
-on the assets of GitHub releases, and the installation is required.
+You can try it in a `REPL <https://pyodide.org/en/stable/console.html>`_ directly in a browser.
 The WASM wheels of fastcan can be installed by
 
 >>> import micropip # doctest: +SKIP
->>> await micropip.install('URL of the wasm wheel (end with _wasm32.whl)') # doctest: +SKIP
+>>> await micropip.install('fastcan') # doctest: +SKIP
 
-📝 **Note:** Due to the Cross-Origin Resource Sharing (CORS) block in web browsers,
-you may need `Allow CORS: Access-Control-Allow-Origin Chrome extension <https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf>`_.
 
 📝 **Note:** The nightly wasm wheel of fastcan's dependency (i.e. scikit-learn) can be found in `Scientific Python Nightly Wheels <https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/>`_.
 

@@ -7,9 +7,9 @@ jobs:
   build-wasm-wheel:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build WASM wheel
-        uses: pypa/cibuildwheel@v3.4.0
+        uses: pypa/cibuildwheel@v4.1.0
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD_FRONTEND: "build[uv]"
