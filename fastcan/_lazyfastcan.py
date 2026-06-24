@@ -92,7 +92,7 @@ class LazyFastCan(BaseEstimator):
     sample_mask : ndarray of shape (n_samples,), default=None
         Bool mask for valid samples.
 
-    tol : float, default=1e-10
+    tol : float, default=1e-6
         Tolerance for linear dependence check.
         The classical Gram-Schmidt fails when abs(x.T @ W) > `tol`.
 
