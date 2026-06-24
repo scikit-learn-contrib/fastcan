@@ -50,7 +50,7 @@ def _default_feature_generator(X, skip_indices):
         yield j, X[:, j]
 
 
-def _check_generated_features(idx, feature, n_samples, xp):
+def _check_generated_features(idx, feature, n_samples, sample_mask, xp):
     """Check the validity of generated features."""
     if not isinstance(idx, Integral):
         raise TypeError(f"Generated feature index {idx} is not an integer.")
@@ -63,10 +63,12 @@ def _check_generated_features(idx, feature, n_samples, xp):
             f"Generated feature with index {idx} has length {feature.shape[0]}, "
             f"but expected length is {n_samples}."
         )
-    if not xp.all(xp.isfinite(feature)):
+    feature_masked = feature[sample_mask]
+    if not xp.all(xp.isfinite(feature_masked)):
         raise ValueError(
             f"Generated feature with index {idx} contains non-finite values."
         )
+    return feature_masked
 
 
 class LazyFastCan(BaseEstimator):
@@ -159,8 +161,9 @@ class LazyFastCan(BaseEstimator):
         y_transformed, _ = xp.linalg.qr(
             y_masked - xp.mean(y_masked, axis=0), mode="reduced"
         )
+        n_samples_masked = y_masked.shape[0]
         W = xp.zeros(
-            (y_masked.shape[0], self.n_features_to_select),
+            (n_samples_masked, self.n_features_to_select),
             dtype=X.dtype,
             device=device_,
         )
@@ -174,8 +177,7 @@ class LazyFastCan(BaseEstimator):
             best_index = -1
             best_feat = None
             for j, feat in feature_generator(X, skip_indices=indices[:i]):
-                _check_generated_features(j, feat, n_samples, xp)
-                feat = feat[sample_mask]
+                feat = _check_generated_features(j, feat, n_samples, sample_mask, xp)
                 max_feat_idx = np.maximum(max_feat_idx, j)
                 feat_centered = feat - xp.mean(feat)
                 feat_orth = _classical_gram_schmidt(feat_centered, W[:, :i], xp)

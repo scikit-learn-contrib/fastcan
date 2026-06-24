@@ -225,6 +225,48 @@ def test_lazy_redundant_feats():
     assert selected_ids.tolist() == list(range(n_informative))
 
 
+def test_gen_nan_feats():
+    """
+    Test when feature generator yields features with NaN values,
+    LazyFastCan can handle it by sample_mask.
+    """
+
+    def _gen_nan_features(X, ids, skip_indices):
+        for index, id_temp in enumerate(ids):
+            if index in skip_indices:
+                continue
+            yield index, make_time_shift_features(X, id_temp.reshape((1, -1))).flatten()
+
+    n_samples = 1000
+    n_features = 10
+    n_informative = 5
+    max_delay = 5
+
+    rng = np.random.default_rng(42)
+    X = rng.normal(size=(n_samples, n_features))
+    w = rng.normal(size=n_informative)
+    y = X[:, :n_informative] @ w
+    time_shift_ids = make_time_shift_ids(n_informative, max_delay=max_delay)
+    gen_nan = partial(_gen_nan_features, ids=time_shift_ids)
+
+    lfc = LazyFastCan(
+        n_features_to_select=n_informative,
+        feature_generator=gen_nan,
+    )
+    with pytest.raises(ValueError, match="contains non-finite values"):
+        lfc.fit(X, y)
+
+    sample_mask = np.ones(n_samples, dtype=bool)
+    sample_mask[:max_delay] = False
+    lfc_mask = LazyFastCan(
+        n_features_to_select=n_informative,
+        feature_generator=gen_nan,
+        sample_mask=sample_mask,
+    )
+    lfc_mask.fit(X, y)
+    assert np.all(lfc_mask.indices_ < n_informative * max_delay)
+
+
 def test_lazy_errors():
     """
     Test if LazyFastCan raises expected errors.
