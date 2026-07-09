@@ -38,7 +38,7 @@ def _classical_gram_schmidt(x, W, xp):
     return q / norm_safe
 
 
-def _default_feature_generator(X, skip_indices, batch_size=128):
+def _default_feature_generator(X, skip_indices, batch_size=16):
     """Default feature generator that yields batches of columns from X."""
     xp, _, device_ = get_namespace_and_device(X)
     n_features = X.shape[1]

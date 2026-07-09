@@ -32,7 +32,7 @@ from .._fastcan import _check_indices_params
     },
     prefer_skip_nested_validation=True,
 )
-def gen_time_shift_features(X, ids, skip_indices=None, batch_size=128, **kwargs):
+def gen_time_shift_features(X, ids, skip_indices=None, batch_size=16, **kwargs):
     """Generator to make time shift features.
 
     .. versionadded:: 0.6.0
@@ -49,7 +49,7 @@ def gen_time_shift_features(X, ids, skip_indices=None, batch_size=128, **kwargs)
     skip_indices : array-like, default=None
         Indices of features that have already been selected and can be skipped.
 
-    batch_size : int, default=128
+    batch_size : int, default=16
         Number of time shift features to generate in each batch.
 
         .. versionadded:: 0.6.1
@@ -246,7 +246,7 @@ def make_time_shift_ids(
     },
     prefer_skip_nested_validation=True,
 )
-def gen_poly_features(X, ids, skip_indices=None, batch_size=128):
+def gen_poly_features(X, ids, skip_indices=None, batch_size=16):
     """Generator to make polynomial features.
 
     .. versionadded:: 0.6.0
@@ -263,7 +263,7 @@ def gen_poly_features(X, ids, skip_indices=None, batch_size=128):
     skip_indices : array-like, default=None
         Indices of features that have already been selected and can be skipped.
 
-    batch_size : int, default=128
+    batch_size : int, default=16
         Number of polynomial features to generate in each batch.
 
         .. versionadded:: 0.6.1
