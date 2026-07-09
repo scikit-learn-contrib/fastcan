@@ -1,6 +1,11 @@
 [workspace]
 channels = ["conda-forge"]
-platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
+platforms = [
+    "win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64",
+    { name = "linux-64-cuda", platform = "linux-64", cuda = "12.1" },
+    { name = "linux-aarch64-cuda", platform = "linux-aarch64", cuda = "12.1" },
+    { name = "win-64-cuda", platform = "win-64", cuda = "12.1" }
+]
 
 [dependencies]
 python = ">=3.11"
@@ -66,18 +71,18 @@ pandas = "*"
 sympy = "*"
 pytorch = ">=2.12.0"
 
-[feature.gpu.system-requirements]
-cuda = "12.1"
+[feature.gpu]
+platforms = ["linux-64-cuda", "linux-aarch64-cuda", "win-64-cuda"]
 
-[feature.gpu.target.win-64.dependencies]
+[feature.gpu.target.win-64-cuda.dependencies]
 cupy ="*"
 pytorch-gpu = "*"
 
-[feature.gpu.target.linux-64.dependencies]
+[feature.gpu.target.linux-64-cuda.dependencies]
 cupy = "*"
 pytorch-gpu = "*"
 
-[feature.gpu.target.linux-aarch64.dependencies]
+[feature.gpu.target.linux-aarch64-cuda.dependencies]
 cupy = "*"
 pytorch-gpu = "*"
 

@@ -3,7 +3,7 @@ openmp_dep = dependency('OpenMP', language: 'c', required: false)
 cython_args = [
   '-X language_level=3', '-X boundscheck=False', '-X wraparound=False',
   '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
-  '-X profile=False',
+  '-X profile=False', '-Xfreethreading_compatible=True',
 ]
 
 py.extension_module(

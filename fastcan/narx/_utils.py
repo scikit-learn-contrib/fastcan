@@ -426,20 +426,26 @@ def make_narx(
 
 
 def _gen_poly_time_shift_terms(
-    X, time_shift_ids, poly_ids, skip_indices=None, **kwargs
+    X, time_shift_ids, poly_ids, skip_indices=None, batch_size=128, **kwargs
 ):
     """Generate polynomial time shift terms."""
     n_samples = X.shape[0]
     n_features = poly_ids.shape[0]
     skip_indices = _check_indices_params(skip_indices, n_features)
-    for index, id_row in enumerate(poly_ids):
-        if index in skip_indices:
-            continue
-        feature = np.ones(n_samples)
-        for j in id_row:
-            if j != -1:
-                time_shift_vars = _make_a_time_shift_feature(
-                    X, time_shift_ids[j], **kwargs
-                )
-                feature *= time_shift_vars
-        yield index, feature
+    valid_mask = np.ones(n_features, dtype=bool)
+    valid_mask[skip_indices] = False
+    valid_indices = np.flatnonzero(valid_mask)
+
+    for i in range(0, len(valid_indices), batch_size):
+        batch_idx = valid_indices[i : i + batch_size]
+        batch_features = np.ones(
+            (n_samples, len(batch_idx)), dtype=X.dtype
+        )
+        for j, feat_id in enumerate(batch_idx):
+            for var_id in poly_ids[feat_id]:
+                if var_id != -1:
+                    time_shift_vars = _make_a_time_shift_feature(
+                        X, time_shift_ids[var_id], **kwargs
+                    )
+                    batch_features[:, j] *= time_shift_vars
+        yield batch_idx, batch_features
