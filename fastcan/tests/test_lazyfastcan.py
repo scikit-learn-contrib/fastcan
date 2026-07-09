@@ -275,6 +275,13 @@ def test_lazy_errors():
     Test if LazyFastCan raises expected errors.
     """
 
+    def _gen_scalar_idx(X, skip_indices):
+        n_features = X.shape[1]
+        for j in range(n_features):
+            if j in skip_indices:
+                continue
+            yield j, X[:, [j]]
+
     def _gen_float_idx(X, skip_indices):
         n_features = X.shape[1]
         for j in range(n_features):
@@ -319,6 +326,12 @@ def test_lazy_errors():
     X[:, n_informative:] = X[:, :n_informative]
     w = rng.normal(size=n_informative)
     y = X[:, :n_informative] @ w
+
+    filter_scalar_idx = LazyFastCan(
+        feature_generator=_gen_scalar_idx,
+    )
+    with pytest.raises(ValueError, match="is not a one-dimensional array"):
+        filter_scalar_idx.fit(X, y)
 
     filter_float_idx = LazyFastCan(
         feature_generator=_gen_float_idx,

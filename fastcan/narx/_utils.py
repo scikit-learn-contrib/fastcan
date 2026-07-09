@@ -144,6 +144,9 @@ def print_narx(
         "include_zero_delay": [None, "array-like"],
         "static_indices": [None, "array-like"],
         "lazy": ["boolean"],
+        "batch_size": [
+            Interval(Integral, 1, None, closed="left"),
+        ],
         "refine_verbose": ["verbose"],
         "refine_drop": [
             None,
@@ -171,6 +174,7 @@ def make_narx(
     include_zero_delay=None,
     static_indices=None,
     lazy=False,
+    batch_size=16,
     refine_verbose=1,
     refine_drop=None,
     refine_max_iter=None,
@@ -230,6 +234,12 @@ def make_narx(
         Whether to use LazyFastCan for selection. If False, FastCan will be used.
 
         .. versionadded:: 0.6.0
+
+    batch_size : int, default=16
+        The batch size of polynomial time shift terms generated at a time.
+        Only available when `lazy` is True.
+
+        .. versionadded:: 0.6.1
 
     refine_verbose : int, default=1
         The verbosity level of refine. Only available when `lazy` is False.
@@ -360,6 +370,7 @@ def make_narx(
             poly_ids=poly_ids_all,
             mode="constant",
             constant_values=0.0,
+            batch_size=batch_size,
         )
         selected_poly_ids = []
         for i in range(n_outputs):
@@ -426,7 +437,7 @@ def make_narx(
 
 
 def _gen_poly_time_shift_terms(
-    X, time_shift_ids, poly_ids, skip_indices=None, batch_size=128, **kwargs
+    X, time_shift_ids, poly_ids, skip_indices=None, batch_size=16, **kwargs
 ):
     """Generate polynomial time shift terms."""
     n_samples = X.shape[0]
@@ -438,9 +449,7 @@ def _gen_poly_time_shift_terms(
 
     for i in range(0, len(valid_indices), batch_size):
         batch_idx = valid_indices[i : i + batch_size]
-        batch_features = np.ones(
-            (n_samples, len(batch_idx)), dtype=X.dtype
-        )
+        batch_features = np.ones((n_samples, len(batch_idx)), dtype=X.dtype)
         for j, feat_id in enumerate(batch_idx):
             for var_id in poly_ids[feat_id]:
                 if var_id != -1:
