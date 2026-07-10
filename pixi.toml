@@ -56,8 +56,7 @@ prettier = "*"
 
 [feature.asv.dependencies]
 asv = "*"
-asv_runner = "<0.2.2" # https://github.com/airspeed-velocity/asv_runner/issues/52
-py-rattler = "<0.22.0"
+py-rattler = "*"
 
 [feature.jupyter.dependencies]
 notebook = "*"
