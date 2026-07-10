@@ -56,7 +56,8 @@ prettier = "*"
 
 [feature.asv.dependencies]
 asv = "*"
-py-rattler = "*"
+libmambapy = "*"
+conda-build = "*"
 
 [feature.jupyter.dependencies]
 notebook = "*"
