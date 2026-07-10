@@ -35,15 +35,15 @@ class Benchmark(ABC):
         # This is run once per combination of parameters and per repeat so we
         # need to avoid doing expensive operations there.
 
-        # WORKAROUND: https://github.com/airspeed-velocity/asv_runner/issues/52
-        if not params:
-            return
-
         self.X, self.X_val, self.y, self.y_val = self.make_data(params)
 
         est_path = get_estimator_path(self, params)
         with est_path.open(mode="rb") as f:
             self.estimator = pickle.load(f)
+
+    @abstractmethod
+    def setup_cache(self):
+        """Pickle a fitted estimator"""
 
     @abstractmethod
     def make_data(self, params):
