@@ -56,6 +56,7 @@ prettier = "*"
 
 [feature.asv.dependencies]
 asv = "*"
+py-rattler = "*"
 libmambapy = "*"
 conda-build = "*"
 
