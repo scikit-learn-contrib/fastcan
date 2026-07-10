@@ -55,9 +55,9 @@ pyodide-build = "*"
 prettier = "*"
 
 [feature.asv.dependencies]
-asv = ">=0.6.6"
-asv_runner = "*"
-py-rattler = "*"
+asv = "*"
+asv_runner = "<0.2.2" # https://github.com/airspeed-velocity/asv_runner/issues/52
+py-rattler = "<0.22.0"
 
 [feature.jupyter.dependencies]
 notebook = "*"
