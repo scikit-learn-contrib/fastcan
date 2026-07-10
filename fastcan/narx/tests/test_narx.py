@@ -590,6 +590,7 @@ def test_make_narx_lazy():
         poly_degree=poly_degree,
         session_sizes=session_sizes,
         lazy=True,
+        batch_size=5,
     ).fit(X, y)
     assert_array_equal(narx_normal.feat_ids, narx_lazy.feat_ids)
     assert_array_equal(narx_normal.delay_ids, narx_lazy.delay_ids)

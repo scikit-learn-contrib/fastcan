@@ -235,7 +235,10 @@ def test_gen_nan_feats():
         for index, id_temp in enumerate(ids):
             if index in skip_indices:
                 continue
-            yield index, make_time_shift_features(X, id_temp.reshape((1, -1))).flatten()
+            yield (
+                np.array([index], dtype=int),
+                make_time_shift_features(X, id_temp.reshape((1, -1))),
+            )
 
     n_samples = 1000
     n_features = 10
@@ -272,40 +275,47 @@ def test_lazy_errors():
     Test if LazyFastCan raises expected errors.
     """
 
-    def _gen_float_idx(X, skip_indices):
-        n_features = X.shape[1]
-        for j in range(n_features):
-            if j in skip_indices:
-                continue
-            yield float(j), X[:, j]
-
-    def _gen_neg_idx(X, skip_indices):
-        n_features = X.shape[1]
-        for j in range(n_features):
-            if j in skip_indices:
-                continue
-            yield -1, X[:, j]
-
-    def _gen_nd_feats(X, skip_indices):
+    def _gen_scalar_idx(X, skip_indices):
         n_features = X.shape[1]
         for j in range(n_features):
             if j in skip_indices:
                 continue
             yield j, X[:, [j]]
 
+    def _gen_float_idx(X, skip_indices):
+        n_features = X.shape[1]
+        for j in range(n_features):
+            if j in skip_indices:
+                continue
+            yield np.array([0], dtype=float), X[:, [j]]
+
+    def _gen_neg_idx(X, skip_indices):
+        n_features = X.shape[1]
+        for j in range(n_features):
+            if j in skip_indices:
+                continue
+            yield np.array([-1], dtype=int), X[:, [j]]
+
+    def _gen_1d_feats(X, skip_indices):
+        n_features = X.shape[1]
+        for j in range(n_features):
+            if j in skip_indices:
+                continue
+            yield np.array([j], dtype=int), X[:, j]
+
     def _gen_short_feats(X, skip_indices):
         n_features = X.shape[1]
         for j in range(n_features):
             if j in skip_indices:
                 continue
-            yield j, X[10:, j]
+            yield np.array([j], dtype=int), X[10:, [j]]
 
     def _gen_nan_feats(X, skip_indices):
         n_features = X.shape[1]
         for j in range(n_features):
             if j in skip_indices:
                 continue
-            yield j, np.r_[X[1:, j], np.nan]
+            yield np.array([j], dtype=int), np.r_[X[1:, j], np.nan].reshape(-1, 1)
 
     n_samples = 100
     n_features = 10
@@ -317,23 +327,29 @@ def test_lazy_errors():
     w = rng.normal(size=n_informative)
     y = X[:, :n_informative] @ w
 
+    filter_scalar_idx = LazyFastCan(
+        feature_generator=_gen_scalar_idx,
+    )
+    with pytest.raises(ValueError, match="is not a one-dimensional array"):
+        filter_scalar_idx.fit(X, y)
+
     filter_float_idx = LazyFastCan(
         feature_generator=_gen_float_idx,
     )
-    with pytest.raises(TypeError, match="is not an integer"):
+    with pytest.raises(TypeError, match="not an array of integers"):
         filter_float_idx.fit(X, y)
 
     filter_neg_idx = LazyFastCan(
         feature_generator=_gen_neg_idx,
     )
-    with pytest.raises(ValueError, match="is negative"):
+    with pytest.raises(ValueError, match="contains negative values"):
         filter_neg_idx.fit(X, y)
 
-    filter_nd_feats = LazyFastCan(
-        feature_generator=_gen_nd_feats,
+    filter_1d_feats = LazyFastCan(
+        feature_generator=_gen_1d_feats,
     )
-    with pytest.raises(ValueError, match="is not one-dimensional"):
-        filter_nd_feats.fit(X, y)
+    with pytest.raises(ValueError, match="is not two-dimensional"):
+        filter_1d_feats.fit(X, y)
 
     filter_short_feats = LazyFastCan(
         feature_generator=_gen_short_feats,

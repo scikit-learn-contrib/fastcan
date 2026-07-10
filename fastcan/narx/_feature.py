@@ -15,6 +15,7 @@ import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
     get_namespace_and_device,
+    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval, validate_params
@@ -27,10 +28,11 @@ from .._fastcan import _check_indices_params
         "X": ["array-like"],
         "ids": ["array-like"],
         "skip_indices": ["array-like", None],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
-def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
+def gen_time_shift_features(X, ids, skip_indices=None, batch_size=16, **kwargs):
     """Generator to make time shift features.
 
     .. versionadded:: 0.6.0
@@ -47,16 +49,21 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
     skip_indices : array-like, default=None
         Indices of features that have already been selected and can be skipped.
 
+    batch_size : int, default=16
+        Number of time shift features to generate in each batch.
+
+        .. versionadded:: 0.6.1
+
     **kwargs : dict
         Additional keyword arguments to be passed to :func:`numpy.pad`.
 
     Yields
     ------
-    index : int
-        The index of the yielded feature.
+    index : ndarray of shape (batch_size,)
+        The indices of the yielded features.
 
-    feature : ndarray of shape (n_samples,)
-        A time shift feature.
+    feature : ndarray of shape (n_samples, batch_size)
+        A batch of time shift features.
 
     Examples
     --------
@@ -64,21 +71,32 @@ def gen_time_shift_features(X, ids, skip_indices=None, **kwargs):
     >>> from fastcan.narx import gen_time_shift_features, make_time_shift_ids
     >>> ids = make_time_shift_ids(2, 1)
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> for i, feat in gen_time_shift_features(X, ids):
+    >>> for i, feat in gen_time_shift_features(X, ids, batch_size=2):
     ...     print(i, feat)
-    0 [0. 1. 3. 5.]
-    1 [0. 2. 4. 6.]
+    [0 1] [[0. 0.]
+     [1. 2.]
+     [3. 4.]
+     [5. 6.]]
     """
     xp, _, device_ = get_namespace_and_device(X)
     X = check_array(X, ensure_2d=True, dtype=supported_float_dtypes(xp, device_))
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_features = ids.shape[0]
+    skip_indices = move_to(skip_indices, xp=np, device="cpu")
     skip_indices = _check_indices_params(skip_indices, n_features)
-    skip_set = set(skip_indices.tolist())
-    for index, id_temp in enumerate(ids):
-        if index in skip_set:
-            continue
-        yield index, _make_a_time_shift_feature(X, id_temp, **kwargs)
+    valid_mask = np.ones(n_features, dtype=bool)
+    valid_mask[skip_indices] = False
+    valid_indices = np.flatnonzero(valid_mask)
+
+    for i in range(0, len(valid_indices), batch_size):
+        batch_idx = valid_indices[i : i + batch_size]
+        batch_features = [
+            _make_a_time_shift_feature(X, ids[j], **kwargs) for j in batch_idx
+        ]
+        yield (
+            move_to(batch_idx, xp=xp, device=device_),
+            xp.stack(batch_features, axis=1),
+        )
 
 
 def _make_a_time_shift_feature(X, idx, **kwargs):
@@ -224,10 +242,11 @@ def make_time_shift_ids(
         "X": ["array-like"],
         "ids": ["array-like"],
         "skip_indices": ["array-like", None],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
-def gen_poly_features(X, ids, skip_indices=None):
+def gen_poly_features(X, ids, skip_indices=None, batch_size=16):
     """Generator to make polynomial features.
 
     .. versionadded:: 0.6.0
@@ -244,13 +263,18 @@ def gen_poly_features(X, ids, skip_indices=None):
     skip_indices : array-like, default=None
         Indices of features that have already been selected and can be skipped.
 
+    batch_size : int, default=16
+        Number of polynomial features to generate in each batch.
+
+        .. versionadded:: 0.6.1
+
     Yields
     ------
-    index : int
-        The index of the yielded feature.
+    index : ndarray of shape (batch_size,)
+        The indices of the yielded features.
 
-    feature : ndarray of shape (n_samples,)
-        A polynomial feature.
+    feature : ndarray of shape (n_samples, batch_size)
+        A batch of polynomial features.
 
     Examples
     --------
@@ -258,29 +282,42 @@ def gen_poly_features(X, ids, skip_indices=None):
     >>> from fastcan.narx import gen_poly_features, make_poly_ids
     >>> ids = make_poly_ids(2, 2)
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> for i, feat in gen_poly_features(X, ids):
+    >>> for i, feat in gen_poly_features(X, ids, batch_size=2):
     ...     print(i, feat)
-    0 [1. 3. 5. 7.]
-    1 [2. 4. 6. 8.]
-    2 [ 1.  9. 25. 49.]
-    3 [ 2. 12. 30. 56.]
-    4 [ 4. 16. 36. 64.]
+    [0 1] [[1. 2.]
+     [3. 4.]
+     [5. 6.]
+     [7. 8.]]
+    [2 3] [[ 1.  2.]
+     [ 9. 12.]
+     [25. 30.]
+     [49. 56.]]
+    [4] [[ 4.]
+     [16.]
+     [36.]
+     [64.]]
     """
     xp, _, device_ = get_namespace_and_device(X)
     X = check_array(X, ensure_2d=True, dtype=supported_float_dtypes(xp, device_))
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_samples = X.shape[0]
     n_features = ids.shape[0]
+    skip_indices = move_to(skip_indices, xp=np, device="cpu")
     skip_indices = _check_indices_params(skip_indices, n_features)
-    skip_set = set(skip_indices.tolist())
-    for index, id_row in enumerate(ids):
-        if index in skip_set:
-            continue
-        feature = xp.ones(n_samples, dtype=X.dtype, device=device_)
-        for j in id_row:
-            if j != -1:
-                feature *= X[:, j]
-        yield index, feature
+    valid_mask = np.ones(n_features, dtype=bool)
+    valid_mask[skip_indices] = False
+    valid_indices = np.flatnonzero(valid_mask)
+
+    for i in range(0, len(valid_indices), batch_size):
+        batch_idx = valid_indices[i : i + batch_size]
+        batch_features = xp.ones(
+            (n_samples, len(batch_idx)), dtype=X.dtype, device=device_
+        )
+        for j, feat_id in enumerate(batch_idx):
+            for var_id in ids[feat_id]:
+                if var_id != -1:
+                    batch_features[:, j] *= X[:, var_id]
+        yield move_to(batch_idx, xp=xp, device=device_), batch_features
 
 
 @validate_params(
