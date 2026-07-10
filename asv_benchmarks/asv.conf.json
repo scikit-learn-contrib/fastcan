@@ -11,10 +11,7 @@
     "install_command": ["python -mpip install {wheel_file}"],
     "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
     "matrix": {
-        // https://github.com/airspeed-velocity/asv_runner/issues/52
-        "pip+asv_runner": ["0.2.1"],
         "scikit-learn": [""],
-        "pandas": [""],
-        "expat": [""]
+        "pandas": [""]
     }
 }
