@@ -112,7 +112,7 @@ scikit-learn = ">=1.8.0"
 fastcan = { path = ".", editable = true }
 
 [feature.array-api.dependencies]
-array-api-strict = "*"
+array-api-strict = "<2.6"
 
 [tasks]
 time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
