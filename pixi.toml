@@ -220,10 +220,10 @@ cctools = ">=1030.6.3"
 cctools = ">=1030.6.3"
 
 [feature.low.target.linux-64.dependencies]
-libstdcxx-ng = ">=13.1.0"
+libstdcxx-ng = ">=13.2.0"
 
 [feature.low.target.linux-aarch64.dependencies]
-libstdcxx-ng = ">=13.1.0"
+libstdcxx-ng = ">=13.2.0"
 
 [environments]
 default = ["build"]
