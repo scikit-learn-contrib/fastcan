@@ -208,7 +208,7 @@ pytest = ">=9.0.2"
 numpy = ">=2.1.0"
 meson = ">=1.11.1" # For win-64
 mpmath = ">=1.3.0"
-pytorch = ">=2.2.0"
+pytorch = ">=2.12.0"
 scipy = ">=1.14.0"
 array-api-strict = ">=2.3"
 
@@ -218,6 +218,12 @@ cctools = ">=1030.6.3"
 
 [feature.low.target.osx-arm64.dependencies]
 cctools = ">=1030.6.3"
+
+[feature.low.target.linux-64.dependencies]
+libstdcxx-ng = ">=13.1.0"
+
+[feature.low.target.linux-aarch64.dependencies]
+libstdcxx-ng = ">=13.1.0"
 
 [environments]
 default = ["build"]
