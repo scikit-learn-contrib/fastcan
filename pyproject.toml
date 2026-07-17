@@ -9,7 +9,7 @@ requires-python = ">=3.11"
 readme = "README.rst"
 license = { file = "LICENSE" }
 
-dependencies = ["scikit-learn>=1.8.0"]
+dependencies = ["scikit-learn>=1.9.0"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -34,7 +34,7 @@ tracker = "https://github.com/scikit-learn-contrib/fastcan/issues"
 
 [build-system]
 requires = [
-    "scikit-learn>=1.8.0",
+    "scikit-learn>=1.9.0",
     "meson-python>=0.19.0",
     "Cython>=3.2.4",
 ]

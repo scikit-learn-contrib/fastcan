@@ -1251,10 +1251,10 @@ def _validate_session_sizes(session_sizes, n_samples):
 
 
 def _prepare_poly_terms(
-    xy_hstack, time_shift_ids, poly_ids, session_sizes_cumsum, max_delay
+    xy_hstack, time_shift_ids, poly_ids, session_sizes_cumsum, max_delay, xp=np
 ):
     time_shift_vars = make_time_shift_features(xy_hstack, time_shift_ids)
     for start in session_sizes_cumsum[:-1]:
-        time_shift_vars[start : start + max_delay] = np.nan
+        time_shift_vars[start : start + max_delay] = xp.nan
     poly_terms = make_poly_features(time_shift_vars, poly_ids)
     return poly_terms

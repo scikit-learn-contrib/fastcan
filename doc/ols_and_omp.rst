@@ -1,10 +1,10 @@
-.. currentmodule:: fastcan
-
 .. _ols_omp:
 
 ===========================
 Comparison with OLS and OMP
 ===========================
+
+.. currentmodule:: fastcan
 
 :class:`FastCan` has a close relationship with Orthogonal Least Squares (OLS) [1]_
 and Orthogonal Matching Pursuit (OMP) [2]_.

@@ -2,9 +2,11 @@
 
 import numpy as np
 import pytest
+import torch
 from numpy.testing import assert_allclose, assert_almost_equal, assert_array_equal
 from sklearn.metrics import r2_score
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils._array_api import move_to
+from sklearn.utils.estimator_checks import check_estimator, config_context
 
 from fastcan.narx import (
     NARX,
@@ -20,7 +22,7 @@ from fastcan.narx import (
 from fastcan.utils import mask_missing_values
 
 
-def _make_data(multi_output, nan, rng):
+def _make_data(multi_output, nan, rng, monkeypatch, array_type="numpy"):
     if multi_output:
         n_samples = 1000
         max_delay = 3
@@ -77,6 +79,18 @@ def _make_data(multi_output, nan, rng):
 
     X = np.asfortranarray(X)
     y = np.asfortranarray(y)
+    if array_type == "pytorch":
+        monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+        device = (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.mps.is_available()
+            else "cpu"
+        )
+        torch.set_default_device(device)
+        X = torch.tensor(X, dtype=torch.float32)
+        y = torch.tensor(y, dtype=torch.float32)
     return X, y, n_outputs
 
 
@@ -108,34 +122,44 @@ def test_time_ids():
         make_time_shift_ids(3, 2, [False, True, False, True])
 
 
+@pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
 @pytest.mark.parametrize("multi_output", [False, True])
 @pytest.mark.parametrize("nan", [False, True])
-def test_narx(nan, multi_output):
+def test_narx(nan, multi_output, monkeypatch, array_type):
     """Test NARX"""
 
     rng = np.random.default_rng(12345)
-    X, y, n_outputs = _make_data(multi_output, nan, rng)
+    X, y, n_outputs = _make_data(multi_output, nan, rng, monkeypatch, array_type)
 
-    if multi_output:
-        narx_score = make_narx(
-            X,
-            y,
-            n_terms_to_select=[5, 4],
-            max_delay=3,
-            poly_degree=2,
-            verbose=0,
-        ).fit(X, y)
-    else:
-        narx_score = make_narx(
-            X,
-            y,
-            n_terms_to_select=4,
-            max_delay=3,
-            poly_degree=2,
-            verbose=0,
-        ).fit(X, y)
+    X_np = move_to(X, xp=np, device="cpu")
+    y_np = move_to(y, xp=np, device="cpu")
 
-    assert r2_score(*mask_missing_values(y, narx_score.predict(X, y_init=y))) > 0.5
+    with config_context(array_api_dispatch=(array_type == "pytorch")):
+        if multi_output:
+            narx_score = make_narx(
+                X,
+                y,
+                n_terms_to_select=[5, 4],
+                max_delay=3,
+                poly_degree=2,
+                verbose=0,
+            )
+        else:
+            narx_score = make_narx(
+                X,
+                y,
+                n_terms_to_select=4,
+                max_delay=3,
+                poly_degree=2,
+                verbose=0,
+            )
+
+    narx_score.fit(X_np, y_np)
+
+    assert (
+        r2_score(*mask_missing_values(y_np, narx_score.predict(X_np, y_init=y_np)))
+        > 0.5
+    )
 
     params: dict = {
         "n_terms_to_select": rng.integers(low=2, high=4),
@@ -143,7 +167,8 @@ def test_narx(nan, multi_output):
         "poly_degree": rng.integers(low=2, high=5),
     }
 
-    narx_default = make_narx(X=X, y=y, **params)
+    with config_context(array_api_dispatch=(array_type == "pytorch")):
+        narx_default = make_narx(X=X, y=y, **params)
 
     if multi_output:
         assert narx_default.feat_ids.shape[0] == params["n_terms_to_select"] * 2
@@ -151,7 +176,8 @@ def test_narx(nan, multi_output):
         assert narx_default.feat_ids.shape[0] == params["n_terms_to_select"]
 
     params["include_zero_delay"] = [False, True]
-    narx_0_delay = make_narx(X=X, y=y, **params)
+    with config_context(array_api_dispatch=(array_type == "pytorch")):
+        narx_0_delay = make_narx(X=X, y=y, **params)
     time_shift_ids, _ = fd2tp(narx_0_delay.feat_ids, narx_0_delay.delay_ids)
     time_ids_u0 = time_shift_ids[time_shift_ids[:, 0] == 0]
     time_ids_u1 = time_shift_ids[time_shift_ids[:, 0] == 1]
@@ -161,7 +187,8 @@ def test_narx(nan, multi_output):
     assert ~np.isin(0, time_ids_y[:, 1]) or (time_ids_y.size == 0)
 
     params["static_indices"] = [1]
-    narx_static = make_narx(X=X, y=y, **params)
+    with config_context(array_api_dispatch=(array_type == "pytorch")):
+        narx_static = make_narx(X=X, y=y, **params)
     time_shift_ids, _ = fd2tp(narx_static.feat_ids, narx_static.delay_ids)
     time_ids_u1 = time_shift_ids[time_shift_ids[:, 0] == 1]
     if time_ids_u1.size != 0:
@@ -169,11 +196,12 @@ def test_narx(nan, multi_output):
 
     params["refine_drop"] = 1
     params["refine_max_iter"] = 10
-    narx_drop = make_narx(X=X, y=y, **params)
-    narx_drop_coef = narx_drop.fit(X, y).coef_
+    with config_context(array_api_dispatch=(array_type == "pytorch")):
+        narx_drop = make_narx(X=X, y=y, **params)
+    narx_drop_coef = narx_drop.fit(X_np, y_np).coef_
 
     time_shift_ids = make_time_shift_ids(
-        X.shape[1] + n_outputs, 5, include_zero_delay=False
+        X_np.shape[1] + n_outputs, 5, include_zero_delay=False
     )
     poly_ids = make_poly_ids(time_shift_ids.shape[0], 2)
     if multi_output:
@@ -184,13 +212,13 @@ def test_narx(nan, multi_output):
         output_ids = None
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
     narx_osa = NARX(feat_ids=feat_ids, delay_ids=delay_ids, output_ids=output_ids).fit(
-        X, y
+        X_np, y_np
     )
     assert narx_osa.coef_.size == poly_ids.shape[0]
-    narx_osa_msa = narx_drop.fit(X, y, coef_init="one_step_ahead")
+    narx_osa_msa = narx_drop.fit(X_np, y_np, coef_init="one_step_ahead")
     narx_osa_msa_coef = narx_osa_msa.coef_
     narx_array_init_msa = narx_osa_msa.fit(
-        X, y, coef_init=np.zeros(narx_osa_msa_coef.size + n_outputs)
+        X_np, y_np, coef_init=np.zeros(narx_osa_msa_coef.size + n_outputs)
     )
     assert np.any(narx_array_init_msa.coef_ != narx_drop_coef)
     assert np.any(narx_osa_msa_coef != narx_array_init_msa.coef_)
@@ -199,14 +227,14 @@ def test_narx(nan, multi_output):
         y_init = np.ones((narx_array_init_msa.max_delay_, n_outputs), order="F")
     else:
         y_init = [1] * narx_array_init_msa.max_delay_
-    y_hat = narx_array_init_msa.predict(X, y_init=y_init)
+    y_hat = narx_array_init_msa.predict(X_np, y_init=y_init)
     assert_array_equal(y_hat[: narx_array_init_msa.max_delay_], y_init)
 
     with pytest.raises(ValueError, match=r"`coef_init` should have the shape of .*"):
-        narx_array_init_msa.fit(X, y, coef_init=np.zeros(narx_osa_msa_coef.size))
+        narx_array_init_msa.fit(X_np, y_np, coef_init=np.zeros(narx_osa_msa_coef.size))
 
     time_shift_ids = make_time_shift_ids(
-        X.shape[1] + n_outputs + 1, 3, include_zero_delay=False
+        X_np.shape[1] + n_outputs + 1, 3, include_zero_delay=False
     )
     poly_ids = make_poly_ids(time_shift_ids.shape[0], 2)
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
@@ -219,7 +247,7 @@ def test_narx(nan, multi_output):
     with pytest.raises(ValueError, match=r"The element x of feat_ids should satisfy.*"):
         narx_osa = NARX(
             feat_ids=feat_ids, delay_ids=delay_ids, output_ids=output_ids
-        ).fit(X, y)
+        ).fit(X_np, y_np)
 
     time_shift_ids = np.array(
         [
@@ -238,10 +266,10 @@ def test_narx(nan, multi_output):
     with pytest.raises(ValueError, match=r"The element x of delay_ids should be -1.*"):
         narx_osa = NARX(
             feat_ids=feat_ids, delay_ids=delay_ids, output_ids=output_ids
-        ).fit(X, y)
+        ).fit(X_np, y_np)
 
     time_shift_ids = make_time_shift_ids(
-        X.shape[1] + n_outputs, 3, include_zero_delay=False
+        X_np.shape[1] + n_outputs, 3, include_zero_delay=False
     )
     poly_ids = make_poly_ids(time_shift_ids.shape[0], 2)
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
@@ -254,15 +282,15 @@ def test_narx(nan, multi_output):
     ):
         narx_osa = NARX(
             feat_ids=feat_ids, delay_ids=delay_ids_shape_err, output_ids=output_ids
-        ).fit(X, y)
+        ).fit(X_np, y_np)
     delay_ids_max_err = np.copy(delay_ids)
-    delay_ids_max_err[0, 1] = X.shape[0]
+    delay_ids_max_err[0, 1] = X_np.shape[0]
     with pytest.raises(
         ValueError, match=r"The element x of delay_ids should satisfy -1.*"
     ):
         narx_osa = NARX(
             feat_ids=feat_ids, delay_ids=delay_ids_max_err, output_ids=output_ids
-        ).fit(X, y)
+        ).fit(X_np, y_np)
 
 
 def test_multi_output_warn():
@@ -566,32 +594,38 @@ def test_make_narx_refine_print(capsys):
     assert "No. of iterations: " in captured.out
 
 
-def test_make_narx_lazy():
+@pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
+def test_make_narx_lazy(array_type, monkeypatch):
     """Test lazy selection in make_narx."""
     rng = np.random.default_rng(12345)
-    X, y, _ = _make_data(False, False, rng)
+    X, y, _ = _make_data(False, False, rng, monkeypatch, array_type)
+    X_np = move_to(X, xp=np, device="cpu")
+    y_np = move_to(y, xp=np, device="cpu")
     max_delay = 3
     poly_degree = 3
     session_sizes = [200, 300, 500]
-    narx_normal = make_narx(
-        X,
-        y,
-        n_terms_to_select=3,
-        max_delay=max_delay,
-        poly_degree=poly_degree,
-        session_sizes=session_sizes,
-        lazy=False,
-    ).fit(X, y)
-    narx_lazy = make_narx(
-        X,
-        y,
-        n_terms_to_select=3,
-        max_delay=max_delay,
-        poly_degree=poly_degree,
-        session_sizes=session_sizes,
-        lazy=True,
-        batch_size=5,
-    ).fit(X, y)
+    with config_context(array_api_dispatch=(array_type == "pytorch")):
+        narx_normal = make_narx(
+            X,
+            y,
+            n_terms_to_select=3,
+            max_delay=max_delay,
+            poly_degree=poly_degree,
+            session_sizes=session_sizes,
+            lazy=False,
+        )
+        narx_lazy = make_narx(
+            X,
+            y,
+            n_terms_to_select=3,
+            max_delay=max_delay,
+            poly_degree=poly_degree,
+            session_sizes=session_sizes,
+            lazy=True,
+            batch_size=5,
+        )
+    narx_normal.fit(X_np, y_np)
+    narx_lazy.fit(X_np, y_np)
     assert_array_equal(narx_normal.feat_ids, narx_lazy.feat_ids)
     assert_array_equal(narx_normal.delay_ids, narx_lazy.delay_ids)
 

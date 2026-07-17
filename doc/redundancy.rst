@@ -1,10 +1,10 @@
-.. currentmodule:: fastcan
-
 .. _redundancy:
 
 ==================
 Feature redundancy
 ==================
+
+.. currentmodule:: fastcan
 
 :class:`FastCan` can effectively skip the linearly redundant features.
 Here a feature :math:`x_r\in \mathbb{R}^{N\times 1}` is linearly

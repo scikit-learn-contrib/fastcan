@@ -1,10 +1,10 @@
-.. currentmodule:: fastcan
-
 .. _unsupervised:
 
 ==============================
 Unsupervised feature selection
 ==============================
+
+.. currentmodule:: fastcan
 
 We can use :class:`FastCan` to do unsupervised feature selection.
 The basic idea of unsupervised feature selection is to use the learned features,

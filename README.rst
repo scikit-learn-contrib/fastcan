@@ -120,6 +120,10 @@ The WASM wheels of fastcan can be installed by
 
 📝 **Note:** The nightly wasm wheel of fastcan's dependency (i.e. scikit-learn) can be found in `Scientific Python Nightly Wheels <https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/>`_.
 
+Array API Support
+-----------------
+fastcan is actively adding support for array API compatible inputs.
+See our `Array API support status <https://fastcan.readthedocs.io/en/latest/array_api.html>`_.
 
 Citation
 --------

@@ -13,6 +13,11 @@ from sklearn.utils import (
     check_consistent_length,
     column_or_1d,
 )
+from sklearn.utils._array_api import (
+    get_namespace_and_device,
+    move_to,
+    supported_float_dtypes,
+)
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import check_is_fitted
 
@@ -301,21 +306,33 @@ def make_narx(
     |  0  | X[k-1,0]*X[k-3,0]  |  2.000   |
     |  0  |  X[k-2,0]*X[k,1]   |  1.528   |
     """
-    y = check_array(y, dtype=float, ensure_2d=False, ensure_all_finite="allow-nan")
+    xp, _, device_ = get_namespace_and_device(y)
+    y = check_array(
+        y,
+        dtype=supported_float_dtypes(xp, device_),
+        ensure_2d=False,
+        ensure_all_finite="allow-nan",
+    )
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+    n_samples, n_outputs = y.shape
+
     if X is None:
-        X = np.empty((len(y), 0), dtype=float, order="C")  # Create 0 feature input
+        xy_hstack = y
+        n_features = 0
     else:
+        X = move_to(X, xp=xp, device=device_)
         X = check_array(
             X,
-            dtype=float,
+            dtype=y.dtype,
             ensure_2d=True,
             ensure_all_finite="allow-nan",
             ensure_min_features=0,
         )
         check_consistent_length(X, y)
-    if y.ndim == 1:
-        y = y.reshape(-1, 1)
-    n_samples, n_outputs = y.shape
+        xy_hstack = xp.concat((X, y), axis=1)
+        n_features = X.shape[1]
+
     if isinstance(n_terms_to_select, Integral):
         n_terms_to_select = np.full(n_outputs, n_terms_to_select, dtype=int)
     else:
@@ -327,9 +344,6 @@ def make_narx(
                 f"{len(n_terms_to_select)}."
             )
     session_sizes_cumsum = _validate_session_sizes(session_sizes, n_samples)
-
-    xy_hstack = np.c_[X, y]
-    n_features = X.shape[1]
 
     if include_zero_delay is None:
         _include_zero_delay = [True] * n_features + [False] * n_outputs
@@ -361,7 +375,7 @@ def make_narx(
     )
 
     if lazy:
-        sample_mask = np.ones(n_samples, dtype=bool)
+        sample_mask = xp.ones(n_samples, dtype=xp.bool, device=device_)
         for start in session_sizes_cumsum[:-1]:
             sample_mask[start : start + max_delay] = False
         gen_terms = partial(
@@ -378,9 +392,10 @@ def make_narx(
                 n_features_to_select=n_terms_to_select[i],
                 feature_generator=gen_terms,
                 sample_mask=sample_mask,
-            ).fit(np.c_[X, y], y[:, i])
+            ).fit(xy_hstack, y[:, i])
             selected_ids = csf.indices_
-            selected_ids.sort()
+            selected_ids = xp.sort(selected_ids)
+            selected_ids = move_to(selected_ids, xp=np, device="cpu")
             selected_poly_ids.append(poly_ids_all[selected_ids])
     else:
         poly_terms = _prepare_poly_terms(
@@ -389,9 +404,12 @@ def make_narx(
             poly_ids_all,
             session_sizes_cumsum,
             max_delay,
+            xp=xp,
         )
         # Remove missing values
         poly_terms_masked, y_masked = mask_missing_values(poly_terms, y)
+        poly_terms_masked = move_to(poly_terms_masked, xp=np, device="cpu")
+        y_masked = move_to(y_masked, xp=np, device="cpu")
 
         selected_poly_ids = []
         for i in range(n_outputs):
@@ -440,16 +458,22 @@ def _gen_poly_time_shift_terms(
     X, time_shift_ids, poly_ids, skip_indices=None, batch_size=16, **kwargs
 ):
     """Generate polynomial time shift terms."""
+    xp, _, device_ = get_namespace_and_device(X)
     n_samples = X.shape[0]
     n_features = poly_ids.shape[0]
+    skip_indices = move_to(skip_indices, xp=np, device="cpu")
     skip_indices = _check_indices_params(skip_indices, n_features)
     valid_mask = np.ones(n_features, dtype=bool)
     valid_mask[skip_indices] = False
     valid_indices = np.flatnonzero(valid_mask)
+    valid_indices = move_to(valid_indices, xp=xp, device=device_)
 
-    for i in range(0, len(valid_indices), batch_size):
+    n_valid = valid_indices.shape[0]
+    for i in range(0, n_valid, batch_size):
         batch_idx = valid_indices[i : i + batch_size]
-        batch_features = np.ones((n_samples, len(batch_idx)), dtype=X.dtype)
+        batch_features = xp.ones(
+            (n_samples, len(batch_idx)), dtype=X.dtype, device=device_
+        )
         for j, feat_id in enumerate(batch_idx):
             for var_id in poly_ids[feat_id]:
                 if var_id != -1:
