@@ -1,10 +1,10 @@
-.. currentmodule:: fastcan
-
 .. _multioutput:
 
 ==============================
 Multioutput feature selection
 ==============================
+
+.. currentmodule:: fastcan
 
 We can use :class:`FastCan` to handle multioutput feature selection, which means
 target ``y`` can be a matrix. For regression, :class:`FastCan` can be used for

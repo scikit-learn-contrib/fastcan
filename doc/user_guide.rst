@@ -14,3 +14,4 @@ User Guide
    ols_and_omp.rst
    narx.rst
    pruning.rst
+   array_api.rst

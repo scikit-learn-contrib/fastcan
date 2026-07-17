@@ -145,14 +145,20 @@ def make_time_shift_features(X, ids, **kwargs):
            [ 5.,  3.,  4.],
            [ 7.,  5.,  6.]])
     """
-    X = check_array(X, ensure_2d=True, dtype=float, ensure_all_finite="allow-nan")
+    xp, _, device_ = get_namespace_and_device(X)
+    X = check_array(
+        X,
+        ensure_2d=True,
+        dtype=supported_float_dtypes(xp, device_),
+        ensure_all_finite="allow-nan",
+    )
     ids = check_array(ids, ensure_2d=True, dtype=int)
     if not kwargs:
-        kwargs["constant_values"] = np.nan
+        kwargs["constant_values"] = xp.nan
 
     n_samples = X.shape[0]
     n_outputs = ids.shape[0]
-    out = np.zeros([n_samples, n_outputs])
+    out = xp.zeros((n_samples, n_outputs), dtype=X.dtype, device=device_)
     for i, id_temp in enumerate(ids):
         out[:, i] = _make_a_time_shift_feature(X, id_temp, **kwargs)
 
@@ -353,13 +359,19 @@ def make_poly_features(X, ids):
            [ 1.,  5., 25.,  6.],
            [ 1.,  7., 49.,  8.]])
     """
-    X = check_array(X, ensure_2d=True, dtype=float, ensure_all_finite="allow-nan")
+    xp, _, device_ = get_namespace_and_device(X)
+    X = check_array(
+        X,
+        ensure_2d=True,
+        dtype=supported_float_dtypes(xp, device_),
+        ensure_all_finite="allow-nan",
+    )
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_samples = X.shape[0]
     n_outputs, degree = ids.shape
 
     # Generate polynomial features
-    out = np.ones([n_outputs, n_samples])
+    out = xp.ones((n_outputs, n_samples), dtype=X.dtype, device=device_)
     unique_features = np.unique(ids)
     unique_features = unique_features[unique_features != -1]
     for i in range(degree):

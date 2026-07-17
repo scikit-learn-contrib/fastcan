@@ -1,10 +1,10 @@
-.. currentmodule:: fastcan
-
 .. _pruning:
 
 ===================================================
 Dictionary learning based unsupervised data pruning
 ===================================================
+
+.. currentmodule:: fastcan
 
 Different from feature selection, which reduces the size of dataset in column-wise,
 data pruning reduces the size of dataset in row-wise.

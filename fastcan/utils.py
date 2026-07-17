@@ -10,6 +10,7 @@ from sklearn.cross_decomposition import CCA
 from sklearn.utils import _safe_indexing, check_consistent_length, check_X_y
 from sklearn.utils._array_api import get_namespace_and_device, supported_float_dtypes
 from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.validation import _num_samples
 
 __all__ = ["mask_missing_values", "ols", "ssc"]
 
@@ -167,7 +168,14 @@ def mask_missing_values(*arrays, return_mask=False):
     if len(arrays) == 0:
         return None
     check_consistent_length(*arrays)
-    mask_valid = np.all(np.isfinite(np.c_[arrays]), axis=1)
+    xp, _, device_ = get_namespace_and_device(*arrays)
+    n_samples = _num_samples(arrays[0])
+    mask_valid = xp.ones(n_samples, dtype=xp.bool, device=device_)
+    for arr in arrays:
+        arr = xp.asarray(arr)
+        mask_valid &= (
+            xp.all(xp.isfinite(arr), axis=1) if arr.ndim == 2 else xp.isfinite(arr)
+        )
     if return_mask:
         return mask_valid
     masked_arrays = [_safe_indexing(x, mask_valid) for x in arrays]

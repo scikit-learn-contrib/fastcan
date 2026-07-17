@@ -1,10 +1,10 @@
-.. currentmodule:: fastcan.narx
-
 .. _narx:
 
 =======================================================
 Reduced polynomial NARX model for system identification
 =======================================================
+
+.. currentmodule:: fastcan.narx
 
 :class:`NARX` is a class to build a reduced polynomial NARX (Nonlinear AutoRegressive eXogenous) model for system identification.
 The structure of a polynomial NARX model is shown below:

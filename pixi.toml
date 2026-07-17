@@ -9,7 +9,7 @@ platforms = [
 
 [dependencies]
 python = ">=3.11"
-scikit-learn = ">=1.8.0"
+scikit-learn = ">=1.9.0"
 
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
@@ -106,10 +106,11 @@ python = "*"
 python-freethreading = "*"
 
 [feature.nogil.pypi-dependencies]
-scikit-learn = ">=1.8.0"
+scikit-learn = ">=1.9.0"
 fastcan = { path = ".", editable = true }
 
 [feature.array-api.dependencies]
+# https://github.com/scikit-learn/scikit-learn/issues/34456
 array-api-strict = "<2.6"
 
 [tasks]
@@ -135,10 +136,14 @@ test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov
 [feature.gpu.tasks]
 test-gpu = { cmd = [
     "pytest",
-    "fastcan/tests/test_utils.py::test_sum_errs[pytorch]",
+    "-k", "pytorch or test_lazyfastcan_is_sklearn_estimator",
+
+    "fastcan/tests/test_utils.py::test_sum_errs",
     "fastcan/tests/test_lazyfastcan.py::test_lazyfastcan_is_sklearn_estimator",
-    "fastcan/tests/test_lazyfastcan.py::test_lazy_poly_selection[pytorch]",
-    "fastcan/tests/test_lazyfastcan.py::test_lazy_time_shift_selection[pytorch]",
+    "fastcan/tests/test_lazyfastcan.py::test_lazy_poly_selection",
+    "fastcan/tests/test_lazyfastcan.py::test_lazy_time_shift_selection",
+    "fastcan/narx/tests/test_narx.py::test_narx",
+    "fastcan/narx/tests/test_narx.py::test_make_narx_lazy",
 ] }
 
 [feature.rebuild.tasks]
@@ -200,10 +205,10 @@ solve-strategy = "lowest"
 
 [feature.low.dependencies]
 pytest = ">=9.0.2"
-numpy = ">=2.0.1"
+numpy = ">=2.1.0"
 meson = ">=1.11.1" # For win-64
 mpmath = ">=1.3.0"
-pytorch = ">=2.2.0"
+pytorch = ">=2.12.0"
 scipy = ">=1.14.0"
 array-api-strict = ">=2.3"
 
@@ -213,6 +218,12 @@ cctools = ">=1030.6.3"
 
 [feature.low.target.osx-arm64.dependencies]
 cctools = ">=1030.6.3"
+
+[feature.low.target.linux-64.dependencies]
+libstdcxx-ng = ">=14.1.0"
+
+[feature.low.target.linux-aarch64.dependencies]
+libstdcxx-ng = ">=14.1.0"
 
 [environments]
 default = ["build"]
