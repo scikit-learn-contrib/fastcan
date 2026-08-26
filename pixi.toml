@@ -11,6 +11,9 @@ platforms = [
 python = ">=3.11"
 scikit-learn = ">=1.9.0"
 
+[pypi-options]
+no-build-isolation = ["fastcan"]
+
 [pypi-dependencies]
 fastcan = { path = ".", editable = true }
 
