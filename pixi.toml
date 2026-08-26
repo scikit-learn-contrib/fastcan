@@ -108,6 +108,9 @@ pip = "*"
 python = "*"
 python-freethreading = "*"
 
+[feature.nogil.pypi-options]
+no-build-isolation = ["fastcan"]
+
 [feature.nogil.pypi-dependencies]
 scikit-learn = ">=1.9.0"
 fastcan = { path = ".", editable = true }
