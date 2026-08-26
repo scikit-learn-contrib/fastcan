@@ -210,7 +210,7 @@ meson = ">=1.11.1" # For win-64
 mpmath = ">=1.3.0"
 pytorch = ">=2.12.0"
 scipy = ">=1.14.0"
-array-api-strict = ">=2.3"
+array-api-strict = ">=2.5"
 
 [feature.low.target.osx-64.dependencies]
 # See: https://github.com/numpy/numpy/issues/29319
