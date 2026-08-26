@@ -24,13 +24,31 @@ from fastcan.narx import (
 
 def test_lazyfastcan_is_sklearn_estimator(monkeypatch):
     monkeypatch.setenv("SCIPY_ARRAY_API", "1")
-    if torch.mps.is_available() and torch.__version__ >= "2.12.0":
+    if torch.mps.is_available():
         monkeypatch.setenv("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
+    # TODO: Current scikit-learn (1.9.0) use api_version=2024.12
+    # Remove this monkeypatch after api_version is updated to 2025.12
+    import array_api_strict  # ty: ignore[unresolved-import]
+
+    original_set_flags = array_api_strict.set_array_api_strict_flags
+
+    def set_array_api_strict_flags(*args, **kwargs):
+        if kwargs.get("api_version") == "2024.12":
+            kwargs["api_version"] = "2025.12"
+        return original_set_flags(*args, **kwargs)
+
+    monkeypatch.setattr(
+        array_api_strict,
+        "set_array_api_strict_flags",
+        set_array_api_strict_flags,
+    )
     check_estimator(LazyFastCan())
 
 
 @pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
-def test_lazy_poly_selection(array_type, monkeypatch):
+@pytest.mark.parametrize("prerequisite", [True, False])
+def test_lazy_poly_selection(array_type, prerequisite, monkeypatch):
     """
     Test if LazyFastCan correctly selects informative polynomial features,
     and if the ssc score is aligned with the ground truth.
@@ -51,11 +69,12 @@ def test_lazy_poly_selection(array_type, monkeypatch):
     gtruth_ssc = reg.score(X_poly, y)
 
     poly_ids = make_poly_ids(n_features, degree=2)
-    feat_gen = partial(gen_poly_features, ids=poly_ids)
+    feat_gen = partial(gen_poly_features, ids=poly_ids, batch_size=1)
 
     poly_filter = LazyFastCan(
         n_features_to_select=n_polys,
         feature_generator=feat_gen,
+        indices_include=[0, 2] if prerequisite else None,
     )
     if array_type == "pytorch":
         monkeypatch.setenv("SCIPY_ARRAY_API", "1")
@@ -80,7 +99,8 @@ def test_lazy_poly_selection(array_type, monkeypatch):
 
 
 @pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
-def test_lazy_time_shift_selection(array_type, monkeypatch):
+@pytest.mark.parametrize("prerequisite", [True, False])
+def test_lazy_time_shift_selection(array_type, prerequisite, monkeypatch):
     """
     Test if LazyFastCan correctly selects informative time-shifted features,
     and if the ssc score is aligned with the ground truth.
@@ -122,6 +142,7 @@ def test_lazy_time_shift_selection(array_type, monkeypatch):
             n_features_to_select=n_time_shifts,
             feature_generator=feat_gen,
             sample_mask=sample_mask,
+            indices_include=[0, 2] if prerequisite else None,
         )
         X_torch = torch.tensor(X, dtype=torch.float32)
         y_torch = torch.tensor(y, dtype=torch.float32)
@@ -375,3 +396,17 @@ def test_lazy_errors():
     filter_mask = LazyFastCan(sample_mask=np.ones(n_samples - 1, dtype=bool))
     with pytest.raises(ValueError, match="The length of sample_mask"):
         filter_mask.fit(X, y)
+
+    filter_include = LazyFastCan(
+        n_features_to_select=n_informative, indices_include=[0, 2, n_features]
+    )
+    with pytest.raises(
+        RuntimeError, match="Not all prerequisite features can be selected"
+    ):
+        filter_include.fit(X, y)
+
+    filter_duplicate = LazyFastCan(
+        n_features_to_select=n_informative, indices_include=[0, 2, 2]
+    )
+    with pytest.raises(ValueError, match="Duplicate indices"):
+        filter_duplicate.fit(X, y)

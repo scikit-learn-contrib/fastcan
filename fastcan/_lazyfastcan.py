@@ -7,7 +7,6 @@ Lazy FastCan selector.
 
 from numbers import Integral, Real
 
-import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
@@ -38,19 +37,21 @@ def _classical_gram_schmidt(x, W, xp):
     return q / norm_safe
 
 
+def _skip2valid(skip_indices, n_features, xp, device):
+    """Convert skip_indices to valid_indices for feature generators."""
+    skip_indices = move_to(skip_indices, xp=xp, device=device)
+    skip_indices = _check_indices_params(skip_indices, n_features, xp=xp, device=device)
+    all_indices = xp.arange(n_features, dtype=xp.int64, device=device)
+    skip_mask = xp.isin(all_indices, skip_indices)
+    valid_indices = all_indices[~skip_mask]
+    return valid_indices
+
+
 def _default_feature_generator(X, skip_indices, batch_size=16):
     """Default feature generator that yields batches of columns from X."""
     xp, _, device_ = get_namespace_and_device(X)
     n_features = X.shape[1]
-    skip_indices = move_to(skip_indices, xp=np, device="cpu")
-    skip_indices = _check_indices_params(skip_indices, n_features)
-
-    valid_mask = np.ones(n_features, dtype=bool)
-    valid_mask[skip_indices] = False
-
-    # 2. Extract all valid indices at once
-    valid_indices = np.flatnonzero(valid_mask)
-    valid_indices = move_to(valid_indices, xp=xp, device=device_)
+    valid_indices = _skip2valid(skip_indices, n_features, xp=xp, device=device_)
 
     n_valid = valid_indices.shape[0]
     for i in range(0, n_valid, batch_size):
@@ -108,6 +109,9 @@ class LazyFastCan(BaseEstimator):
     sample_mask : ndarray of shape (n_samples,), default=None
         Bool mask for valid samples.
 
+    indices_include : array-like of shape (n_inclusions,), default=None
+        The indices of the prerequisite features.
+
     tol : float, default=1e-6
         Tolerance for linear dependence check.
         The classical Gram-Schmidt fails when abs(x.T @ W) > `tol`.
@@ -121,6 +125,9 @@ class LazyFastCan(BaseEstimator):
     scores_ : ndarray of shape (n_features_to_select,), dtype=float
         The h-correlation scores of selected features. The order of
         the scores is corresponding to the feature selection process.
+
+    indices_include_ : ndarray of shape (n_inclusions,), dtype=int
+        The indices of the prerequisite features.
 
 
     Examples
@@ -141,6 +148,7 @@ class LazyFastCan(BaseEstimator):
         ],
         "feature_generator": [callable, None],
         "sample_mask": ["array-like", None],
+        "indices_include": [None, "array-like"],
         "tol": [Interval(Real, 0, None, closed="neither")],
     }
 
@@ -149,11 +157,13 @@ class LazyFastCan(BaseEstimator):
         n_features_to_select=1,
         feature_generator=None,
         sample_mask=None,
+        indices_include=None,
         tol=1e-6,
     ):
         self.n_features_to_select = n_features_to_select
         self.feature_generator = feature_generator
         self.sample_mask = sample_mask
+        self.indices_include = indices_include
         self.tol = tol
 
     def fit(self, X, y):
@@ -173,6 +183,11 @@ class LazyFastCan(BaseEstimator):
                     f"The length of sample_mask {sample_mask.shape[0]} does not match "
                     f"the number of samples {n_samples}."
                 )
+        # Not checking n_features related error, as n_features is unknown in lazy mode
+        self.indices_include_ = _check_indices_params(
+            self.indices_include, xp=xp, device=device_
+        )
+        indices_include = xp.asarray(self.indices_include_, copy=True)
         y_masked = y[sample_mask]
         y_transformed, _ = xp.linalg.qr(
             y_masked - xp.mean(y_masked, axis=0), mode="reduced"
@@ -199,6 +214,18 @@ class LazyFastCan(BaseEstimator):
                 max_feat_idx = xp.maximum(max_feat_idx, xp.max(id_batch))
                 feat_centered = feat_batch - xp.mean(feat_batch, axis=0)
                 feat_orth = _classical_gram_schmidt(feat_centered, W[:, :i], xp)
+                include_support = xp.isin(indices_include, id_batch)
+                if xp.any(include_support):
+                    include_index = xp.nonzero(include_support)[0][
+                        0
+                    ]  # Get the 1st index
+                    best_index = indices_include[include_index].item()
+                    batch_index = xp.nonzero(id_batch == best_index)[0][0]
+                    best_feat = feat_orth[:, batch_index]
+                    r_include = best_feat.T @ y_transformed
+                    best_score = xp.sum(r_include**2)
+                    indices_include[include_index] = -1  # Mark as used
+                    break
                 # Linear dependence check
                 if i > 0:
                     g = feat_orth.T @ W[:, :i]
@@ -238,6 +265,11 @@ class LazyFastCan(BaseEstimator):
         self.indices_ = move_to(indices, xp=xp, device=device_)
         self.scores_ = scores
         self.n_features_ = max_feat_idx + 1
+        if not xp.all(indices_include == -1):
+            raise RuntimeError(
+                "Not all prerequisite features can be selected. "
+                f"Remaining indices: {indices_include[indices_include != -1]}"
+            )
         return self
 
     def __sklearn_tags__(self):

@@ -22,12 +22,11 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.validation import check_is_fitted
 
 from .._fastcan import FastCan
-from .._lazyfastcan import LazyFastCan
+from .._lazyfastcan import LazyFastCan, _skip2valid
 from .._refine import refine
 from ..utils import mask_missing_values
 from ._base import NARX, _prepare_poly_terms, _validate_session_sizes
 from ._feature import (
-    _check_indices_params,
     _make_a_time_shift_feature,
     make_poly_ids,
     make_time_shift_ids,
@@ -461,12 +460,7 @@ def _gen_poly_time_shift_terms(
     xp, _, device_ = get_namespace_and_device(X)
     n_samples = X.shape[0]
     n_features = poly_ids.shape[0]
-    skip_indices = move_to(skip_indices, xp=np, device="cpu")
-    skip_indices = _check_indices_params(skip_indices, n_features)
-    valid_mask = np.ones(n_features, dtype=bool)
-    valid_mask[skip_indices] = False
-    valid_indices = np.flatnonzero(valid_mask)
-    valid_indices = move_to(valid_indices, xp=xp, device=device_)
+    valid_indices = _skip2valid(skip_indices, n_features, xp=xp, device=device_)
 
     n_valid = valid_indices.shape[0]
     for i in range(0, n_valid, batch_size):

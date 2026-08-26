@@ -15,12 +15,11 @@ import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
     get_namespace_and_device,
-    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval, validate_params
 
-from .._fastcan import _check_indices_params
+from .._lazyfastcan import _skip2valid
 
 
 @validate_params(
@@ -82,21 +81,14 @@ def gen_time_shift_features(X, ids, skip_indices=None, batch_size=16, **kwargs):
     X = check_array(X, ensure_2d=True, dtype=supported_float_dtypes(xp, device_))
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_features = ids.shape[0]
-    skip_indices = move_to(skip_indices, xp=np, device="cpu")
-    skip_indices = _check_indices_params(skip_indices, n_features)
-    valid_mask = np.ones(n_features, dtype=bool)
-    valid_mask[skip_indices] = False
-    valid_indices = np.flatnonzero(valid_mask)
+    valid_indices = _skip2valid(skip_indices, n_features, xp=xp, device=device_)
 
     for i in range(0, len(valid_indices), batch_size):
         batch_idx = valid_indices[i : i + batch_size]
         batch_features = [
             _make_a_time_shift_feature(X, ids[j], **kwargs) for j in batch_idx
         ]
-        yield (
-            move_to(batch_idx, xp=xp, device=device_),
-            xp.stack(batch_features, axis=1),
-        )
+        yield batch_idx, xp.stack(batch_features, axis=1)
 
 
 def _make_a_time_shift_feature(X, idx, **kwargs):
@@ -308,11 +300,7 @@ def gen_poly_features(X, ids, skip_indices=None, batch_size=16):
     ids = check_array(ids, ensure_2d=True, dtype=int)
     n_samples = X.shape[0]
     n_features = ids.shape[0]
-    skip_indices = move_to(skip_indices, xp=np, device="cpu")
-    skip_indices = _check_indices_params(skip_indices, n_features)
-    valid_mask = np.ones(n_features, dtype=bool)
-    valid_mask[skip_indices] = False
-    valid_indices = np.flatnonzero(valid_mask)
+    valid_indices = _skip2valid(skip_indices, n_features, xp=xp, device=device_)
 
     for i in range(0, len(valid_indices), batch_size):
         batch_idx = valid_indices[i : i + batch_size]
@@ -323,7 +311,7 @@ def gen_poly_features(X, ids, skip_indices=None, batch_size=16):
             for var_id in ids[feat_id]:
                 if var_id != -1:
                     batch_features[:, j] *= X[:, var_id]
-        yield move_to(batch_idx, xp=xp, device=device_), batch_features
+        yield batch_idx, batch_features
 
 
 @validate_params(

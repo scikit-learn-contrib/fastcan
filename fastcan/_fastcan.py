@@ -310,33 +310,46 @@ def _check_X_y(estimator, X, y, order=None, dtype=float, xp=np):
     return X, y
 
 
-def _check_indices_params(indices_params, n_features):
+def _check_indices_params(indices_params, n_features=None, xp=np, device="cpu"):
     """Check indices_include or indices_exclude."""
     if indices_params is None:
-        indices_params = np.zeros(0, dtype=int)
+        indices_params = xp.zeros(0, dtype=xp.int64, device=device)
     else:
-        indices_params = check_array(
-            indices_params,
-            ensure_2d=False,
-            dtype=int,
-            ensure_min_samples=0,
+        indices_params = xp.asarray(
+            indices_params, dtype=xp.int64, device=device, copy=True
         )
+
+    indices_params = check_array(
+        indices_params,
+        ensure_2d=False,
+        dtype=xp.int64,
+        ensure_min_samples=0,
+    )
 
     if indices_params.ndim != 1:
         raise ValueError(
             f"Found indices_params with dim {indices_params.ndim}, but expected == 1."
         )
 
-    if indices_params.size >= n_features:
+    if (n_features is not None) and (indices_params.shape[0] >= n_features):
         raise ValueError(
-            f"The number of indices in indices_params {indices_params.size} must "
+            f"The number of indices in indices_params {indices_params.shape[0]} must "
             f"be < n_features {n_features}."
         )
 
-    if np.any((indices_params < 0) | (indices_params >= n_features)):
+    if xp.any(indices_params < 0) or (
+        (n_features is not None) and xp.any(indices_params >= n_features)
+    ):
         raise ValueError(
             "Out of bounds. "
             f"All items in indices_params should be in [0, {n_features}). "
+            f"But got indices_params = {indices_params}."
+        )
+
+    if xp.unique_values(indices_params).shape[0] != indices_params.shape[0]:
+        raise ValueError(
+            "Duplicate indices. "
+            f"All items in indices_params should be unique. "
             f"But got indices_params = {indices_params}."
         )
     return indices_params
