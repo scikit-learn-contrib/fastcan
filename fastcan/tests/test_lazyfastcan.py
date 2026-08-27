@@ -45,6 +45,49 @@ def test_lazyfastcan_is_sklearn_estimator(monkeypatch):
     )
     check_estimator(LazyFastCan())
 
+@pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
+def test_lazy_include(array_type, monkeypatch):
+    """
+    Test if LazyFastCan correctly selects prerequisite features.
+    """
+    rng = np.random.default_rng(42)
+    n_samples = 200
+    n_features = 20
+    n_informative = 10
+    n_terms = 6
+    n_include = 3
+    X = rng.normal(size=(n_samples, n_features))
+
+    w = rng.normal(size=n_informative)
+    e = rng.normal(scale=0.01, size=n_samples)
+    y = X[:, :n_informative] @ w + e
+
+    for _ in range(5):
+        indices_include = rng.choice(n_informative, size=n_include, replace=False)
+        lfc = LazyFastCan(
+            n_features_to_select=n_terms,
+            indices_include=indices_include,
+        )
+        if array_type == "pytorch":
+            monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+            device = (
+                "cuda"
+                if torch.cuda.is_available()
+                else "mps"
+                if torch.mps.is_available()
+                else "cpu"
+            )
+            torch.set_default_device(device)
+            X_torch = torch.tensor(X, dtype=torch.float32)
+            y_torch = torch.tensor(y, dtype=torch.float32)
+
+            with config_context(array_api_dispatch=True):
+                lfc.fit(X_torch, y_torch)
+                indices = lfc.indices_.cpu().numpy()
+        else:
+            lfc.fit(X, y)
+            indices = lfc.indices_
+        assert set(indices_include).issubset(set(indices))
 
 @pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
 @pytest.mark.parametrize("prerequisite", [True, False])
