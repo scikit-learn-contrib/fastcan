@@ -93,9 +93,11 @@ def gen_time_shift_features(X, ids, skip_indices=None, batch_size=16, **kwargs):
 
 def _make_a_time_shift_feature(X, idx, **kwargs):
     """Make a time shift feature."""
+    feat_id = int(idx[0])
+    delay = int(idx[1])
     return xpx.pad(
-        X[: -idx[1] or None, idx[0]],
-        (idx[1], 0),
+        X[: -delay or None, feat_id],
+        (delay, 0),
         **kwargs,
     )
 

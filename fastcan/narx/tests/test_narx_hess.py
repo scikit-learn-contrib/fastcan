@@ -57,7 +57,7 @@ def _hessian_wrapper(
     jac_term_ids = combined_term_ids[n_terms : n_terms + n_jac]
     hess_term_ids = combined_term_ids[n_terms + n_jac :]
 
-    max_delay = int(delay_ids.max())
+    max_delay = int(np.max(delay_ids))
     n_outputs = y.shape[1]
     if fit_intercept:
         y_ids = np.asarray(
@@ -644,15 +644,15 @@ def test_symbolic_hess(seed):
 
     def normalize_term(term):
         norm_tuples = [normalize_tuple(t) for t in term]
-        norm_tuples.sort(key=lambda x: str(x))
+        norm_tuples.sort(key=str)
         return tuple(norm_tuples)
 
     rng = np.random.default_rng(seed)
-    n_features = rng.integers(1, 11)  # (1, 10)
-    n_outputs = rng.integers(1, 6)  # (1, 5)
-    max_delay = rng.integers(1, 11)  # (1, 10)
-    n_degress = rng.integers(1, 6)  # (1, 5)
-    n_terms = n_outputs + rng.integers(1, 11)  # (1, 10)
+    n_features = rng.integers(1, 11, dtype=int)  # (1, 10)
+    n_outputs = rng.integers(1, 6, dtype=int)  # (1, 5)
+    max_delay = rng.integers(1, 11, dtype=int)  # (1, 10)
+    n_degress = rng.integers(1, 6, dtype=int)  # (1, 5)
+    n_terms = n_outputs + rng.integers(1, 11, dtype=int)  # (1, 10)
 
     n_in_out_1 = n_features + n_outputs - 1
 

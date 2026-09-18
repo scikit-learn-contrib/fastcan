@@ -222,7 +222,7 @@ class LazyFastCan(BaseEstimator):
                     best_index = indices_include[include_index].item()
                     batch_index = xp.nonzero(id_batch == best_index)[0][0]
                     best_feat = feat_orth[:, batch_index]
-                    r_include = best_feat.T @ y_transformed
+                    r_include = best_feat @ y_transformed
                     best_score = xp.sum(r_include**2)
                     indices_include[include_index] = -1  # Mark as used
                     break
