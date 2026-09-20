@@ -45,7 +45,7 @@ jobs:
           matrix.os == 'macos-latest' ||
           matrix.os == 'windows-11-arm'
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.1.0
+        uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_SKIP: "*_i686 *_ppc64le *_s390x *_universal2 *-musllinux_*"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.11"
