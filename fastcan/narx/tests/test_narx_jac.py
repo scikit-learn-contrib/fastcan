@@ -42,7 +42,7 @@ def _derivative_wrapper(
     jac_term_ids = combined_term_ids[n_terms : n_terms + n_jac]
     hess_term_ids = combined_term_ids[n_terms + n_jac :]
 
-    max_delay = int(delay_ids.max())
+    max_delay = int(np.max(delay_ids))
     n_outputs = y.shape[1]
     if fit_intercept:
         y_ids = np.asarray(
@@ -104,7 +104,7 @@ def test_simple():
     intercept = np.array([1], dtype=float)
     sample_weight = np.array([1, 1, 1, 1], dtype=float).reshape(-1, 1)
 
-    max_delay = int(delay_ids.max())
+    max_delay = int(np.max(delay_ids))
 
     y_hat = np.zeros_like(y, dtype=float)
     _predict(

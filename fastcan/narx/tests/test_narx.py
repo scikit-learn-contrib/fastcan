@@ -347,8 +347,8 @@ def test_fit_intercept():
     narx.fit(X, y, coef_init="one_step_ahead")
     assert_almost_equal(narx.intercept_, 0.0)
 
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 2)
+    X = rng.random((10, 2))
+    y = rng.random((10, 2))
     time_shift_ids = np.array([[0, 1], [1, 1]])
     poly_ids = np.array([[0, 0], [1, 1]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
@@ -380,38 +380,38 @@ def test_multi_output_error():
     poly_ids = np.array([[0, 0], [1, 1]])
     feat_ids, delay_ids = tp2fd(time_shift_ids, poly_ids)
 
+    narx = NARX(
+        feat_ids=feat_ids,
+        delay_ids=delay_ids,
+        output_ids=[0],
+    )
     with pytest.raises(ValueError, match="The length of output_ids should"):
-        narx = NARX(
-            feat_ids=feat_ids,
-            delay_ids=delay_ids,
-            output_ids=[0],
-        )
         narx.fit(X, y)
 
+    narx = NARX(
+        feat_ids=feat_ids,
+        delay_ids=delay_ids,
+        output_ids=[0, 2],
+    )
     with pytest.raises(
         ValueError, match=r"The element x of output_ids should satisfy 0 <=.*"
     ):
-        narx = NARX(
-            feat_ids=feat_ids,
-            delay_ids=delay_ids,
-            output_ids=[0, 2],
-        )
         narx.fit(X, y)
 
     with pytest.raises(ValueError, match="The length of `n_terms_to_select` should"):
         make_narx(X=X, y=y, n_terms_to_select=[2], max_delay=3, poly_degree=2)
 
+    narx = make_narx(X=X, y=y, n_terms_to_select=[2, 2], max_delay=3, poly_degree=2)
+    narx.fit(X, y)
     with pytest.raises(ValueError, match="`y_init` should have "):
-        narx = make_narx(X=X, y=y, n_terms_to_select=[2, 2], max_delay=3, poly_degree=2)
-        narx.fit(X, y)
         narx.predict(X, y_init=[1, 1, 1])
 
+    narx = NARX(
+        feat_ids=np.array([[0, 1], [-1, -1]]),
+        delay_ids=np.array([[0, 1], [-1, -1]]),
+        output_ids=[0, 1],
+    )
     with pytest.raises(ValueError, match=r"`feat_ids` should not contain rows that.*"):
-        narx = NARX(
-            feat_ids=np.array([[0, 1], [-1, -1]]),
-            delay_ids=np.array([[0, 1], [-1, -1]]),
-            output_ids=[0, 1],
-        )
         narx.fit(X, y)
 
 
@@ -817,18 +817,20 @@ def test_session_sizes():
             verbose=0,
             session_sizes=[10, 20],
         )
+
+    model = make_narx(
+        X,
+        y,
+        n_terms_to_select=5,
+        max_delay=3,
+        poly_degree=2,
+        verbose=0,
+    )
     with pytest.raises(
         ValueError, match=r"All elements of session_sizes should be positive.*"
     ):
-        model = make_narx(
-            X,
-            y,
-            n_terms_to_select=5,
-            max_delay=3,
-            poly_degree=2,
-            verbose=0,
-        )
         model.fit(X, y, session_sizes=[-10, 110])
+
     model = make_narx(
         X,
         y,

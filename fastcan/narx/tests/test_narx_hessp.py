@@ -14,11 +14,11 @@ def test_random(seed):
     rng = np.random.default_rng(seed)
 
     # Random configuration generation
-    n_features = rng.integers(1, 11)  # (1, 10)
-    n_outputs = rng.integers(1, 6)  # (1, 5)
-    max_delay = rng.integers(1, 11)  # (1, 10)
-    n_degrees = rng.integers(1, 6)  # (1, 5)
-    n_terms = n_outputs + rng.integers(1, 11)  # (1, 10)
+    n_features = rng.integers(1, 11, dtype=int)  # (1, 10)
+    n_outputs = rng.integers(1, 6, dtype=int)  # (1, 5)
+    max_delay = rng.integers(1, 11, dtype=int)  # (1, 10)
+    n_degrees = rng.integers(1, 6, dtype=int)  # (1, 5)
+    n_terms = n_outputs + rng.integers(1, 11, dtype=int)  # (1, 10)
 
     n_in_out_1 = n_features + n_outputs - 1
 

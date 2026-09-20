@@ -27,23 +27,8 @@ def test_lazyfastcan_is_sklearn_estimator(monkeypatch):
     if torch.mps.is_available():
         monkeypatch.setenv("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
-    # TODO: Current scikit-learn (1.9.0) use api_version=2024.12
-    # Remove this monkeypatch after api_version is updated to 2025.12
-    import array_api_strict  # ty: ignore[unresolved-import]
-
-    original_set_flags = array_api_strict.set_array_api_strict_flags
-
-    def set_array_api_strict_flags(*args, **kwargs):
-        if kwargs.get("api_version") == "2024.12":
-            kwargs["api_version"] = "2025.12"
-        return original_set_flags(*args, **kwargs)
-
-    monkeypatch.setattr(
-        array_api_strict,
-        "set_array_api_strict_flags",
-        set_array_api_strict_flags,
-    )
     check_estimator(LazyFastCan())
+
 
 @pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
 def test_lazy_include(array_type, monkeypatch):
@@ -88,6 +73,7 @@ def test_lazy_include(array_type, monkeypatch):
             lfc.fit(X, y)
             indices = lfc.indices_
         assert set(indices_include).issubset(set(indices))
+
 
 @pytest.mark.parametrize("array_type", ["numpy", "pytorch"])
 @pytest.mark.parametrize("prerequisite", [True, False])
