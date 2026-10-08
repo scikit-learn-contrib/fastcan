@@ -1,10 +1,14 @@
 [workspace]
 channels = ["conda-forge"]
 platforms = [
-    "win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64",
-    { name = "linux-64-cuda", platform = "linux-64", cuda = "12.1" },
-    { name = "linux-aarch64-cuda", platform = "linux-aarch64", cuda = "12.1" },
-    { name = "win-64-cuda", platform = "win-64", cuda = "12.1" }
+  "win-64",
+  "linux-64",
+  "osx-64",
+  "osx-arm64",
+  "linux-aarch64",
+  { name = "linux-64-cuda", platform = "linux-64", cuda = "12.1" },
+  { name = "linux-aarch64-cuda", platform = "linux-aarch64", cuda = "12.1" },
+  { name = "win-64-cuda", platform = "win-64", cuda = "12.1" },
 ]
 
 [dependencies]
@@ -37,7 +41,7 @@ sphinx-design = "*"
 sphinxcontrib-plantuml = "*"
 jupyterlite-sphinx = "*"
 jupyterlite-xeus = "*"
-pip = "*" # Required by xeus environment creation
+pip = "*"                    # Required by xeus environment creation
 graphviz = "*"
 
 [feature.docs.target.win-64.dependencies]
@@ -77,7 +81,7 @@ pytorch = ">=2.12.0"
 platforms = ["linux-64-cuda", "linux-aarch64-cuda", "win-64-cuda"]
 
 [feature.gpu.target.win-64-cuda.dependencies]
-cupy ="*"
+cupy = "*"
 pytorch-gpu = "*"
 
 [feature.gpu.target.linux-64-cuda.dependencies]
@@ -95,9 +99,9 @@ cython-lint = "*"
 ty = "*"
 codespell = "*"
 scikit-learn = "*" # for ty
-pytest = "*" # for ty
-sympy = "*" # for ty
-pytorch = "*" # for ty
+pytest = "*"       # for ty
+sympy = "*"        # for ty
+pytorch = "*"      # for ty
 
 
 [feature.rebuild.dependencies]
@@ -116,40 +120,52 @@ scikit-learn = ">=1.9.1"
 fastcan = { path = ".", editable = true }
 
 [feature.array-api.dependencies]
-# https://github.com/scikit-learn/scikit-learn/issues/34456
-array-api-strict = "<2.6"
+array-api-strict = "*"
 
 [tasks]
 time-h = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, verbose=0).fit(X, y)'"
 time-eta = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(30000, 100); y = np.random.rand(30000, 20)' 's = FastCan(100, eta=True, verbose=0).fit(X, y)'"
-profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "cumtime" }] }
+profile-minibatch = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan import minibatch; X = np.random.rand(100, 3000); y = np.random.rand(100, 20); cProfile.run('minibatch(X, y, 1000, 10, verbose=0)', sort='{{ SORT }}')"''', args = [
+  { arg = "SORT", default = "cumtime" },
+] }
 time-narx = '''python -m timeit -n 1 -s "import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(5); X = rng.random((1000, 10)); y = rng.random((1000, 2)); m = make_narx(X, y, 10, max_delay=2, poly_degree=2, verbose=0)" "m.fit(X, y, coef_init='one_step_ahead', verbose=1)"'''
-profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='{{ SORT }}')"''', args = [{ arg = "SORT", default = "tottime" }] }
+profile-narx = { cmd = '''python -c "import cProfile; import numpy as np; from fastcan.narx import make_narx; rng = np.random.default_rng(8); X = rng.random((3000, 3)); y = rng.random((3000, 3)); m = make_narx(X, y, 10, max_delay=10, poly_degree=2, verbose=0); cProfile.run('m.fit(X, y, coef_init=[0]*33)', sort='{{ SORT }}')"''', args = [
+  { arg = "SORT", default = "tottime" },
+] }
 time-beam = "python -m timeit -n 5 -s 'import numpy as np; from fastcan import FastCan; X = np.random.rand(3000, 100); y = np.random.rand(3000, 20)' 's = FastCan(20, beam_width=10, verbose=0).fit(X, y)'"
 mem-fastcan = '''python -c "import tracemalloc, numpy as np; from fastcan import FastCan; from fastcan.narx import make_poly_ids, make_poly_features; rng = np.random.default_rng(42); X = rng.random((1000, 10)); y = rng.random((1000, 2)); ids = make_poly_ids(10, degree=3); X_poly = make_poly_features(X, ids); tracemalloc.start(); FastCan(10, verbose=0).fit(X_poly, y); print(f'FastCan Peak: {tracemalloc.get_traced_memory()[1] / 10**6:.2f} MB'); tracemalloc.stop()"'''
 mem-lazy = '''python -c "import tracemalloc, numpy as np; from fastcan import LazyFastCan; from fastcan.narx import make_poly_ids, gen_poly_features; from functools import partial; rng = np.random.default_rng(42); X = rng.random((1000, 10)); y = rng.random((1000, 2)); ids = make_poly_ids(10, degree=3); gen = partial(gen_poly_features, ids=ids); tracemalloc.start(); LazyFastCan(10, feature_generator=gen).fit(X, y); print(f'LazyFastCan Peak: {tracemalloc.get_traced_memory()[1] / 10**6:.2f} MB'); tracemalloc.stop()"'''
 time-lazy = '''python -c "import time, numpy as np; from fastcan import LazyFastCan; from fastcan.narx import make_poly_ids, gen_poly_features; from functools import partial; rng = np.random.default_rng(42); X = rng.random((5000, 20)); y = rng.random((5000, 2)); ids = make_poly_ids(20, degree=3); [print(f'Batch size {bs}: {time.perf_counter() - t0:.4f}s') for bs in [1, 8, 16, 32] for gen in [partial(gen_poly_features, ids=ids, batch_size=bs)] for t0 in [time.perf_counter()] for _ in [LazyFastCan(20, feature_generator=gen).fit(X, y)]]"'''
 
 [feature.asv.tasks]
-asv-build = { cmd = "python -m asv machine --machine {{ MACHINE }} --yes && python -m asv run --show-stderr -v --machine {{ MACHINE }} {{ EXTRA_ARGS }}", cwd = "asv_benchmarks", args = [{ arg = "MACHINE", default = "MacOS-M1" }, { arg = "EXTRA_ARGS", default = "" }] }
+asv-build = { cmd = "python -m asv machine --machine {{ MACHINE }} --yes && python -m asv run --show-stderr -v --machine {{ MACHINE }} {{ EXTRA_ARGS }}", cwd = "asv_benchmarks", args = [
+  { arg = "MACHINE", default = "MacOS-M1" },
+  { arg = "EXTRA_ARGS", default = "" },
+] }
 asv-publish = { cmd = "python -m asv publish", cwd = "asv_benchmarks" }
-asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = ["asv-publish"] }
+asv-preview = { cmd = "python -m asv preview", cwd = "asv_benchmarks", depends-on = [
+  "asv-publish",
+] }
 
 [feature.test.tasks]
 test = "pytest"
-test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [{ arg = "FMT", default = "html" }, { arg = "PACKAGE", default = "fastcan" }] }
+test-coverage = { cmd = "rm -rf .coverage && pytest --cov-report {{ FMT }} --cov={{ PACKAGE }}", args = [
+  { arg = "FMT", default = "html" },
+  { arg = "PACKAGE", default = "fastcan" },
+] }
 
 [feature.gpu.tasks]
 test-gpu = { cmd = [
-    "pytest",
-    "-k", "pytorch or test_lazyfastcan_is_sklearn_estimator",
+  "pytest",
+  "-k",
+  "pytorch or test_lazyfastcan_is_sklearn_estimator",
 
-    "fastcan/tests/test_utils.py::test_sum_errs",
-    "fastcan/tests/test_lazyfastcan.py::test_lazyfastcan_is_sklearn_estimator",
-    "fastcan/tests/test_lazyfastcan.py::test_lazy_poly_selection",
-    "fastcan/tests/test_lazyfastcan.py::test_lazy_time_shift_selection",
-    "fastcan/narx/tests/test_narx.py::test_narx",
-    "fastcan/narx/tests/test_narx.py::test_make_narx_lazy",
+  "fastcan/tests/test_utils.py::test_sum_errs",
+  "fastcan/tests/test_lazyfastcan.py::test_lazyfastcan_is_sklearn_estimator",
+  "fastcan/tests/test_lazyfastcan.py::test_lazy_poly_selection",
+  "fastcan/tests/test_lazyfastcan.py::test_lazy_time_shift_selection",
+  "fastcan/narx/tests/test_narx.py::test_narx",
+  "fastcan/narx/tests/test_narx.py::test_make_narx_lazy",
 ] }
 
 [feature.rebuild.tasks]
@@ -178,15 +194,29 @@ type = { cmd = "ty check .", cwd = "fastcan" }
 spell = "codespell fastcan"
 
 [feature.docs.tasks]
-doc-build = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [{ arg = "SPHINXBUILD", default = "sphinx-build" }, { arg = "CMD", default = "html" }, { arg = "SOURCEDIR", default = "." }, { arg = "BUILDDIR", default = "_build" }, { arg = "SPHINXOPTS", default = "" }] }
-doc-clean = { cmd = "rm -rf {{ BUILDDIR }} generated auto_examples jupyterlite_contents .jupyterlite.doit.db _contents _output .cache", cwd = "doc", args = [{ arg = "BUILDDIR", default = "_build" }] }
-doc-deploy = { cmd = "python -m http.server" , cwd = "doc/_build/html" }
-doc-plantuml = { cmd = "plantuml {{ FORMAT }} {{ SOURCE }} -o {{ OUTPUT }}", cwd = "doc", args = [{ arg = "FORMAT", default = "-tsvg" }, { arg = "SOURCE", default = "diagram.puml" }, { arg = "OUTPUT", default = "_build" }] }
+doc-build = { cmd = "{{ SPHINXBUILD }} -M {{ CMD }} {{ SOURCEDIR }} {{ BUILDDIR }} {{ SPHINXOPTS }} --fail-on-warning", cwd = "doc", args = [
+  { arg = "SPHINXBUILD", default = "sphinx-build" },
+  { arg = "CMD", default = "html" },
+  { arg = "SOURCEDIR", default = "." },
+  { arg = "BUILDDIR", default = "_build" },
+  { arg = "SPHINXOPTS", default = "" },
+] }
+doc-clean = { cmd = "rm -rf {{ BUILDDIR }} generated auto_examples jupyterlite_contents .jupyterlite.doit.db _contents _output .cache", cwd = "doc", args = [
+  { arg = "BUILDDIR", default = "_build" },
+] }
+doc-deploy = { cmd = "python -m http.server", cwd = "doc/_build/html" }
+doc-plantuml = { cmd = "plantuml {{ FORMAT }} {{ SOURCE }} -o {{ OUTPUT }}", cwd = "doc", args = [
+  { arg = "FORMAT", default = "-tsvg" },
+  { arg = "SOURCE", default = "diagram.puml" },
+  { arg = "OUTPUT", default = "_build" },
+] }
 # The setting (pixi config set --local run-post-link-scripts insecure) is required before install the environment,
 # otherwise graphviz will not generate its plugin config. See:
 # https://github.com/prefix-dev/pixi/blob/8aad97b5ac6482cdf0d3167fdaf0cb26328cc9c4/CHANGELOG.md?plain=1#L899
 doc-plantuml-test = "plantuml -testdot"
-doc-jupyterlite-debug = { cmd = "jupyter-lite build --debug --output-dir {{ OUTPUT }}", cwd = "doc", args = [{ arg = "OUTPUT", default = "_output" }] }
+doc-jupyterlite-debug = { cmd = "jupyter-lite build --debug --output-dir {{ OUTPUT }}", cwd = "doc", args = [
+  { arg = "OUTPUT", default = "_output" },
+] }
 
 [feature.docs.activation.env]
 MAMBA_NO_LOW_SPEED_LIMIT = "1"
@@ -199,12 +229,22 @@ nogil-eta = "python -Xgil=0 -m timeit -n 5 -s 'import numpy as np; from fastcan 
 emsdk-clone = "bash -c '[ -d emsdk ] || git clone https://github.com/emscripten-core/emsdk.git emsdk'"
 pyodide-compatible = "pyodide xbuildenv search -a"
 pyodide-toolchain = { cmd = "LATEST_COMPATIBLE=$(pyodide xbuildenv search -a | grep '│ Yes' | head -n 1 | awk -F '│' '{print $2}' | xargs) && pyodide xbuildenv install $LATEST_COMPATIBLE" }
-emsdk-setup = { cmd = "PYODIDE_EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) && ./emsdk install $PYODIDE_EMSCRIPTEN_VERSION && ./emsdk activate $PYODIDE_EMSCRIPTEN_VERSION", cwd = "emsdk", depends-on = ["emsdk-clone", "pyodide-toolchain"] }
-pyodide-build = { cmd = "bash -c 'source emsdk/emsdk_env.sh && pyodide build'", depends-on = ["emsdk-setup"] }
+emsdk-setup = { cmd = "PYODIDE_EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) && ./emsdk install $PYODIDE_EMSCRIPTEN_VERSION && ./emsdk activate $PYODIDE_EMSCRIPTEN_VERSION", cwd = "emsdk", depends-on = [
+  "emsdk-clone",
+  "pyodide-toolchain",
+] }
+pyodide-build = { cmd = "bash -c 'source emsdk/emsdk_env.sh && pyodide build'", depends-on = [
+  "emsdk-setup",
+] }
 pyodide-create-recipe = "rm -rf packages && pyodide skeleton pypi fastcan"
-pyodide-build-recipe = { cmd = "rm -rf dist && bash -c 'source emsdk/emsdk_env.sh && pyodide build-recipes fastcan --install'", depends-on = ["emsdk-setup"] }
+pyodide-build-recipe = { cmd = "rm -rf dist && bash -c 'source emsdk/emsdk_env.sh && pyodide build-recipes fastcan --install'", depends-on = [
+  "emsdk-setup",
+] }
 pyodide-download = '''bash -c "[ -d pyodide ] || (LATEST_TAG=$(curl -s https://api.github.com/repos/pyodide/pyodide/releases/latest | grep \"tag_name\" | cut -d \" -f4) && curl -L https://github.com/pyodide/pyodide/releases/download/${LATEST_TAG}/pyodide-${LATEST_TAG}.tar.bz2 | tar -xjf -)"'''
-pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directory .", cwd = "pyodide", depends-on = ["pyodide-download", "pyodide-build-recipe"] }
+pyodide-test-recipe = { cmd = "mv ../dist/* . && python -m http.server --directory .", cwd = "pyodide", depends-on = [
+  "pyodide-download",
+  "pyodide-build-recipe",
+] }
 
 [feature.low]
 solve-strategy = "lowest"
@@ -212,7 +252,7 @@ solve-strategy = "lowest"
 [feature.low.dependencies]
 pytest = ">=9.0.2"
 numpy = ">=2.1.0"
-meson = ">=1.11.1" # For win-64
+meson = ">=1.11.1"         # For win-64
 mpmath = ">=1.3.0"
 pytorch = ">=2.12.0"
 scipy = ">=1.14.0"
