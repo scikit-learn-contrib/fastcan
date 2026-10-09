@@ -39,7 +39,6 @@ def _classical_gram_schmidt(x, W, xp):
 
 def _skip2valid(skip_indices, n_features, xp, device):
     """Convert skip_indices to valid_indices for feature generators."""
-    skip_indices = move_to(skip_indices, xp=xp, device=device)
     skip_indices = _check_indices_params(skip_indices, n_features, xp=xp, device=device)
     all_indices = xp.arange(n_features, dtype=xp.int64, device=device)
     skip_mask = xp.isin(all_indices, skip_indices)
@@ -198,7 +197,7 @@ class LazyFastCan(BaseEstimator):
             dtype=X.dtype,
             device=device_,
         )
-        indices = xp.zeros(self.n_features_to_select, dtype=xp.int64)
+        indices = xp.zeros(self.n_features_to_select, dtype=xp.int64, device=device_)
         scores = xp.zeros(self.n_features_to_select, dtype=X.dtype, device=device_)
 
         max_feat_idx = xp.asarray(-1, device=device_)
@@ -262,7 +261,7 @@ class LazyFastCan(BaseEstimator):
             indices[i] = best_index
             scores[i] = best_score
             W[:, i] = best_feat
-        self.indices_ = move_to(indices, xp=xp, device=device_)
+        self.indices_ = indices
         self.scores_ = scores
         self.n_features_ = max_feat_idx + 1
         if not xp.all(indices_include == -1):
